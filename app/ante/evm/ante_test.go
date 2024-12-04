@@ -571,7 +571,7 @@ func (suite *AnteTestSuite) TestAnteHandler() {
 				from := acc.GetAddress()
 				gas := uint64(200000)
 				amount := sdk.NewCoins(sdk.NewCoin(evmtypes.DefaultEVMDenom, sdkmath.NewInt(100*int64(gas))))
-				txBuilder, err := suite.CreateTestEIP712TxBuilderMsgSend(from, privKey, "evmos_9001-1", gas, amount)
+				txBuilder, err := suite.CreateTestEIP712TxBuilderMsgSend(from, privKey, "guru_3111-1", gas, amount)
 				suite.Require().NoError(err)
 				return txBuilder.GetTx()
 			}, false, false, false,
@@ -640,7 +640,7 @@ func (suite *AnteTestSuite) TestAnteHandler() {
 					addr[:],
 					sdk.NewCoins(
 						sdk.NewCoin(
-							"evmos",
+							"guru",
 							sdk.NewInt(1),
 						),
 					),
@@ -670,7 +670,7 @@ func (suite *AnteTestSuite) TestAnteHandler() {
 					addr[:],
 					sdk.NewCoins(
 						sdk.NewCoin(
-							"evmos",
+							"guru",
 							sdk.NewInt(1),
 						),
 					),
@@ -700,7 +700,7 @@ func (suite *AnteTestSuite) TestAnteHandler() {
 					addr[:],
 					sdk.NewCoins(
 						sdk.NewCoin(
-							"evmos",
+							"guru",
 							sdk.NewInt(1),
 						),
 					),
@@ -755,7 +755,7 @@ func (suite *AnteTestSuite) TestAnteHandler() {
 					addr[:],
 					sdk.NewCoins(
 						sdk.NewCoin(
-							"evmos",
+							"guru",
 							sdk.NewInt(1),
 						),
 					),
@@ -785,7 +785,7 @@ func (suite *AnteTestSuite) TestAnteHandler() {
 					addr[:],
 					sdk.NewCoins(
 						sdk.NewCoin(
-							"evmos",
+							"guru",
 							sdk.NewInt(1),
 						),
 					),
@@ -815,7 +815,7 @@ func (suite *AnteTestSuite) TestAnteHandler() {
 					addr[:],
 					sdk.NewCoins(
 						sdk.NewCoin(
-							"evmos",
+							"guru",
 							sdk.NewInt(1),
 						),
 					),
@@ -845,7 +845,7 @@ func (suite *AnteTestSuite) TestAnteHandler() {
 					addr[:],
 					sdk.NewCoins(
 						sdk.NewCoin(
-							"evmos",
+							"guru",
 							sdk.NewInt(1),
 						),
 					),
@@ -879,7 +879,7 @@ func (suite *AnteTestSuite) TestAnteHandler() {
 					addr[:],
 					sdk.NewCoins(
 						sdk.NewCoin(
-							"evmos",
+							"guru",
 							sdk.NewInt(1),
 						),
 					),
@@ -909,7 +909,7 @@ func (suite *AnteTestSuite) TestAnteHandler() {
 					addr[:],
 					sdk.NewCoins(
 						sdk.NewCoin(
-							"evmos",
+							"guru",
 							sdk.NewInt(1),
 						),
 					),

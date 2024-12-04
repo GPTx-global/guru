@@ -7,9 +7,9 @@ import (
 )
 
 func (suite *KeeperTestSuite) TestsClaimsRecords() {
-	addr1, err := sdk.AccAddressFromBech32("evmos1hf0468jjpe6m6vx38s97z2qqe8ldu0njdyf625")
+	addr1, err := sdk.AccAddressFromBech32("guru10jmp6sgh4cc6zt3e8gw05wavvejgr5pwggsdaj")
 	suite.Require().NoError(err)
-	addr2, err := sdk.AccAddressFromBech32("evmos1sv9m0g7ycejwr3s369km58h5qe7xj77hvcxrms")
+	addr2, err := sdk.AccAddressFromBech32("guru1cml96vmptgw99syqrrz8az79xer2pcgpawsch9")
 	suite.Require().NoError(err)
 
 	cr1 := types.NewClaimsRecord(sdk.NewInt(1000))
@@ -18,14 +18,14 @@ func (suite *KeeperTestSuite) TestsClaimsRecords() {
 
 	expRecords := []types.ClaimsRecordAddress{
 		{
-			Address:                addr2.String(),
-			InitialClaimableAmount: cr2.InitialClaimableAmount,
-			ActionsCompleted:       cr2.ActionsCompleted,
-		},
-		{
 			Address:                addr1.String(),
 			InitialClaimableAmount: cr1.InitialClaimableAmount,
 			ActionsCompleted:       cr1.ActionsCompleted,
+		},
+		{
+			Address:                addr2.String(),
+			InitialClaimableAmount: cr2.InitialClaimableAmount,
+			ActionsCompleted:       cr2.ActionsCompleted,
 		},
 	}
 

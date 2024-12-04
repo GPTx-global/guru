@@ -240,7 +240,7 @@ func (tx AccessListTx) Validate() error {
 	if !(chainID.Cmp(big.NewInt(3110)) == 0 || chainID.Cmp(big.NewInt(3111)) == 0) {
 		return errorsmod.Wrapf(
 			errortypes.ErrInvalidChainID,
-			"chain ID must be 3110 or 3111 on Evmos, got %s", chainID,
+			"chain ID must be 3110 or 3111 on Guru, got %s", chainID,
 		)
 	}
 

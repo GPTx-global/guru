@@ -53,13 +53,13 @@ var _ = Describe("Convert receiving IBC to Erc20", Ordered, func() {
 		Base:        utils.BaseDenom,
 		DenomUnits: []*banktypes.DenomUnit{
 			{
-				Denom:    teststypes.AevmosDenomtrace.BaseDenom,
+				Denom:    teststypes.AguruDenomtrace.BaseDenom,
 				Exponent: 0,
 			},
 		},
 		Name:    utils.BaseDenom,
 		Symbol:  erc20Symbol,
-		Display: teststypes.AevmosDenomtrace.BaseDenom,
+		Display: teststypes.AguruDenomtrace.BaseDenom,
 	}
 
 	BeforeEach(func() {
@@ -149,39 +149,39 @@ var _ = Describe("Convert receiving IBC to Erc20", Ordered, func() {
 			ibcAtomBalanceAfter := s.app.BankKeeper.GetBalance(s.EvmosChain.GetContext(), receiverAcc, teststypes.UatomIbcdenom)
 			s.Require().Equal(amount, ibcAtomBalanceAfter.Amount.Int64())
 		})
-		It("should transfer and not convert aevmos", func() {
-			// Register 'aevmos' coin in ERC-20 keeper to validate it is not converting the coins when receiving 'aevmos' thru IBC
+		It("should transfer and not convert aguru", func() {
+			// Register 'aguru' coin in ERC-20 keeper to validate it is not converting the coins when receiving 'aguru' thru IBC
 			pair, err := s.app.Erc20Keeper.RegisterCoin(s.EvmosChain.GetContext(), evmosMeta)
 			s.Require().NoError(err)
 
-			aevmosInitialBalance := s.app.BankKeeper.GetBalance(s.EvmosChain.GetContext(), receiverAcc, utils.BaseDenom)
+			aguruInitialBalance := s.app.BankKeeper.GetBalance(s.EvmosChain.GetContext(), receiverAcc, utils.BaseDenom)
 
-			// 1. Send aevmos from Evmos to Osmosis
+			// 1. Send aguru from Evmos to Osmosis
 			s.SendAndReceiveMessage(s.pathOsmosisEvmos, s.EvmosChain, utils.BaseDenom, amount, receiver, sender, 1, "")
 
-			aevmosAfterBalance := s.app.BankKeeper.GetBalance(s.EvmosChain.GetContext(), receiverAcc, utils.BaseDenom)
-			s.Require().Equal(aevmosInitialBalance.Amount.Sub(math.NewInt(amount)).Sub(sendAndReceiveMsgFee), aevmosAfterBalance.Amount)
+			aguruAfterBalance := s.app.BankKeeper.GetBalance(s.EvmosChain.GetContext(), receiverAcc, utils.BaseDenom)
+			s.Require().Equal(aguruInitialBalance.Amount.Sub(math.NewInt(amount)).Sub(sendAndReceiveMsgFee), aguruAfterBalance.Amount)
 
-			// check ibc aevmos coins balance on Osmosis
-			aevmosIBCBalanceBefore := s.IBCOsmosisChain.GetSimApp().BankKeeper.GetBalance(s.IBCOsmosisChain.GetContext(), senderAcc, teststypes.AevmosIbcdenom)
-			s.Require().Equal(amount, aevmosIBCBalanceBefore.Amount.Int64())
+			// check ibc aguru coins balance on Osmosis
+			aguruIBCBalanceBefore := s.IBCOsmosisChain.GetSimApp().BankKeeper.GetBalance(s.IBCOsmosisChain.GetContext(), senderAcc, teststypes.AguruIbcdenom)
+			s.Require().Equal(amount, aguruIBCBalanceBefore.Amount.Int64())
 
-			// 2. Send aevmos IBC coins from Osmosis to Evmos
-			ibcCoinMeta := fmt.Sprintf("%s/%s", teststypes.AevmosDenomtrace.Path, teststypes.AevmosDenomtrace.BaseDenom)
-			s.SendBackCoins(s.pathOsmosisEvmos, s.IBCOsmosisChain, teststypes.AevmosIbcdenom, amount, sender, receiver, 1, ibcCoinMeta)
+			// 2. Send aguru IBC coins from Osmosis to Evmos
+			ibcCoinMeta := fmt.Sprintf("%s/%s", teststypes.AguruDenomtrace.Path, teststypes.AguruDenomtrace.BaseDenom)
+			s.SendBackCoins(s.pathOsmosisEvmos, s.IBCOsmosisChain, teststypes.AguruIbcdenom, amount, sender, receiver, 1, ibcCoinMeta)
 
-			// check ibc aevmos coins balance on Osmosis - should be zero
-			aevmosIBCSenderFinalBalance := s.IBCOsmosisChain.GetSimApp().BankKeeper.GetBalance(s.IBCOsmosisChain.GetContext(), senderAcc, teststypes.AevmosIbcdenom)
-			s.Require().Equal(int64(0), aevmosIBCSenderFinalBalance.Amount.Int64())
+			// check ibc aguru coins balance on Osmosis - should be zero
+			aguruIBCSenderFinalBalance := s.IBCOsmosisChain.GetSimApp().BankKeeper.GetBalance(s.IBCOsmosisChain.GetContext(), senderAcc, teststypes.AguruIbcdenom)
+			s.Require().Equal(int64(0), aguruIBCSenderFinalBalance.Amount.Int64())
 
-			// check aevmos balance after transfer - should be equal to initial balance
-			aevmosFinalBalance := s.app.BankKeeper.GetBalance(s.EvmosChain.GetContext(), receiverAcc, utils.BaseDenom)
+			// check aguru balance after transfer - should be equal to initial balance
+			aguruFinalBalance := s.app.BankKeeper.GetBalance(s.EvmosChain.GetContext(), receiverAcc, utils.BaseDenom)
 
 			totalFees := sendBackCoinsFee.Add(sendAndReceiveMsgFee)
-			s.Require().Equal(aevmosInitialBalance.Amount.Sub(totalFees), aevmosFinalBalance.Amount)
+			s.Require().Equal(aguruInitialBalance.Amount.Sub(totalFees), aguruFinalBalance.Amount)
 
 			// check IBC Coin balance - should be zero
-			ibcCoinsBalance := s.app.BankKeeper.GetBalance(s.EvmosChain.GetContext(), receiverAcc, teststypes.AevmosIbcdenom)
+			ibcCoinsBalance := s.app.BankKeeper.GetBalance(s.EvmosChain.GetContext(), receiverAcc, teststypes.AguruIbcdenom)
 			s.Require().Equal(int64(0), ibcCoinsBalance.Amount.Int64())
 
 			// Check ERC20 balances - should be zero
@@ -298,7 +298,7 @@ var _ = Describe("Convert receiving IBC to Erc20", Ordered, func() {
 			err := testutil.FundModuleAccount(s.EvmosChain.GetContext(), s.app.BankKeeper, claimstypes.ModuleName, coins)
 			s.Require().NoError(err)
 
-			receiverInitialAevmosBalance := s.app.BankKeeper.GetBalance(s.EvmosChain.GetContext(), receiverAcc, utils.BaseDenom)
+			receiverInitialAguruBalance := s.app.BankKeeper.GetBalance(s.EvmosChain.GetContext(), receiverAcc, utils.BaseDenom)
 
 			uosmoInitialBalance := s.IBCOsmosisChain.GetSimApp().BankKeeper.GetBalance(s.IBCOsmosisChain.GetContext(), senderAcc, "uosmo")
 
@@ -307,7 +307,7 @@ var _ = Describe("Convert receiving IBC to Erc20", Ordered, func() {
 			amount, _ := strconv.ParseInt(claimstypes.IBCTriggerAmt, 10, 64)
 			s.SendAndReceiveMessage(s.pathOsmosisEvmos, s.IBCOsmosisChain, "uosmo", amount, sender, receiver, 1, "")
 
-			// should trigger claims logic and send aevmos coins from claims to receiver
+			// should trigger claims logic and send aguru coins from claims to receiver
 
 			// ERC-20 balance should be the transferred amount
 			balanceTokenAfter := s.app.Erc20Keeper.BalanceOf(s.EvmosChain.GetContext(), contracts.ERC20MinterBurnerDecimalsContract.ABI, pair.GetERC20Contract(), common.BytesToAddress(receiverAcc.Bytes()))
@@ -322,9 +322,9 @@ var _ = Describe("Convert receiving IBC to Erc20", Ordered, func() {
 			s.Require().Equal(uosmoInitialBalance.Amount.Int64()-amount, uosmoFinalBalance.Amount.Int64())
 
 			// validate that Receiver address on Evmos got the claims tokens
-			receiverFinalAevmosBalance := s.app.BankKeeper.GetBalance(s.EvmosChain.GetContext(), receiverAcc, utils.BaseDenom)
+			receiverFinalAguruBalance := s.app.BankKeeper.GetBalance(s.EvmosChain.GetContext(), receiverAcc, utils.BaseDenom)
 
-			s.Require().Equal(receiverInitialAevmosBalance.Amount.Add(claimableAmount).Sub(sendBackCoinsFee), receiverFinalAevmosBalance.Amount)
+			s.Require().Equal(receiverInitialAguruBalance.Amount.Add(claimableAmount).Sub(sendBackCoinsFee), receiverFinalAguruBalance.Amount)
 		})
 	})
 	Describe("registered erc20", func() {
