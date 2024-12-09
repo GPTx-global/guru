@@ -22,7 +22,7 @@ import (
 	evmostypes "github.com/evmos/evmos/v12/types"
 
 	utils "github.com/evmos/evmos/v12/utils"
-	incentivestypes "github.com/evmos/evmos/v12/x/incentives/types"
+	// incentivestypes "github.com/evmos/evmos/v12/x/incentives/types"
 	"github.com/evmos/evmos/v12/x/inflation/types"
 )
 
@@ -90,14 +90,14 @@ func (k Keeper) AllocateExponentialInflation(
 	// Allocate usage incentives to incentives module account
 	incentives = sdk.Coins{k.GetProportions(ctx, mintedCoin, distribution.UsageIncentives)}
 
-	if err = k.bankKeeper.SendCoinsFromModuleToModule(
-		ctx,
-		types.ModuleName,
-		incentivestypes.ModuleName,
-		incentives,
-	); err != nil {
-		return nil, nil, nil, err
-	}
+	// if err = k.bankKeeper.SendCoinsFromModuleToModule(
+	// 	ctx,
+	// 	types.ModuleName,
+	// 	incentivestypes.ModuleName,
+	// 	incentives,
+	// ); err != nil {
+	// 	return nil, nil, nil, err
+	// }
 
 	// Allocate community pool amount (remaining module balance) to community
 	// pool address
