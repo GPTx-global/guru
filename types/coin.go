@@ -24,14 +24,14 @@ import (
 )
 
 const (
-	// AttoEvmos defines the default coin denomination used in Evmos in:
+	// AttoGuru defines the default coin denomination used in Evmos in:
 	//
 	// - Staking parameters: denomination used as stake in the dPoS chain
 	// - Mint parameters: denomination minted due to fee distribution rewards
 	// - Governance parameters: denomination used for spam prevention in proposal deposits
 	// - Crisis parameters: constant fee denomination used for spam prevention to check broken invariant
 	// - EVM parameters: denomination used for running EVM state transitions in Evmos.
-	AttoEvmos string = "aguru"
+	AttoGuru string = "aguru"
 
 	// BaseDenomUnit defines the base denomination unit for Evmos.
 	// 1 evmos = 1x10^{BaseDenomUnit} aguru
@@ -47,17 +47,17 @@ var PowerReduction = sdkmath.NewIntFromBigInt(new(big.Int).Exp(big.NewInt(10), b
 // NewGuruCoin is a utility function that returns an "aguru" coin with the given sdkmath.Int amount.
 // The function will panic if the provided amount is negative.
 func NewGuruCoin(amount sdkmath.Int) sdk.Coin {
-	return sdk.NewCoin(AttoEvmos, amount)
+	return sdk.NewCoin(AttoGuru, amount)
 }
 
 // NewGuruDecCoin is a utility function that returns an "aguru" decimal coin with the given sdkmath.Int amount.
 // The function will panic if the provided amount is negative.
 func NewGuruDecCoin(amount sdkmath.Int) sdk.DecCoin {
-	return sdk.NewDecCoin(AttoEvmos, amount)
+	return sdk.NewDecCoin(AttoGuru, amount)
 }
 
 // NewGuruCoinInt64 is a utility function that returns an "aguru" coin with the given int64 amount.
 // The function will panic if the provided amount is negative.
 func NewGuruCoinInt64(amount int64) sdk.Coin {
-	return sdk.NewInt64Coin(AttoEvmos, amount)
+	return sdk.NewInt64Coin(AttoGuru, amount)
 }
