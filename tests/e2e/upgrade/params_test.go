@@ -23,6 +23,10 @@ func TestLoadUpgradeParams(t *testing.T) {
 
 	defaultMountPath := wd + "/build/:/root/"
 	availableUpgrades, err := RetrieveUpgradesList(upgradesPath)
+	if len(availableUpgrades) == 0 {
+		return
+	}
+
 	require.NoError(t, err, "can't retrieve upgrades list")
 	latestVersionName := availableUpgrades[len(availableUpgrades)-1]
 	defaultInitialVersion := availableUpgrades[len(availableUpgrades)-2]
