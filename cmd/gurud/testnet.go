@@ -321,12 +321,17 @@ func initTestnetFiles(
 		})
 
 		valTokens := sdk.TokensFromConsensusPower(100, evmostypes.PowerReduction)
+
+		commissionRate, _ := sdk.NewDecFromStr("0.1")
+		commissionMaxRate, _ := sdk.NewDecFromStr("0.2")
+		commissionMaxChangeRate, _ := sdk.NewDecFromStr("0.01")
+
 		createValMsg, err := stakingtypes.NewMsgCreateValidator(
 			sdk.ValAddress(addr),
 			valPubKeys[i],
 			sdk.NewCoin(cmdcfg.BaseDenom, valTokens),
 			stakingtypes.NewDescription(nodeDirName, "", "", "", ""),
-			stakingtypes.NewCommissionRates(sdk.OneDec(), sdk.OneDec(), sdk.OneDec()),
+			stakingtypes.NewCommissionRates(commissionRate, commissionMaxRate, commissionMaxChangeRate),
 			sdk.OneInt(),
 		)
 		if err != nil {
