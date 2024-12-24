@@ -238,7 +238,7 @@ func (m *Manager) GetNodeHeight(ctx context.Context) (int, error) {
 		}
 	}
 	if errBuff.String() != "" {
-		return 0, fmt.Errorf("evmos query error: %s", errBuff.String())
+		return 0, fmt.Errorf("guru query error: %s", errBuff.String())
 	}
 	return h, nil
 }
@@ -255,7 +255,7 @@ func (m *Manager) GetNodeVersion(ctx context.Context) (string, error) {
 		return "", fmt.Errorf("run exec error: %w", err)
 	}
 	if errBuff.String() != "" {
-		return "", fmt.Errorf("evmos version error: %s", errBuff.String())
+		return "", fmt.Errorf("guru version error: %s", errBuff.String())
 	}
 	return outBuff.String(), nil
 }

@@ -7,34 +7,30 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	evmostypes "github.com/evmos/evmos/v12/types"
-	incentivestypes "github.com/evmos/evmos/v12/x/incentives/types"
 	"github.com/evmos/evmos/v12/x/inflation/types"
 )
 
 func (suite *KeeperTestSuite) TestMintAndAllocateInflation() {
 	testCases := []struct {
-		name                  string
-		mintCoin              sdk.Coin
-		malleate              func()
-		expStakingRewardAmt   sdk.Coin
-		expUsageIncentivesAmt sdk.Coin
-		expCommunityPoolAmt   sdk.DecCoins
-		expPass               bool
+		name                string
+		mintCoin            sdk.Coin
+		malleate            func()
+		expStakingRewardAmt sdk.Coin
+		expCommunityPoolAmt sdk.DecCoins
+		expPass             bool
 	}{
 		{
 			"pass",
 			sdk.NewCoin(denomMint, sdk.NewInt(1_000_000)),
 			func() {},
 			sdk.NewCoin(denomMint, sdk.NewInt(533_333)),
-			sdk.NewCoin(denomMint, sdk.NewInt(333_333)),
-			sdk.NewDecCoins(sdk.NewDecCoin(denomMint, sdk.NewInt(133_334))),
+			sdk.NewDecCoins(sdk.NewDecCoin(denomMint, sdk.NewInt(466_667))),
 			true,
 		},
 		{
 			"pass - no coins minted ",
 			sdk.NewCoin(denomMint, sdk.ZeroInt()),
 			func() {},
-			sdk.NewCoin(denomMint, sdk.ZeroInt()),
 			sdk.NewCoin(denomMint, sdk.ZeroInt()),
 			sdk.DecCoins(nil),
 			true,
@@ -62,20 +58,12 @@ func (suite *KeeperTestSuite) TestMintAndAllocateInflation() {
 				denomMint,
 			)
 
-			incentives := suite.app.AccountKeeper.GetModuleAddress(incentivestypes.ModuleName)
-			balanceUsageIncentives := suite.app.BankKeeper.GetBalance(
-				suite.ctx,
-				incentives,
-				denomMint,
-			)
-
 			balanceCommunityPool := suite.app.DistrKeeper.GetFeePoolCommunityCoins(suite.ctx)
 
 			if tc.expPass {
 				suite.Require().NoError(err, tc.name)
 				suite.Require().True(balanceModule.IsZero())
 				suite.Require().Equal(tc.expStakingRewardAmt, balanceStakingRewards)
-				suite.Require().Equal(tc.expUsageIncentivesAmt, balanceUsageIncentives)
 				suite.Require().Equal(tc.expCommunityPoolAmt, balanceCommunityPool)
 			} else {
 				suite.Require().Error(err)
@@ -87,7 +75,7 @@ func (suite *KeeperTestSuite) TestMintAndAllocateInflation() {
 func (suite *KeeperTestSuite) TestGetCirculatingSupplyAndInflationRate() {
 	// the total bonded tokens for the 2 accounts initialized on the setup
 	bondedAmt := sdkmath.NewInt(1000100000000000000)
-	bondedCoins := sdk.NewDecCoin(evmostypes.AttoEvmos, bondedAmt)
+	bondedCoins := sdk.NewDecCoin(evmostypes.AttoGuru, bondedAmt)
 
 	testCases := []struct {
 		name             string
@@ -181,7 +169,7 @@ func (suite *KeeperTestSuite) TestBondedRatio() {
 			if tc.isMainnet {
 				suite.ctx = suite.ctx.WithChainID("guru_3111-1")
 			} else {
-				suite.ctx = suite.ctx.WithChainID("evmos_9999-666")
+				suite.ctx = suite.ctx.WithChainID("guru_9999-666")
 			}
 			tc.malleate()
 

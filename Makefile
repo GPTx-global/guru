@@ -440,6 +440,7 @@ proto-download-deps:
 	git config core.sparseCheckout true && \
 	printf "proto\nthird_party\n" > .git/info/sparse-checkout && \
 	git pull origin main && \
+#	git checkout tags/v0.46.13 && \
 	rm -f ./proto/buf.* && \
 	mv ./proto/* ..
 	rm -rf "$(THIRD_PARTY_DIR)/cosmos_tmp"

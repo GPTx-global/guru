@@ -228,7 +228,7 @@ func initTestnetFiles(
 	args initArgs,
 ) error {
 	if args.chainID == "" {
-		args.chainID = fmt.Sprintf("evmos_%d-1", tmrand.Int63n(9999999999999)+1)
+		args.chainID = fmt.Sprintf("guru_%d-1", tmrand.Int63n(9999999999999)+1)
 	}
 
 	nodeIDs := make([]string, args.numValidators)
@@ -321,12 +321,17 @@ func initTestnetFiles(
 		})
 
 		valTokens := sdk.TokensFromConsensusPower(100, evmostypes.PowerReduction)
+
+		commissionRate, _ := sdk.NewDecFromStr("0.1")
+		commissionMaxRate, _ := sdk.NewDecFromStr("0.2")
+		commissionMaxChangeRate, _ := sdk.NewDecFromStr("0.01")
+
 		createValMsg, err := stakingtypes.NewMsgCreateValidator(
 			sdk.ValAddress(addr),
 			valPubKeys[i],
 			sdk.NewCoin(cmdcfg.BaseDenom, valTokens),
 			stakingtypes.NewDescription(nodeDirName, "", "", "", ""),
-			stakingtypes.NewCommissionRates(sdk.OneDec(), sdk.OneDec(), sdk.OneDec()),
+			stakingtypes.NewCommissionRates(commissionRate, commissionMaxRate, commissionMaxChangeRate),
 			sdk.OneInt(),
 		)
 		if err != nil {
