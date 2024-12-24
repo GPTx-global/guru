@@ -13,7 +13,7 @@ import (
 
 func (suite *KeeperTestSuite) TestTotalUnclaimed() {
 	ctx := sdk.WrapSDKContext(suite.ctx)
-	coins := sdk.NewCoins(sdk.NewCoin("aevmos", sdk.NewInt(1000)))
+	coins := sdk.NewCoins(sdk.NewCoin("aguru", sdk.NewInt(1000)))
 
 	testCases := []struct {
 		name       string
@@ -149,7 +149,7 @@ func (suite *KeeperTestSuite) TestClaimsRecord() {
 			"invalid address",
 			func() {
 				req = &types.QueryClaimsRecordRequest{
-					Address: "evmos1",
+					Address: "guru1",
 				}
 			},
 			true,

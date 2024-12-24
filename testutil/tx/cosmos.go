@@ -41,7 +41,7 @@ type CosmosTxArgs struct {
 	TxCfg client.TxConfig
 	// Priv is the private key that will be used to sign the tx
 	Priv cryptotypes.PrivKey
-	// ChainID is the chain's id on cosmos format, e.g. 'evmos_9000-1'
+	// ChainID is the chain's id on cosmos format, e.g. 'guru_3110-1'
 	ChainID string
 	// Gas to be used on the tx
 	Gas uint64
@@ -59,7 +59,7 @@ type CosmosTxArgs struct {
 // It returns the signed transaction and an error
 func PrepareCosmosTx(
 	ctx sdk.Context,
-	appEvmos *app.Evmos,
+	appEvmos *app.Guru,
 	args CosmosTxArgs,
 ) (authsigning.Tx, error) {
 	txBuilder := args.TxCfg.NewTxBuilder()
@@ -92,7 +92,7 @@ func PrepareCosmosTx(
 // the provided private key
 func signCosmosTx(
 	ctx sdk.Context,
-	appEvmos *app.Evmos,
+	appEvmos *app.Guru,
 	args CosmosTxArgs,
 	txBuilder client.TxBuilder,
 ) (authsigning.Tx, error) {

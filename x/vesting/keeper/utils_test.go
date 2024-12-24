@@ -56,7 +56,7 @@ func (suite *KeeperTestSuite) DoSetupTest(t require.TestingT) {
 
 	// Set Context
 	header := testutil.NewHeader(
-		1, time.Now().UTC(), "evmos_9001-1", suite.consAddress, nil, nil,
+		1, time.Now().UTC(), "guru_3111-1", suite.consAddress, nil, nil,
 	)
 	suite.ctx = suite.app.BaseApp.NewContext(false, header)
 
@@ -219,7 +219,7 @@ func delegate(clawbackAccount *types.ClawbackVestingAccount, amount sdkmath.Int)
 	addr, err := sdk.AccAddressFromBech32(clawbackAccount.Address)
 	s.Require().NoError(err)
 
-	val, err := sdk.ValAddressFromBech32("evmosvaloper1z3t55m0l9h0eupuz3dp5t5cypyv674jjn4d6nn")
+	val, err := sdk.ValAddressFromBech32("guruvaloper1wkcd9fun5ftzq7g9jdetwwsyp5z55kqsez54kg")
 	s.Require().NoError(err)
 	delegateMsg := stakingtypes.NewMsgDelegate(addr, val, sdk.NewCoin(utils.BaseDenom, amount))
 

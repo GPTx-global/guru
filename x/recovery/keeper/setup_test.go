@@ -35,7 +35,7 @@ type KeeperTestSuite struct {
 
 	ctx sdk.Context
 
-	app         *app.Evmos
+	app         *app.Guru
 	queryClient types.QueryClient
 }
 
@@ -45,7 +45,7 @@ func (suite *KeeperTestSuite) SetupTest() {
 
 	suite.app = app.Setup(false, feemarkettypes.DefaultGenesisState())
 	header := testutil.NewHeader(
-		1, time.Now().UTC(), "evmos_9001-1", consAddress, nil, nil,
+		1, time.Now().UTC(), "guru_3111-1", consAddress, nil, nil,
 	)
 	suite.ctx = suite.app.BaseApp.NewContext(false, header)
 

@@ -16,6 +16,7 @@
 package keeper
 
 import (
+	"fmt"
 	"math/big"
 
 	errorsmod "cosmossdk.io/errors"
@@ -127,7 +128,7 @@ func (k *Keeper) WithChainID(ctx sdk.Context) {
 	}
 
 	if !(chainID.Cmp(big.NewInt(3110)) == 0 || chainID.Cmp(big.NewInt(3111)) == 0) {
-		panic("EVM only supports Evmos chain identifiers (3110 or 3111)")
+		panic(fmt.Errorf("EVM only supports Guru chain identifiers (3110 or 3111). ChainID: %d", chainID))
 	}
 
 	k.eip155ChainID = chainID

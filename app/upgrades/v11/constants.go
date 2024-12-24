@@ -28,5 +28,5 @@ const (
 
 	// FundingAccount is the account which holds the rewards for the incentivized testnet.
 	// It contains ~7.4M tokens, of which ~5.6M are to be distributed.
-	FundingAccount = "evmos1f7vxxvmd544dkkmyxan76t76d39k7j3gr8d45y"
+	FundingAccount = "guru10jmp6sgh4cc6zt3e8gw05wavvejgr5pwggsdaj"
 )

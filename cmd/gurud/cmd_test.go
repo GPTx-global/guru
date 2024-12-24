@@ -10,25 +10,25 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/evmos/evmos/v12/app"
-	evmosd "github.com/evmos/evmos/v12/cmd/evmosd"
+	gurud "github.com/evmos/evmos/v12/cmd/gurud"
 	"github.com/evmos/evmos/v12/utils"
 )
 
 func TestInitCmd(t *testing.T) {
-	rootCmd, _ := evmosd.NewRootCmd()
+	rootCmd, _ := gurud.NewRootCmd()
 	rootCmd.SetArgs([]string{
-		"init",       // Test the init cmd
-		"evmos-test", // Moniker
+		"init",      // Test the init cmd
+		"guru-test", // Moniker
 		fmt.Sprintf("--%s=%s", cli.FlagOverwrite, "true"), // Overwrite genesis.json, in case it already exists
 		fmt.Sprintf("--%s=%s", flags.FlagChainID, utils.TestnetChainID+"-1"),
 	})
 
-	err := svrcmd.Execute(rootCmd, "evmosd", app.DefaultNodeHome)
+	err := svrcmd.Execute(rootCmd, "gurud", app.DefaultNodeHome)
 	require.NoError(t, err)
 }
 
 func TestAddKeyLedgerCmd(t *testing.T) {
-	rootCmd, _ := evmosd.NewRootCmd()
+	rootCmd, _ := gurud.NewRootCmd()
 	rootCmd.SetArgs([]string{
 		"keys",
 		"add",
@@ -36,6 +36,6 @@ func TestAddKeyLedgerCmd(t *testing.T) {
 		fmt.Sprintf("--%s", flags.FlagUseLedger),
 	})
 
-	err := svrcmd.Execute(rootCmd, "EVMOSD", app.DefaultNodeHome)
+	err := svrcmd.Execute(rootCmd, "GURUD", app.DefaultNodeHome)
 	require.Error(t, err)
 }

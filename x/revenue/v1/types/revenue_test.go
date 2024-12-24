@@ -124,7 +124,7 @@ func (suite *RevenueTestSuite) TestFee() {
 			"Create revenue- invalid deployer address",
 			types.Revenue{
 				utiltx.GenerateAddress().String(),
-				"evmos14mq5c8yn9jx295ahaxye2f0xw3tlell0lt542Z",
+				"guru11jmp6sgh4cc6zt3e8gw05wavvejgr5pwggsdaj",
 				suite.address2.String(),
 			},
 			false,
@@ -134,7 +134,7 @@ func (suite *RevenueTestSuite) TestFee() {
 			types.Revenue{
 				utiltx.GenerateAddress().String(),
 				suite.address1.String(),
-				"evmos14mq5c8yn9jx295ahaxye2f0xw3tlell0lt542Z",
+				"guru11jmp6sgh4cc6zt3e8gw05wavvejgr5pwggsdaj",
 			},
 			false,
 		},

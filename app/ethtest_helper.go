@@ -39,7 +39,7 @@ import (
 )
 
 // EthDefaultConsensusParams defines the default Tendermint consensus params used in
-// EvmosApp testing.
+// GuruApp testing.
 var EthDefaultConsensusParams = &abci.ConsensusParams{
 	Block: &abci.BlockParams{
 		MaxBytes: 200000,
@@ -57,13 +57,13 @@ var EthDefaultConsensusParams = &abci.ConsensusParams{
 	},
 }
 
-// EthSetup initializes a new EvmosApp. A Nop logger is set in EvmosApp.
-func EthSetup(isCheckTx bool, patchGenesis func(*Evmos, simapp.GenesisState) simapp.GenesisState) *Evmos {
+// EthSetup initializes a new GuruApp. A Nop logger is set in GuruApp.
+func EthSetup(isCheckTx bool, patchGenesis func(*Guru, simapp.GenesisState) simapp.GenesisState) *Guru {
 	return EthSetupWithDB(isCheckTx, patchGenesis, dbm.NewMemDB())
 }
 
-// EthSetupWithDB initializes a new EvmosApp. A Nop logger is set in EvmosApp.
-func EthSetupWithDB(isCheckTx bool, patchGenesis func(*Evmos, simapp.GenesisState) simapp.GenesisState, db dbm.DB) *Evmos {
+// EthSetupWithDB initializes a new GuruApp. A Nop logger is set in GuruApp.
+func EthSetupWithDB(isCheckTx bool, patchGenesis func(*Guru, simapp.GenesisState) simapp.GenesisState, db dbm.DB) *Guru {
 	app := NewEvmos(log.NewNopLogger(),
 		db,
 		nil,
@@ -88,7 +88,7 @@ func EthSetupWithDB(isCheckTx bool, patchGenesis func(*Evmos, simapp.GenesisStat
 		// Initialize the chain
 		app.InitChain(
 			abci.RequestInitChain{
-				ChainId:         "evmos_9000-1",
+				ChainId:         "guru_3110-1",
 				Validators:      []abci.ValidatorUpdate{},
 				ConsensusParams: DefaultConsensusParams,
 				AppStateBytes:   stateBytes,
