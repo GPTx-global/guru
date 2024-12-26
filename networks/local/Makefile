@@ -1,4 +1,4 @@
 all:
-	docker build --no-cache --tag guru/node ../.. -f guru/Dockerfile
+	docker build --no-cache --tag gurufin/guru ../.. -f guru/Dockerfile
 
 .PHONY: all

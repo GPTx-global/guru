@@ -3,7 +3,7 @@ version: '3'
 services:
   node0:
     container_name: gurunode0
-    image: "guru/node"
+    image: "gurufin/guru"
     ports:
       - "26656-26657:26656-26657"
     volumes:
@@ -16,7 +16,7 @@ services:
 
   node1:
     container_name: gurunode1
-    image: "guru/node"
+    image: "gurufin/guru"
     ports:
       - "26659-26660:26656-26657"
     volumes:
@@ -29,7 +29,7 @@ services:
 
   node2:
     container_name: gurunode2
-    image: "guru/node"
+    image: "gurufin/guru"
     ports:
       - "26661-26662:26656-26657"
     volumes:
@@ -42,7 +42,7 @@ services:
 
   node3:
     container_name: gurunode3
-    image: "guru/node"
+    image: "gurufin/guru"
     ports:
       - "26663-26664:26656-26657"
     volumes:
