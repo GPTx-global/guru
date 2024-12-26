@@ -490,7 +490,7 @@ localnet-build:
 
 # Start a 4-node testnet locally
 localnet-start: localnet-stop localnet-build
-	@if ! [ -f build/node0/$(GURU_BINARY)/config/genesis.json ]; then docker run --rm -v $(CURDIR)/build:/guru:Z guru/node "./gurud testnet init-files --v 4 -o /guru --chain-id guru_3110-1 --keyring-backend=test --starting-ip-address 192.167.10.2"; fi
+	@if ! [ -f build/node0/$(GURU_BINARY)/config/genesis.json ]; then docker run --rm -v $(CURDIR)/build:/guru:Z gurufin/guru "./gurud testnet init-files --v 4 -o /guru --chain-id guru_3110-1 --keyring-backend=test --starting-ip-address 192.167.10.2"; fi
 	docker-compose up -d
 
 # Stop testnet
@@ -506,15 +506,15 @@ localnet-clean:
 localnet-unsafe-reset:
 	docker-compose down
 ifeq ($(OS),Windows_NT)
-	@docker run --rm -v $(CURDIR)\build\node0\gurud:/guru\Z guru/node "./gurud tendermint unsafe-reset-all --home=/guru"
-	@docker run --rm -v $(CURDIR)\build\node1\gurud:/guru\Z guru/node "./gurud tendermint unsafe-reset-all --home=/guru"
-	@docker run --rm -v $(CURDIR)\build\node2\gurud:/guru\Z guru/node "./gurud tendermint unsafe-reset-all --home=/guru"
-	@docker run --rm -v $(CURDIR)\build\node3\gurud:/guru\Z guru/node "./gurud tendermint unsafe-reset-all --home=/guru"
+	@docker run --rm -v $(CURDIR)\build\node0\gurud:/guru\Z gurufin/guru "./gurud tendermint unsafe-reset-all --home=/guru"
+	@docker run --rm -v $(CURDIR)\build\node1\gurud:/guru\Z gurufin/guru "./gurud tendermint unsafe-reset-all --home=/guru"
+	@docker run --rm -v $(CURDIR)\build\node2\gurud:/guru\Z gurufin/guru "./gurud tendermint unsafe-reset-all --home=/guru"
+	@docker run --rm -v $(CURDIR)\build\node3\gurud:/guru\Z gurufin/guru "./gurud tendermint unsafe-reset-all --home=/guru"
 else
-	@docker run --rm -v $(CURDIR)/build/node0/gurud:/guru:Z guru/node "./gurud tendermint unsafe-reset-all --home=/guru"
-	@docker run --rm -v $(CURDIR)/build/node1/gurud:/guru:Z guru/node "./gurud tendermint unsafe-reset-all --home=/guru"
-	@docker run --rm -v $(CURDIR)/build/node2/gurud:/guru:Z guru/node "./gurud tendermint unsafe-reset-all --home=/guru"
-	@docker run --rm -v $(CURDIR)/build/node3/gurud:/guru:Z guru/node "./gurud tendermint unsafe-reset-all --home=/guru"
+	@docker run --rm -v $(CURDIR)/build/node0/gurud:/guru:Z gurufin/guru "./gurud tendermint unsafe-reset-all --home=/guru"
+	@docker run --rm -v $(CURDIR)/build/node1/gurud:/guru:Z gurufin/guru "./gurud tendermint unsafe-reset-all --home=/guru"
+	@docker run --rm -v $(CURDIR)/build/node2/gurud:/guru:Z gurufin/guru "./gurud tendermint unsafe-reset-all --home=/guru"
+	@docker run --rm -v $(CURDIR)/build/node3/gurud:/guru:Z gurufin/guru "./gurud tendermint unsafe-reset-all --home=/guru"
 endif
 
 # Clean testnet
