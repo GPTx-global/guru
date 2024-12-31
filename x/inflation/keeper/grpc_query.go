@@ -19,8 +19,8 @@ package keeper
 import (
 	"context"
 
+	"github.com/GPTx-global/guru/x/inflation/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/evmos/evmos/v12/x/inflation/types"
 )
 
 var _ types.QueryServer = Keeper{}

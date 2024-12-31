@@ -18,15 +18,15 @@ import (
 	"github.com/stretchr/testify/suite"
 	tmrpctypes "github.com/tendermint/tendermint/rpc/core/types"
 
-	"github.com/evmos/evmos/v12/app"
-	"github.com/evmos/evmos/v12/crypto/hd"
-	"github.com/evmos/evmos/v12/encoding"
-	"github.com/evmos/evmos/v12/indexer"
-	"github.com/evmos/evmos/v12/rpc/backend/mocks"
-	rpctypes "github.com/evmos/evmos/v12/rpc/types"
-	utiltx "github.com/evmos/evmos/v12/testutil/tx"
-	"github.com/evmos/evmos/v12/utils"
-	evmtypes "github.com/evmos/evmos/v12/x/evm/types"
+	"github.com/GPTx-global/guru/app"
+	"github.com/GPTx-global/guru/crypto/hd"
+	"github.com/GPTx-global/guru/encoding"
+	"github.com/GPTx-global/guru/indexer"
+	"github.com/GPTx-global/guru/rpc/backend/mocks"
+	rpctypes "github.com/GPTx-global/guru/rpc/types"
+	utiltx "github.com/GPTx-global/guru/testutil/tx"
+	"github.com/GPTx-global/guru/utils"
+	evmtypes "github.com/GPTx-global/guru/x/evm/types"
 )
 
 type BackendTestSuite struct {

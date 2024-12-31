@@ -18,6 +18,7 @@ package ante
 
 import (
 	errorsmod "cosmossdk.io/errors"
+	anteutils "github.com/GPTx-global/guru/app/ante/utils"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
@@ -27,14 +28,13 @@ import (
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	ibcante "github.com/cosmos/ibc-go/v6/modules/core/ante"
 	ibckeeper "github.com/cosmos/ibc-go/v6/modules/core/keeper"
-	anteutils "github.com/evmos/evmos/v12/app/ante/utils"
 
-	cosmosante "github.com/evmos/evmos/v12/app/ante/cosmos"
-	evmante "github.com/evmos/evmos/v12/app/ante/evm"
-	evmtypes "github.com/evmos/evmos/v12/x/evm/types"
+	cosmosante "github.com/GPTx-global/guru/app/ante/cosmos"
+	evmante "github.com/GPTx-global/guru/app/ante/evm"
+	evmtypes "github.com/GPTx-global/guru/x/evm/types"
 
+	vestingtypes "github.com/GPTx-global/guru/x/vesting/types"
 	sdkvesting "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
-	vestingtypes "github.com/evmos/evmos/v12/x/vesting/types"
 )
 
 // HandlerOptions defines the list of module keepers required to run the Evmos

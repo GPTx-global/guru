@@ -20,6 +20,9 @@ import (
 
 	errorsmod "cosmossdk.io/errors"
 
+	"github.com/GPTx-global/guru/crypto/ethsecp256k1"
+	"github.com/GPTx-global/guru/ethereum/eip712"
+	"github.com/GPTx-global/guru/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
@@ -32,11 +35,8 @@ import (
 	ethcrypto "github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/crypto/secp256k1"
 	"github.com/ethereum/go-ethereum/signer/core/apitypes"
-	"github.com/evmos/evmos/v12/crypto/ethsecp256k1"
-	"github.com/evmos/evmos/v12/ethereum/eip712"
-	"github.com/evmos/evmos/v12/types"
 
-	evmtypes "github.com/evmos/evmos/v12/x/evm/types"
+	evmtypes "github.com/GPTx-global/guru/x/evm/types"
 )
 
 var evmosCodec codec.ProtoCodecMarshaler

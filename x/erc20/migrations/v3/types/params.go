@@ -19,8 +19,8 @@ package v3types
 import (
 	"fmt"
 
+	"github.com/GPTx-global/guru/x/erc20/types"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
-	"github.com/evmos/evmos/v12/x/erc20/types"
 )
 
 var _ types.LegacyParams = &V3Params{}

@@ -4,9 +4,9 @@ import (
 	"strings"
 	"testing"
 
+	utiltx "github.com/GPTx-global/guru/testutil/tx"
+	"github.com/GPTx-global/guru/x/erc20/types"
 	"github.com/ethereum/go-ethereum/common"
-	utiltx "github.com/evmos/evmos/v12/testutil/tx"
-	"github.com/evmos/evmos/v12/x/erc20/types"
 	"github.com/stretchr/testify/suite"
 	"github.com/tendermint/tendermint/crypto/tmhash"
 )

@@ -3,19 +3,19 @@ package v3_test
 import (
 	"testing"
 
+	"github.com/GPTx-global/guru/app"
+	"github.com/GPTx-global/guru/encoding"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
-	"github.com/evmos/evmos/v12/app"
-	"github.com/evmos/evmos/v12/encoding"
+	v3 "github.com/evmos/evmos/v12/x/erc20/migrations/v3"
 
-	v3types "github.com/evmos/evmos/v12/x/erc20/migrations/v3/types"
+	v3types "github.com/GPTx-global/guru/x/erc20/migrations/v3/types"
 
-	"github.com/evmos/evmos/v12/x/erc20/types"
+	"github.com/GPTx-global/guru/x/erc20/types"
 	"github.com/stretchr/testify/require"
 
 	"github.com/cosmos/cosmos-sdk/testutil"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/evmos/evmos/v12/x/erc20/migrations/v3"
 )
 
 type mockSubspace struct {

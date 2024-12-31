@@ -1,9 +1,9 @@
 package keeper_test
 
 import (
+	evmkeeper "github.com/GPTx-global/guru/x/evm/keeper"
+	"github.com/GPTx-global/guru/x/evm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	evmkeeper "github.com/evmos/evmos/v12/x/evm/keeper"
-	"github.com/evmos/evmos/v12/x/evm/types"
 )
 
 type mockSubspace struct {

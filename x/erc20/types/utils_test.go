@@ -4,9 +4,9 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/GPTx-global/guru/x/erc20/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	"github.com/evmos/evmos/v12/x/erc20/types"
 	"github.com/stretchr/testify/require"
 )
 

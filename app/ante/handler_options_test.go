@@ -1,12 +1,12 @@
 package ante_test
 
 import (
-	ethante "github.com/evmos/evmos/v12/app/ante/evm"
-	"github.com/evmos/evmos/v12/encoding"
-	"github.com/evmos/evmos/v12/types"
+	ethante "github.com/GPTx-global/guru/app/ante/evm"
+	"github.com/GPTx-global/guru/encoding"
+	"github.com/GPTx-global/guru/types"
 
-	"github.com/evmos/evmos/v12/app"
-	"github.com/evmos/evmos/v12/app/ante"
+	"github.com/GPTx-global/guru/app"
+	"github.com/GPTx-global/guru/app/ante"
 )
 
 func (suite *AnteTestSuite) TestValidateHandlerOptions() {

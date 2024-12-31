@@ -4,10 +4,10 @@ import (
 	_ "embed" // embed compiled smart contract
 	"encoding/json"
 
+	evmtypes "github.com/GPTx-global/guru/x/evm/types"
 	"github.com/ethereum/go-ethereum/common"
-	evmtypes "github.com/evmos/evmos/v12/x/evm/types"
 
-	"github.com/evmos/evmos/v12/x/erc20/types"
+	"github.com/GPTx-global/guru/x/erc20/types"
 )
 
 // This is an evil token. Whenever an A -> B transfer is called,

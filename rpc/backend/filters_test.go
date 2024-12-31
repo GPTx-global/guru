@@ -3,11 +3,11 @@ package backend
 import (
 	"encoding/json"
 
+	"github.com/GPTx-global/guru/rpc/backend/mocks"
+	ethrpc "github.com/GPTx-global/guru/rpc/types"
+	evmtypes "github.com/GPTx-global/guru/x/evm/types"
 	"github.com/ethereum/go-ethereum/common"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
-	"github.com/evmos/evmos/v12/rpc/backend/mocks"
-	ethrpc "github.com/evmos/evmos/v12/rpc/types"
-	evmtypes "github.com/evmos/evmos/v12/x/evm/types"
 	tmtypes "github.com/tendermint/tendermint/types"
 )
 

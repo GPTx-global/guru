@@ -9,19 +9,19 @@ import (
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 
 	sdkmath "cosmossdk.io/math"
+	"github.com/GPTx-global/guru/app"
+	ante "github.com/GPTx-global/guru/app/ante"
+	"github.com/GPTx-global/guru/encoding"
+	"github.com/GPTx-global/guru/ethereum/eip712"
+	"github.com/GPTx-global/guru/utils"
+	evmtypes "github.com/GPTx-global/guru/x/evm/types"
+	feemarkettypes "github.com/GPTx-global/guru/x/feemarket/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/simapp"
 	"github.com/cosmos/cosmos-sdk/testutil/testdata"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/evmos/evmos/v12/app"
-	ante "github.com/evmos/evmos/v12/app/ante"
-	"github.com/evmos/evmos/v12/encoding"
-	"github.com/evmos/evmos/v12/ethereum/eip712"
-	"github.com/evmos/evmos/v12/utils"
-	evmtypes "github.com/evmos/evmos/v12/x/evm/types"
-	feemarkettypes "github.com/evmos/evmos/v12/x/feemarket/types"
 )
 
 type AnteTestSuite struct {

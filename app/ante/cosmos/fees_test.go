@@ -5,13 +5,13 @@ import (
 	"time"
 
 	"cosmossdk.io/math"
+	cosmosante "github.com/GPTx-global/guru/app/ante/cosmos"
+	"github.com/GPTx-global/guru/testutil"
+	testutiltx "github.com/GPTx-global/guru/testutil/tx"
+	"github.com/GPTx-global/guru/utils"
 	sdktestutil "github.com/cosmos/cosmos-sdk/testutil/testdata"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/feegrant"
-	cosmosante "github.com/evmos/evmos/v12/app/ante/cosmos"
-	"github.com/evmos/evmos/v12/testutil"
-	testutiltx "github.com/evmos/evmos/v12/testutil/tx"
-	"github.com/evmos/evmos/v12/utils"
 )
 
 func (suite *AnteTestSuite) TestDeductFeeDecorator() {

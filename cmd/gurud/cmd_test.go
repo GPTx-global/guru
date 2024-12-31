@@ -9,9 +9,9 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/genutil/client/cli"
 	"github.com/stretchr/testify/require"
 
-	"github.com/evmos/evmos/v12/app"
-	gurud "github.com/evmos/evmos/v12/cmd/gurud"
-	"github.com/evmos/evmos/v12/utils"
+	"github.com/GPTx-global/guru/app"
+	gurud "github.com/GPTx-global/guru/cmd/gurud"
+	"github.com/GPTx-global/guru/utils"
 )
 
 func TestInitCmd(t *testing.T) {

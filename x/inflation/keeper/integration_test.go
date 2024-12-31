@@ -3,13 +3,13 @@ package keeper_test
 import (
 	"time"
 
-	"github.com/evmos/evmos/v12/x/inflation/types"
+	"github.com/GPTx-global/guru/x/inflation/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	epochstypes "github.com/evmos/evmos/v12/x/epochs/types"
+	epochstypes "github.com/GPTx-global/guru/x/epochs/types"
 )
 
 var (

@@ -21,8 +21,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/GPTx-global/guru/rpc/types"
 	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/evmos/evmos/v12/rpc/types"
 
 	"github.com/tendermint/tendermint/libs/log"
 
@@ -35,7 +35,7 @@ import (
 	"github.com/ethereum/go-ethereum/eth/filters"
 	"github.com/ethereum/go-ethereum/rpc"
 
-	evmtypes "github.com/evmos/evmos/v12/x/evm/types"
+	evmtypes "github.com/GPTx-global/guru/x/evm/types"
 )
 
 // FilterAPI gathers

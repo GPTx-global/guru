@@ -9,12 +9,12 @@ import (
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	"github.com/cosmos/cosmos-sdk/simapp/params"
 
-	"github.com/evmos/evmos/v12/app"
-	"github.com/evmos/evmos/v12/crypto/hd"
-	"github.com/evmos/evmos/v12/encoding"
-	"github.com/evmos/evmos/v12/tests/integration/ledger/mocks"
-	"github.com/evmos/evmos/v12/testutil"
-	utiltx "github.com/evmos/evmos/v12/testutil/tx"
+	"github.com/GPTx-global/guru/app"
+	"github.com/GPTx-global/guru/crypto/hd"
+	"github.com/GPTx-global/guru/encoding"
+	"github.com/GPTx-global/guru/tests/integration/ledger/mocks"
+	"github.com/GPTx-global/guru/testutil"
+	utiltx "github.com/GPTx-global/guru/testutil/tx"
 
 	"github.com/spf13/cobra"
 
