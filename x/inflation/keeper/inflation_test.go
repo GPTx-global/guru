@@ -4,10 +4,10 @@ import (
 	"fmt"
 
 	sdkmath "cosmossdk.io/math"
+	evmostypes "github.com/GPTx-global/guru/types"
+	"github.com/GPTx-global/guru/x/inflation/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	evmostypes "github.com/evmos/evmos/v12/types"
-	"github.com/evmos/evmos/v12/x/inflation/types"
 )
 
 func (suite *KeeperTestSuite) TestMintAndAllocateInflation() {

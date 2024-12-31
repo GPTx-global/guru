@@ -17,10 +17,10 @@
 package keeper
 
 import (
+	v2 "github.com/GPTx-global/guru/x/inflation/migrations/v2"
+	v3 "github.com/GPTx-global/guru/x/inflation/migrations/v3"
+	"github.com/GPTx-global/guru/x/inflation/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	v2 "github.com/evmos/evmos/v12/x/inflation/migrations/v2"
-	v3 "github.com/evmos/evmos/v12/x/inflation/migrations/v3"
-	"github.com/evmos/evmos/v12/x/inflation/types"
 )
 
 // Migrator is a struct for handling in-place store migrations.

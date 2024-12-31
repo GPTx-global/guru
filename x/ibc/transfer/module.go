@@ -21,10 +21,10 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/types/module"
 
+	"github.com/GPTx-global/guru/x/ibc/transfer/keeper"
 	ibctransfer "github.com/cosmos/ibc-go/v6/modules/apps/transfer"
 	ibctransferkeeper "github.com/cosmos/ibc-go/v6/modules/apps/transfer/keeper"
 	"github.com/cosmos/ibc-go/v6/modules/apps/transfer/types"
-	"github.com/evmos/evmos/v12/x/ibc/transfer/keeper"
 )
 
 var (

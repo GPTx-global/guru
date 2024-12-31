@@ -3,14 +3,14 @@ package keeper_test
 import (
 	"context"
 
+	"github.com/GPTx-global/guru/x/erc20/types"
+	"github.com/GPTx-global/guru/x/evm/statedb"
+	evm "github.com/GPTx-global/guru/x/evm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core"
 	"github.com/ethereum/go-ethereum/core/vm"
-	"github.com/evmos/evmos/v12/x/erc20/types"
-	"github.com/evmos/evmos/v12/x/evm/statedb"
-	evm "github.com/evmos/evmos/v12/x/evm/types"
 	"github.com/stretchr/testify/mock"
 )
 

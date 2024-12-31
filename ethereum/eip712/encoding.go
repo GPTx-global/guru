@@ -25,8 +25,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	txTypes "github.com/cosmos/cosmos-sdk/types/tx"
 
+	evmostypes "github.com/GPTx-global/guru/types"
 	apitypes "github.com/ethereum/go-ethereum/signer/core/apitypes"
-	evmostypes "github.com/evmos/evmos/v12/types"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 )

@@ -28,11 +28,11 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/signer/core/apitypes"
 
+	"github.com/GPTx-global/guru/app"
+	cryptocodec "github.com/GPTx-global/guru/crypto/codec"
+	"github.com/GPTx-global/guru/ethereum/eip712"
+	"github.com/GPTx-global/guru/types"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
-	"github.com/evmos/evmos/v12/app"
-	cryptocodec "github.com/evmos/evmos/v12/crypto/codec"
-	"github.com/evmos/evmos/v12/ethereum/eip712"
-	"github.com/evmos/evmos/v12/types"
 )
 
 type EIP712TxArgs struct {

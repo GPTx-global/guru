@@ -53,16 +53,16 @@ import (
 	govv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
-	"github.com/evmos/evmos/v12/crypto/hd"
-	"github.com/evmos/evmos/v12/server/config"
-	srvflags "github.com/evmos/evmos/v12/server/flags"
+	"github.com/GPTx-global/guru/crypto/hd"
+	"github.com/GPTx-global/guru/server/config"
+	srvflags "github.com/GPTx-global/guru/server/flags"
 
-	evmostypes "github.com/evmos/evmos/v12/types"
-	evmtypes "github.com/evmos/evmos/v12/x/evm/types"
+	evmostypes "github.com/GPTx-global/guru/types"
+	evmtypes "github.com/GPTx-global/guru/x/evm/types"
 
-	cmdcfg "github.com/evmos/evmos/v12/cmd/config"
-	evmoskr "github.com/evmos/evmos/v12/crypto/keyring"
-	"github.com/evmos/evmos/v12/testutil/network"
+	cmdcfg "github.com/GPTx-global/guru/cmd/config"
+	evmoskr "github.com/GPTx-global/guru/crypto/keyring"
+	"github.com/GPTx-global/guru/testutil/network"
 )
 
 var (

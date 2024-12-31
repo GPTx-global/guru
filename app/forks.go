@@ -19,7 +19,7 @@ package app
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/evmos/evmos/v12/utils"
+	"github.com/GPTx-global/guru/utils"
 )
 
 // ScheduleForkUpgrade executes any necessary fork logic for based upon the current

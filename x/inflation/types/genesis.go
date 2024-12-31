@@ -19,7 +19,7 @@ package types
 import (
 	fmt "fmt"
 
-	epochstypes "github.com/evmos/evmos/v12/x/epochs/types"
+	epochstypes "github.com/GPTx-global/guru/x/epochs/types"
 )
 
 // NewGenesisState creates a new GenesisState object

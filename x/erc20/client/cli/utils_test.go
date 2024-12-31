@@ -3,7 +3,7 @@ package cli
 import (
 	"testing"
 
-	"github.com/evmos/evmos/v12/x/erc20/types"
+	"github.com/GPTx-global/guru/x/erc20/types"
 	"github.com/stretchr/testify/require"
 )
 

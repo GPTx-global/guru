@@ -22,11 +22,11 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
-	"github.com/evmos/evmos/v12/app"
-	"github.com/evmos/evmos/v12/encoding"
-	v5 "github.com/evmos/evmos/v12/x/evm/migrations/v5"
-	v5types "github.com/evmos/evmos/v12/x/evm/migrations/v5/types"
-	"github.com/evmos/evmos/v12/x/evm/types"
+	"github.com/GPTx-global/guru/app"
+	"github.com/GPTx-global/guru/encoding"
+	v5 "github.com/GPTx-global/guru/x/evm/migrations/v5"
+	v5types "github.com/GPTx-global/guru/x/evm/migrations/v5/types"
+	"github.com/GPTx-global/guru/x/evm/types"
 )
 
 func TestMigrate(t *testing.T) {

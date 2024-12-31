@@ -19,8 +19,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/GPTx-global/guru/types"
 	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/evmos/evmos/v12/types"
 	rpcclient "github.com/tendermint/tendermint/rpc/client"
 )
 

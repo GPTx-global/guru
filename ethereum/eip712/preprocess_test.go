@@ -14,13 +14,13 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/auth/ante"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 
-	"github.com/evmos/evmos/v12/app"
-	"github.com/evmos/evmos/v12/cmd/config"
-	"github.com/evmos/evmos/v12/encoding"
-	"github.com/evmos/evmos/v12/ethereum/eip712"
-	utiltx "github.com/evmos/evmos/v12/testutil/tx"
-	"github.com/evmos/evmos/v12/types"
-	"github.com/evmos/evmos/v12/utils"
+	"github.com/GPTx-global/guru/app"
+	"github.com/GPTx-global/guru/cmd/config"
+	"github.com/GPTx-global/guru/encoding"
+	"github.com/GPTx-global/guru/ethereum/eip712"
+	utiltx "github.com/GPTx-global/guru/testutil/tx"
+	"github.com/GPTx-global/guru/types"
+	"github.com/GPTx-global/guru/utils"
 	"github.com/stretchr/testify/require"
 )
 

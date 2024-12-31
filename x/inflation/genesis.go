@@ -18,9 +18,9 @@ package inflation
 
 import (
 	errorsmod "cosmossdk.io/errors"
+	"github.com/GPTx-global/guru/x/inflation/keeper"
+	"github.com/GPTx-global/guru/x/inflation/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/evmos/evmos/v12/x/inflation/keeper"
-	"github.com/evmos/evmos/v12/x/inflation/types"
 )
 
 // InitGenesis import module genesis

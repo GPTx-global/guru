@@ -23,16 +23,16 @@ import (
 
 	"github.com/ethereum/go-ethereum/rpc"
 
-	"github.com/evmos/evmos/v12/rpc/backend"
-	"github.com/evmos/evmos/v12/rpc/namespaces/ethereum/debug"
-	"github.com/evmos/evmos/v12/rpc/namespaces/ethereum/eth"
-	"github.com/evmos/evmos/v12/rpc/namespaces/ethereum/eth/filters"
-	"github.com/evmos/evmos/v12/rpc/namespaces/ethereum/miner"
-	"github.com/evmos/evmos/v12/rpc/namespaces/ethereum/net"
-	"github.com/evmos/evmos/v12/rpc/namespaces/ethereum/personal"
-	"github.com/evmos/evmos/v12/rpc/namespaces/ethereum/txpool"
-	"github.com/evmos/evmos/v12/rpc/namespaces/ethereum/web3"
-	"github.com/evmos/evmos/v12/types"
+	"github.com/GPTx-global/guru/rpc/backend"
+	"github.com/GPTx-global/guru/rpc/namespaces/ethereum/debug"
+	"github.com/GPTx-global/guru/rpc/namespaces/ethereum/eth"
+	"github.com/GPTx-global/guru/rpc/namespaces/ethereum/eth/filters"
+	"github.com/GPTx-global/guru/rpc/namespaces/ethereum/miner"
+	"github.com/GPTx-global/guru/rpc/namespaces/ethereum/net"
+	"github.com/GPTx-global/guru/rpc/namespaces/ethereum/personal"
+	"github.com/GPTx-global/guru/rpc/namespaces/ethereum/txpool"
+	"github.com/GPTx-global/guru/rpc/namespaces/ethereum/web3"
+	"github.com/GPTx-global/guru/types"
 
 	rpcclient "github.com/tendermint/tendermint/rpc/jsonrpc/client"
 )

@@ -28,11 +28,11 @@ import (
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 
-	"github.com/evmos/evmos/v12/rpc/backend"
+	"github.com/GPTx-global/guru/rpc/backend"
 
-	rpctypes "github.com/evmos/evmos/v12/rpc/types"
-	"github.com/evmos/evmos/v12/types"
-	evmtypes "github.com/evmos/evmos/v12/x/evm/types"
+	rpctypes "github.com/GPTx-global/guru/rpc/types"
+	"github.com/GPTx-global/guru/types"
+	evmtypes "github.com/GPTx-global/guru/x/evm/types"
 )
 
 // The Ethereum API allows applications to connect to an Evmos node that is
