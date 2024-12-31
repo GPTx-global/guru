@@ -5,9 +5,9 @@ import (
 
 	"github.com/GPTx-global/guru/app"
 	"github.com/GPTx-global/guru/encoding"
+	v3 "github.com/GPTx-global/guru/x/erc20/migrations/v3"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
-	v3 "github.com/evmos/evmos/v12/x/erc20/migrations/v3"
 
 	v3types "github.com/GPTx-global/guru/x/erc20/migrations/v3/types"
 

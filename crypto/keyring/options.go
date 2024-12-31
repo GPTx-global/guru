@@ -18,11 +18,12 @@ package keyring
 
 import (
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
+	cosmosLedger "github.com/cosmos/cosmos-sdk/crypto/ledger"
 	"github.com/cosmos/cosmos-sdk/crypto/types"
 
-	// "github.com/evmos/evmos-ledger-go/ledger"
 	"github.com/GPTx-global/guru/crypto/ethsecp256k1"
 	"github.com/GPTx-global/guru/crypto/hd"
+	"github.com/evmos/evmos-ledger-go/ledger"
 )
 
 // AppName defines the Ledger app used for signing. Evmos uses the Ethereum app
@@ -37,7 +38,7 @@ var (
 	// The Ledger derivation function is responsible for all signing and address generation.
 	SupportedAlgorithmsLedger = keyring.SigningAlgoList{hd.EthSecp256k1}
 	// LedgerDerivation defines the Evmos Ledger Go derivation (Ethereum app with EIP-712 signing)
-	// LedgerDerivation = ledger.EvmosLedgerDerivation()
+	LedgerDerivation = ledger.EvmosLedgerDerivation()
 	// CreatePubkey uses the ethsecp256k1 pubkey with Ethereum address generation and keccak hashing
 	CreatePubkey = func(key []byte) types.PubKey { return &ethsecp256k1.PubKey{Key: key} }
 	// SkipDERConversion represents whether the signed Ledger output should skip conversion from DER to BER.
@@ -51,7 +52,7 @@ func Option() keyring.Option {
 	return func(options *keyring.Options) {
 		options.SupportedAlgos = SupportedAlgorithms
 		options.SupportedAlgosLedger = SupportedAlgorithmsLedger
-		// options.LedgerDerivation = func() (cosmosLedger.SECP256K1, error) { return LedgerDerivation() }
+		options.LedgerDerivation = func() (cosmosLedger.SECP256K1, error) { return LedgerDerivation() }
 		options.LedgerCreateKey = CreatePubkey
 		options.LedgerAppName = AppName
 		options.LedgerSigSkipDERConv = SkipDERConversion

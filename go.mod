@@ -15,7 +15,7 @@ require (
 	github.com/cosmos/ibc-go/v6 v6.1.1
 	github.com/davecgh/go-spew v1.1.1
 	github.com/ethereum/go-ethereum v1.10.26
-	// github.com/evmos/evmos-ledger-go v0.3.0-rc0
+	github.com/evmos/evmos-ledger-go v0.3.0-rc0
 	github.com/gogo/protobuf v1.3.3
 	github.com/golang/protobuf v1.5.3
 	github.com/gorilla/mux v1.8.0
@@ -47,8 +47,6 @@ require (
 	google.golang.org/protobuf v1.30.0
 	sigs.k8s.io/yaml v1.3.0
 )
-
-require github.com/evmos/evmos/v12 v12.1.6
 
 require (
 	cloud.google.com/go v0.110.0 // indirect
@@ -227,6 +225,8 @@ replace (
 	github.com/cosmos/cosmos-sdk => github.com/GPTx-global/cosmos-sdk v0.46.13-ledger.3-guru.1
 	// use Evmos geth fork
 	github.com/ethereum/go-ethereum => github.com/evmos/go-ethereum v1.10.26
+
+	github.com/evmos/evmos-ledger-go => github.com/GPTx-global/evmos-ledger-go v0.3.0-rc0-guru.1
 	// Security Advisory https://github.com/advisories/GHSA-h395-qcrw-5vmq
 	github.com/gin-gonic/gin => github.com/gin-gonic/gin v1.7.7
 	// use cosmos flavored protobufs
