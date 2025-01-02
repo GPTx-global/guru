@@ -22,12 +22,12 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	evmostypes "github.com/GPTx-global/guru/types"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
-	evmostypes "github.com/evmos/evmos/v12/types"
 
-	"github.com/evmos/evmos/v12/x/erc20/types"
+	"github.com/GPTx-global/guru/x/erc20/types"
 )
 
 var _ types.QueryServer = Keeper{}

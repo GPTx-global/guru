@@ -19,11 +19,11 @@ package keeper
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	evmostypes "github.com/evmos/evmos/v12/types"
+	evmostypes "github.com/GPTx-global/guru/types"
 
-	utils "github.com/evmos/evmos/v12/utils"
-	// incentivestypes "github.com/evmos/evmos/v12/x/incentives/types"
-	"github.com/evmos/evmos/v12/x/inflation/types"
+	utils "github.com/GPTx-global/guru/utils"
+	// incentivestypes "github.com/GPTx-global/guru/x/incentives/types"
+	"github.com/GPTx-global/guru/x/inflation/types"
 )
 
 // 200M token at year 4 allocated to the team

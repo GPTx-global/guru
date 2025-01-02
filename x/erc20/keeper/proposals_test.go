@@ -12,12 +12,12 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 
-	utiltx "github.com/evmos/evmos/v12/testutil/tx"
-	evmtypes "github.com/evmos/evmos/v12/x/evm/types"
+	utiltx "github.com/GPTx-global/guru/testutil/tx"
+	evmtypes "github.com/GPTx-global/guru/x/evm/types"
 
-	"github.com/evmos/evmos/v12/x/erc20/keeper"
-	"github.com/evmos/evmos/v12/x/erc20/types"
-	inflationtypes "github.com/evmos/evmos/v12/x/inflation/types"
+	"github.com/GPTx-global/guru/x/erc20/keeper"
+	"github.com/GPTx-global/guru/x/erc20/types"
+	inflationtypes "github.com/GPTx-global/guru/x/inflation/types"
 )
 
 const (

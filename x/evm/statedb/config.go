@@ -18,9 +18,9 @@ package statedb
 import (
 	"math/big"
 
+	"github.com/GPTx-global/guru/x/evm/types"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/params"
-	"github.com/evmos/evmos/v12/x/evm/types"
 )
 
 // TxConfig encapulates the readonly information of current tx for `StateDB`.

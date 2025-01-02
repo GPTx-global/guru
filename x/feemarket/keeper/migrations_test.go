@@ -1,9 +1,9 @@
 package keeper_test
 
 import (
+	feemarketkeeper "github.com/GPTx-global/guru/x/feemarket/keeper"
+	"github.com/GPTx-global/guru/x/feemarket/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	feemarketkeeper "github.com/evmos/evmos/v12/x/feemarket/keeper"
-	"github.com/evmos/evmos/v12/x/feemarket/types"
 )
 
 type mockSubspace struct {

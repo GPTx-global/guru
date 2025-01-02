@@ -16,8 +16,8 @@
 package miner
 
 import (
+	"github.com/GPTx-global/guru/rpc/backend"
 	"github.com/cosmos/cosmos-sdk/server"
-	"github.com/evmos/evmos/v12/rpc/backend"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"

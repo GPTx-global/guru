@@ -3,11 +3,11 @@ package utils_test
 import (
 	"time"
 
+	anteutils "github.com/GPTx-global/guru/app/ante/utils"
+	"github.com/GPTx-global/guru/testutil"
+	testutiltx "github.com/GPTx-global/guru/testutil/tx"
+	"github.com/GPTx-global/guru/utils"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	anteutils "github.com/evmos/evmos/v12/app/ante/utils"
-	"github.com/evmos/evmos/v12/testutil"
-	testutiltx "github.com/evmos/evmos/v12/testutil/tx"
-	"github.com/evmos/evmos/v12/utils"
 )
 
 // TestClaimStakingRewardsIfNecessary tests the ClaimStakingRewardsIfNecessary function

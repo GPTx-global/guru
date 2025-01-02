@@ -35,9 +35,9 @@ import (
 
 	ibcgotesting "github.com/cosmos/ibc-go/v6/testing"
 
-	guruapp "github.com/evmos/evmos/v12/app"
-	"github.com/evmos/evmos/v12/types"
-	"github.com/evmos/evmos/v12/utils"
+	guruapp "github.com/GPTx-global/guru/app"
+	"github.com/GPTx-global/guru/types"
+	"github.com/GPTx-global/guru/utils"
 )
 
 var DefaultTestingAppInit func() (ibcgotesting.TestingApp, map[string]json.RawMessage) = guruapp.SetupTestingApp

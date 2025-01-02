@@ -15,9 +15,9 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 
-	cryptocodec "github.com/evmos/evmos/v12/crypto/codec"
-	enccodec "github.com/evmos/evmos/v12/encoding/codec"
-	evmostypes "github.com/evmos/evmos/v12/types"
+	cryptocodec "github.com/GPTx-global/guru/crypto/codec"
+	enccodec "github.com/GPTx-global/guru/encoding/codec"
+	evmostypes "github.com/GPTx-global/guru/types"
 )
 
 var TestCodec amino.Codec

@@ -5,12 +5,12 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 
+	"github.com/GPTx-global/guru/crypto/ethsecp256k1"
+	evmostypes "github.com/GPTx-global/guru/types"
+	"github.com/GPTx-global/guru/x/evm"
+	"github.com/GPTx-global/guru/x/evm/statedb"
+	"github.com/GPTx-global/guru/x/evm/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	"github.com/evmos/evmos/v12/crypto/ethsecp256k1"
-	evmostypes "github.com/evmos/evmos/v12/types"
-	"github.com/evmos/evmos/v12/x/evm"
-	"github.com/evmos/evmos/v12/x/evm/statedb"
-	"github.com/evmos/evmos/v12/x/evm/types"
 )
 
 func (suite *EvmTestSuite) TestInitGenesis() {

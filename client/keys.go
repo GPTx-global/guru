@@ -24,9 +24,9 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/tendermint/tendermint/libs/cli"
 
+	clientkeys "github.com/GPTx-global/guru/client/keys"
+	"github.com/GPTx-global/guru/crypto/hd"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
-	clientkeys "github.com/evmos/evmos/v12/client/keys"
-	"github.com/evmos/evmos/v12/crypto/hd"
 )
 
 // KeyCommands registers a sub-tree of commands to interact with

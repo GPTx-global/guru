@@ -3,12 +3,12 @@ package evm_test
 import (
 	"math/big"
 
+	ethante "github.com/GPTx-global/guru/app/ante/evm"
+	"github.com/GPTx-global/guru/testutil"
+	testutiltx "github.com/GPTx-global/guru/testutil/tx"
+	evmtypes "github.com/GPTx-global/guru/x/evm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
-	ethante "github.com/evmos/evmos/v12/app/ante/evm"
-	"github.com/evmos/evmos/v12/testutil"
-	testutiltx "github.com/evmos/evmos/v12/testutil/tx"
-	evmtypes "github.com/evmos/evmos/v12/x/evm/types"
 )
 
 func (suite *AnteTestSuite) TestEthSigVerificationDecorator() {

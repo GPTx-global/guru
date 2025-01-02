@@ -37,8 +37,8 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/evmos/evmos/v12/rpc/ethereum/pubsub"
-	evmtypes "github.com/evmos/evmos/v12/x/evm/types"
+	"github.com/GPTx-global/guru/rpc/ethereum/pubsub"
+	evmtypes "github.com/GPTx-global/guru/x/evm/types"
 )
 
 var (

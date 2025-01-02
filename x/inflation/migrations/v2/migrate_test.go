@@ -6,14 +6,14 @@ import (
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 
-	v2 "github.com/evmos/evmos/v12/x/inflation/migrations/v2"
-	"github.com/evmos/evmos/v12/x/inflation/types"
+	v2 "github.com/GPTx-global/guru/x/inflation/migrations/v2"
+	"github.com/GPTx-global/guru/x/inflation/types"
 
+	"github.com/GPTx-global/guru/app"
+	"github.com/GPTx-global/guru/encoding"
+	v2types "github.com/GPTx-global/guru/x/inflation/migrations/v2/types"
 	"github.com/cosmos/cosmos-sdk/testutil"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/evmos/evmos/v12/app"
-	"github.com/evmos/evmos/v12/encoding"
-	v2types "github.com/evmos/evmos/v12/x/inflation/migrations/v2/types"
 	"github.com/stretchr/testify/require"
 )
 

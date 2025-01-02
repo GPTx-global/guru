@@ -29,8 +29,8 @@ import (
 	"github.com/ethereum/go-ethereum/core"
 	"github.com/ethereum/go-ethereum/core/vm"
 
-	"github.com/evmos/evmos/v12/x/evm/statedb"
-	evmtypes "github.com/evmos/evmos/v12/x/evm/types"
+	"github.com/GPTx-global/guru/x/evm/statedb"
+	evmtypes "github.com/GPTx-global/guru/x/evm/types"
 )
 
 // AccountKeeper defines the expected interface needed to retrieve account info.

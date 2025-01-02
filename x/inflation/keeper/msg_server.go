@@ -20,9 +20,9 @@ import (
 	"context"
 
 	errorsmod "cosmossdk.io/errors"
+	"github.com/GPTx-global/guru/x/inflation/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
-	"github.com/evmos/evmos/v12/x/inflation/types"
 )
 
 var _ types.MsgServer = &Keeper{}

@@ -21,8 +21,8 @@ import (
 	"fmt"
 	"strings"
 
+	evm "github.com/GPTx-global/guru/x/evm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	evm "github.com/evmos/evmos/v12/x/evm/types"
 )
 
 var ParamsKey = []byte("Params")

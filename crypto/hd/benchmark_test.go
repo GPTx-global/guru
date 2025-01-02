@@ -3,8 +3,8 @@ package hd
 import (
 	"testing"
 
+	"github.com/GPTx-global/guru/types"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
-	"github.com/evmos/evmos/v12/types"
 )
 
 func BenchmarkEthSecp256k1Algo_Derive(b *testing.B) {

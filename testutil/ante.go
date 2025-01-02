@@ -1,9 +1,9 @@
 package testutil
 
 import (
+	"github.com/GPTx-global/guru/app"
+	"github.com/GPTx-global/guru/encoding"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/evmos/evmos/v12/app"
-	"github.com/evmos/evmos/v12/encoding"
 )
 
 // NextFn is a no-op function that returns the context and no error in order to mock

@@ -6,17 +6,17 @@ import (
 	"strconv"
 
 	"cosmossdk.io/math"
+	"github.com/GPTx-global/guru/app"
+	"github.com/GPTx-global/guru/contracts"
+	ibctesting "github.com/GPTx-global/guru/ibc/testing"
+	teststypes "github.com/GPTx-global/guru/types/tests"
+	"github.com/GPTx-global/guru/utils"
+	"github.com/GPTx-global/guru/x/erc20/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	transfertypes "github.com/cosmos/ibc-go/v6/modules/apps/transfer/types"
 	channeltypes "github.com/cosmos/ibc-go/v6/modules/core/04-channel/types"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/evmos/evmos/v12/app"
-	"github.com/evmos/evmos/v12/contracts"
-	ibctesting "github.com/evmos/evmos/v12/ibc/testing"
-	teststypes "github.com/evmos/evmos/v12/types/tests"
-	"github.com/evmos/evmos/v12/utils"
-	"github.com/evmos/evmos/v12/x/erc20/types"
 	. "github.com/onsi/ginkgo/v2"
 )
 

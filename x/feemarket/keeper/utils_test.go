@@ -5,7 +5,7 @@ import (
 	"math/big"
 	"time"
 
-	"github.com/evmos/evmos/v12/utils"
+	"github.com/GPTx-global/guru/utils"
 
 	sdkmath "cosmossdk.io/math"
 	"github.com/cosmos/cosmos-sdk/baseapp"
@@ -21,14 +21,14 @@ import (
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 
-	"github.com/evmos/evmos/v12/app"
-	"github.com/evmos/evmos/v12/crypto/ethsecp256k1"
-	"github.com/evmos/evmos/v12/encoding"
-	"github.com/evmos/evmos/v12/testutil"
-	utiltx "github.com/evmos/evmos/v12/testutil/tx"
-	evmostypes "github.com/evmos/evmos/v12/types"
-	evmtypes "github.com/evmos/evmos/v12/x/evm/types"
-	"github.com/evmos/evmos/v12/x/feemarket/types"
+	"github.com/GPTx-global/guru/app"
+	"github.com/GPTx-global/guru/crypto/ethsecp256k1"
+	"github.com/GPTx-global/guru/encoding"
+	"github.com/GPTx-global/guru/testutil"
+	utiltx "github.com/GPTx-global/guru/testutil/tx"
+	evmostypes "github.com/GPTx-global/guru/types"
+	evmtypes "github.com/GPTx-global/guru/x/evm/types"
+	"github.com/GPTx-global/guru/x/feemarket/types"
 
 	"github.com/stretchr/testify/require"
 

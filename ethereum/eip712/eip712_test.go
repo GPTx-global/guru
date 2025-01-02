@@ -7,26 +7,26 @@ import (
 
 	"cosmossdk.io/math"
 
+	"github.com/GPTx-global/guru/ethereum/eip712"
 	"github.com/cosmos/cosmos-sdk/client"
 	chainparams "github.com/cosmos/cosmos-sdk/simapp/params"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/signer/core/apitypes"
-	"github.com/evmos/evmos/v12/ethereum/eip712"
 	"github.com/tidwall/gjson"
 	"github.com/tidwall/sjson"
 
+	"github.com/GPTx-global/guru/crypto/ethsecp256k1"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/evmos/evmos/v12/crypto/ethsecp256k1"
 
+	"github.com/GPTx-global/guru/app"
+	"github.com/GPTx-global/guru/cmd/config"
+	"github.com/GPTx-global/guru/encoding"
+	"github.com/GPTx-global/guru/utils"
 	txtypes "github.com/cosmos/cosmos-sdk/types/tx"
 	"github.com/cosmos/cosmos-sdk/types/tx/signing"
 	authsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	"github.com/evmos/evmos/v12/app"
-	"github.com/evmos/evmos/v12/cmd/config"
-	"github.com/evmos/evmos/v12/encoding"
-	"github.com/evmos/evmos/v12/utils"
 
 	distributiontypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	govtypesv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"

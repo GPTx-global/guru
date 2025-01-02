@@ -3,12 +3,12 @@ package keeper_test
 import (
 	"time"
 
+	"github.com/GPTx-global/guru/app"
+	"github.com/GPTx-global/guru/testutil"
+	epochstypes "github.com/GPTx-global/guru/x/epochs/types"
+	evm "github.com/GPTx-global/guru/x/evm/types"
+	"github.com/GPTx-global/guru/x/inflation/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
-	"github.com/evmos/evmos/v12/app"
-	"github.com/evmos/evmos/v12/testutil"
-	epochstypes "github.com/evmos/evmos/v12/x/epochs/types"
-	evm "github.com/evmos/evmos/v12/x/evm/types"
-	"github.com/evmos/evmos/v12/x/inflation/types"
 )
 
 // Test helpers
