@@ -1,270 +1,142 @@
-# Evmos Contributor Guidelines
-
-<!-- markdown-link-check-disable -->
-* [General Procedure](#general_procedure)
-* [Architecture Decision Records (ADR)](#adr)
-* [Forking](#forking)
-* [Dependencies](#dependencies)
-* [Protobuf](#protobuf)
-* [Development Procedure](#dev_procedure)
-* [Testing](#testing)
-* [Updating Documentation](#updating_doc)
-* [Branching Model and Release](#braching_model_and_release)
-    * [Commit messages](#commit_messages)
-    * [PR Targeting](#pr_targeting)
-    * [Pull Requests](#pull_requests)
-    * [Process for reviewing PRs](#reviewing_prs)
-    * [Pull Merge Procedure](#pull_merge_procedure)
-    * [Release Procedure](#release_procedure)
-<!-- markdown-link-check-enable -->
-
-## <span id="general_procedure">General Procedure</span>
-
-Thank you for considering making contributions to Evmos and related repositories!
-
-Evmos uses [Tendermint’s coding repo](https://github.com/tendermint/coding)
-for overall information on repository workflow and standards.
-
-Contributing to this repo can mean many things such as participating in discussion or proposing code changes.
-To ensure a smooth workflow for all contributors,
-the following general procedure for contributing has been established:
-
-1. Either [open](https://github.com/evmos/evmos/issues/new/choose)
-   or [find](https://github.com/evmos/evmos/issues) an issue you have identified and would like to contribute to
-   resolving.
-2. Participate in thoughtful discussion on that issue.
-3. If you would like to contribute:
-    1. If the issue is a proposal, ensure that the proposal has been accepted by the Evmos team.
-    2. Ensure that nobody else has already begun working on the same issue. If someone already has, please make sure to
-       contact the individual to collaborate.
-    3. If nobody has been assigned the issue and you would like to work on it,
-       make a comment on the issue to inform the
-       community of your intentions to begin work.
-       Ideally, wait for confirmation that no one has started it.
-       However, if you are eager and do not get a prompt response, feel free to dive on in!
-    4. Follow standard Github best practices:
-        1. Fork the repo
-        2. Branch from the HEAD of `development`(For core developers working within the evmos repo, to ensure a
-           clear ownership of branches, branches must be named with the convention `{moniker}/{issue#}-branch-name`).
-        3. Make commits
-        4. Submit a PR to `development`
-    5. Be sure to submit the PR in `Draft` mode.
-       Submit your PR early, even if it's incomplete as this indicates to the community you're working on something
-       and allows them to provide comments early in the development process.
-    6. When the code is complete it can be marked `Ready for Review`.
-    7. Be sure to include a relevant change log entry in the `Unreleased` section of `CHANGELOG.md`
-       (see file for log format).
-    8. Please make sure to run `make format` before every commit -
-       the easiest way to do this is having your editor run it for you upon saving a file.
-       Additionally, please ensure that your code is lint compliant by running `make lint`.
-       There are CI tests built into the Evmos repository
-       and all PR’s will require that these tests pass
-       before they can be merged.
-
-**Note**: for very small or blatantly obvious problems (such as typos),
-it is not required to open an issue to submit a PR.
-For more complex problems/features, if a PR is opened
-before an adequate design discussion has taken place in a GitHub issue,
-that PR runs a high likelihood of being rejected.
-
-Looking for a good place to start contributing?
-Check out our [good first issues](https://github.com/evmos/evmos/issues?q=label%3A%22good+first+issue%22).
-
-## <span id="adr">Architecture Decision Records (ADR)</span>
-
-When proposing an architecture decision for Evmos,
-please create an [ADR](https://github.com/evmos/evmos/blob/main/docs/architecture/README.md)
-so further discussions can be made.
-We are following this process so all involved parties are in agreement
-before any party begins coding the proposed implementation.
-If you would like to see some examples of how these are written
-refer to [Tendermint ADRs](https://github.com/tendermint/tendermint/tree/master/docs/architecture).
-
-## <span id="forking">Forking</span>
-
-Please note that Go requires code to live under absolute paths, which complicates forking.
-While my fork lives at `https://github.com/evmos/evmos`,
-the code should never exist at `$GOPATH/src/github.com/evmos/evmos`.
-Instead, we use `git remote` to add the fork as a new remote for the original repo,`$GOPATH/src/github.com/evmos/evmos`,
-and do all the work there.
-
-For instance, to create a fork and work on a branch of it, you would:
-
-1. Create the fork on github, using the fork button.
-2. Go to the original repo checked out locally. (i.e. `$GOPATH/src/github.com/evmos/evmos`)
-3. `git remote rename origin upstream`
-4. `git remote add origin git@github.com:tharsis/evmos.git`
-
-Now `origin` refers to my fork and `upstream` refers to the evmos version.
-So I can `git push -u origin master` to update my fork,
-and make pull requests to evmos from there.
-Of course, replace `tharsis` with your git handle.
+# Contributing
 
-To pull in updates from the origin repo, run:
+When contributing to this repository, please first discuss the change you wish to make via issue,
+email, or any other method with the owners of this repository before making a change. 
 
-1. `git fetch upstream`
-2. `git rebase upstream/master` (or whatever branch you want)
+Please note we have a code of conduct, please follow it in all your interactions with the project.
 
-New branch should be rebased before submitting a PR in case there have been changes to avoid merge commits.
+## Pull Request Process
 
-i.e. this branch state:
+1. Ensure any install or build dependencies are removed before the end of the layer when doing a build.
+2. Update the README.md with details of changes to the interface, this includes new environment variables, 
+exposed ports, useful file locations and container parameters.
+3. Increase the version numbers in any examples files and the README.md to the new version that 
+this Pull Request would represent. The versioning scheme we use is [SemVer](http://semver.org/).
 
-```
-          A---B---C new-branch
-         /
-    D---E---F---G target-branch
-            |   |
-         (F, G) changes happened after `new-branch` forked
-```
 
-should become this after rebase:
+# Contributor Covenant Code of Conduct
 
-```
-                  A'--B'--C' new-branch
-                 /
-    D---E---F---G target-branch
-```
+## Our Pledge
 
-More about rebase [here](https://git-scm.com/docs/git-rebase) and
-[here](https://www.atlassian.com/git/tutorials/rewriting-history/git-rebase#:~:text=What%20is%20git%20rebase%3F,of%20a%20feature%20branching%20workflow.)
+We as members, contributors, and leaders pledge to make participation in our
+community a harassment-free experience for everyone, regardless of age, body
+size, visible or invisible disability, ethnicity, sex characteristics, gender
+identity and expression, level of experience, education, socio-economic status,
+nationality, personal appearance, race, caste, color, religion, or sexual
+identity and orientation.
 
-Please **NO DOT** make Pull Requests from `development`.
+We pledge to act and interact in ways that contribute to an open, welcoming, 
+diverse, inclusive, and healthy community.
 
-## <span id="dependencies">Dependencies</span>
+## Our Standards
 
-We use [Go Modules](https://github.com/golang/go/wiki/Modules) to manage dependency versions.
+Examples of behavior that contributes to a positive environment for our community include:
 
-The master branch of every Cosmos repository should just build with `go get`, which means they should be kept up-to-date
-with their dependencies, so we can get away with telling people they can just `go get` our software.
+* Demonstrating empathy and kindness toward other people
+* Being respectful of differing opinions, viewpoints, and experiences
+* Giving and gracefully accepting constructive feedback
+* Accepting responsibility and apologizing to those affected by our mistakes, and learning from the experience
+* Focusing on what is best not just for us as individuals, but for the overall community
 
-Since some dependencies are not under our control, a third party may break our build, in which case we can fall back
-on `go mod tidy -v`.
+Examples of unacceptable behavior include:
 
-## <span id="protobuf">Protobuf</span>
+* The use of sexualized language or imagery, and sexual attention or advances of any kind
+* Trolling, insulting or derogatory comments, and personal or political attacks
+* Public or private harassment
+* Publishing others' private information, such as a physical or email address, without their explicit permission
+* Other conduct which could reasonably be considered inappropriate in a professional setting
 
-We use [Protocol Buffers](https://developers.google.com/protocol-buffers) along
-with [gogoproto](https://github.com/gogo/protobuf) to generate code for use in Evmos.
+## Enforcement Responsibilities
 
-For deterministic behavior around Protobuf tooling, everything is containerized using Docker. Make sure to have Docker
-installed on your machine, or head to [Docker's website](https://docs.docker.com/get-docker/) to install it.
+Community leaders are responsible for clarifying and enforcing our standards of
+acceptable behavior and will take appropriate and fair corrective action in
+response to any behavior that they deem inappropriate, threatening, offensive,
+or harmful.
 
-For formatting code in `.proto` files, you can run `make proto-format` command.
+Community leaders have the right and responsibility to remove, edit, or reject
+comments, commits, code, wiki edits, issues, and other contributions that are
+not aligned to this Code of Conduct, and will communicate reasons for moderation
+decisions when appropriate.
 
-For linting and checking breaking changes, we use [buf](https://buf.build/). You can use the commands `make proto-lint`
-and `make proto-check-breaking` to respectively lint your proto files and check for breaking changes.
+## Scope
 
-To generate the protobuf stubs, you can run `make proto-gen`.
+This Code of Conduct applies within all community spaces, and also applies when
+an individual is officially representing the community in public spaces.
+Examples of representing our community include using an official email address,
+posting via an official social media account, or acting as an appointed
+representative at an online or offline event.
 
-We also added the `make proto-all` command to run all the above commands sequentially.
+## Enforcement
 
-In order for imports to properly compile in your IDE, you may need to manually set your protobuf path in your IDE's
-workspace `settings/config`.
+Instances of abusive, harassing, or otherwise unacceptable behavior may be
+reported to the community leaders responsible for enforcement at
+[INSERT CONTACT METHOD].
+All complaints will be reviewed and investigated promptly and fairly.
 
-For example, in vscode your `.vscode/settings.json` should look like:
+All community leaders are obligated to respect the privacy and security of the
+reporter of any incident.
 
-```json
-{
-  "protoc": {
-    "options": [
-      "--proto_path=${workspaceRoot}/proto",
-      "--proto_path=${workspaceRoot}/third_party/proto"
-    ]
-  }
-}
-```
+## Enforcement Guidelines
 
-## <span id="dev_procedure">Development Procedure</span>
+Community leaders will follow these Community Impact Guidelines in determining
+the consequences for any action they deem in violation of this Code of Conduct:
 
-1. The latest state of development is on `development`.
-2. `development` must never
-   fail `make lint, make test, make test-race, make test-rpc, make test-import`
-3. No `--force` onto `development` (except when reverting a broken commit, which should seldom happen).
-4. Create your feature branch from `development` either on `github.com/evmos/evmos`, or your fork (
-   using `git remote add origin`).
-5. Before submitting a pull request, begin `git rebase` on top of `development`.
+### 1. Correction
 
-## <span id="testing">Testing</span>
+**Community Impact**: Use of inappropriate language or other behavior deemed
+unprofessional or unwelcome in the community.
 
-Evmos uses [GitHub Actions](https://github.com/features/actions) for automated testing.
+**Consequence**: A private, written warning from community leaders, providing
+clarity around the nature of the violation and an explanation of why the
+behavior was inappropriate. A public apology may be requested.
 
-## <span id="updating_doc">Updating Documentation</span>
+### 2. Warning
 
-If you open a PR on the Evmos repo, it is mandatory to update the relevant documentation in `/docs`. Please refer to
-the docs subdirectory and make changes accordingly. Prior to approval, the Code owners/approvers may request some
-updates to specific docs.
+**Community Impact**: A violation through a single incident or series of
+actions.
 
-## <span id="braching_model_and_release">Branching Model and Release</span>
+**Consequence**: A warning with consequences for continued behavior. No
+interaction with the people involved, including unsolicited interaction with
+those enforcing the Code of Conduct, for a specified period of time. This
+includes avoiding interactions in community spaces as well as external channels
+like social media. Violating these terms may lead to a temporary or permanent
+ban.
 
-User-facing repos should adhere to the [trunk based development branching model](https://trunkbaseddevelopment.com/).
+### 3. Temporary Ban
 
-Libraries need not follow the model strictly, but would be wise to.
+**Community Impact**: A serious violation of community standards, including
+sustained inappropriate behavior.
 
-Evmos utilizes [semantic versioning](https://semver.org/).
+**Consequence**: A temporary ban from any sort of interaction or public
+communication with the community for a specified period of time. No public or
+private interaction with the people involved, including unsolicited interaction
+with those enforcing the Code of Conduct, is allowed during this period.
+Violating these terms may lead to a permanent ban.
 
-### <span id="commit_messages">Commit messages</span>
+### 4. Permanent Ban
 
-Commit messages should be written in a short, descriptive manner
-and be prefixed with tags for the change type and scope (if possible)
-according to the [semantic commit](https://gist.github.com/joshbuchea/6f47e86d2510bce28f8e7f42ae84c716) scheme.
+**Community Impact**: Demonstrating a pattern of violation of community
+standards, including sustained inappropriate behavior, harassment of an
+individual, or aggression toward or disparagement of classes of individuals.
 
-For example, a new change to the `bank` module might have the following message:
-`feat(bank): add balance query cli command`
+**Consequence**: A permanent ban from any sort of public interaction within the
+community.
 
-### <span id="pr_targeting">PR Targeting</span>
+## Attribution
 
-Ensure that you base and target your PR on the `development` branch.
+This Code of Conduct is adapted from the [Contributor Covenant][homepage],
+version 2.1, available at
+[https://www.contributor-covenant.org/version/2/1/code_of_conduct.html][v2.1].
 
-All feature additions should be targeted against `development`.
-Bug fixes for an outstanding release candidate should be
-targeted against the release candidate branch.
+Community Impact Guidelines were inspired by
+[Mozilla's code of conduct enforcement ladder][Mozilla CoC].
 
-### <span id="pull_requests">Pull Requests</span>
+For answers to common questions about this code of conduct, see the FAQ at
+[https://www.contributor-covenant.org/faq][FAQ]. Translations are available at
+[https://www.contributor-covenant.org/translations][translations].
 
-To accommodate the review process, we suggest that PRs are categorically broken up. Ideally each PR addresses only a
-single issue. Additionally, as much as possible code refactoring and cleanup should be submitted as separate PRs from
-bug fixes/feature-additions.
-
-### <span id="reviewing_prs">Process for reviewing PRs</span>
-
-All PRs require two Reviews before merge. When reviewing PRs, please use the following review explanations:
-
-1. `LGTM` without an explicit approval means that the changes look good,
-   but you haven't pulled down the code, ran tests locally and thoroughly reviewed it.
-2. `Approval` through the GH UI means that you understand the code,
-   documentation/spec is updated in the right places,
-   you have pulled down and tested the code locally.
-   In addition:
-    * You must think through whether any added code could be partially combined (DRYed) with existing code.
-    * You must think through any potential security issues or incentive-compatibility flaws introduced by the changes.
-    * Naming convention must be consistent with the rest of the codebase.
-    * Code must live in a reasonable location, considering dependency structures
-      (e.g. not importing testing modules in production code, or including example code modules in production code).
-    * If you approve of the PR, you are responsible for fixing any of the issues mentioned here.
-3. If you are only making "surface level" reviews, submit any notes as `Comments` without adding a review.
-
-### <span id="pull_merge_procedure">Pull Merge Procedure</span>
-
-1. Ensure pull branch is rebased on `development`.
-2. Run `make test` to ensure that all tests pass.
-3. Squash merge pull request.
-
-### <span id="release_procedure">Release Procedure</span>
-
-1. Start on `development`.
-2. Create the release candidate branch `rc/v*` (going forward known as `RC`)
-   and ensure it's protected against pushing from anyone except the release manager/coordinator.
-   No PRs targeting this branch should be merged unless exceptional circumstances arise.
-3. On the `RC` branch, prepare a new version section in the `CHANGELOG.md`.
-   All links must be link-ified: `$ python ./scripts/linkify_changelog.py CHANGELOG.md`  
-   Copy the entries into a `RELEASE_CHANGELOG.md`.
-   This is needed so the bot knows which entries to add to the release page on GitHub.
-4. Kick off a large round of simulation testing (e.g. 400 seeds for 2k blocks).
-5. If errors are found during the simulation testing, commit the fixes to `development` and create a new `RC` branch (
-   making sure to increment the `rcN`).
-6. After simulation has successfully completed, create the release branch (`release/vX.XX.X`) from the `RC` branch.
-7. Create a PR to `development` to incorporate the `CHANGELOG.md` updates.
-8. Tag the release (use `git tag -a`) and create a release in Github.
-9. Delete the `RC` branches.
-
-**Note**: tharsis’s Evmos team currently cuts releases on a need to have basis.
-We will announce a more standardized release schedule as we near production readiness.
+[homepage]: https://www.contributor-covenant.org
+[v2.1]: https://www.contributor-covenant.org/version/2/1/code_of_conduct.html
+[Mozilla CoC]: https://github.com/mozilla/diversity
+[FAQ]: https://www.contributor-covenant.org/faq
+[translations]: https://www.contributor-covenant.org/translations
