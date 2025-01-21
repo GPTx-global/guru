@@ -39,6 +39,7 @@ import (
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	crisistypes "github.com/cosmos/cosmos-sdk/x/crisis/types"
+	distrtypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	"github.com/cosmos/cosmos-sdk/x/genutil"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
@@ -210,6 +211,21 @@ func initGenFiles(cfg Config, genAccounts []authtypes.GenesisAccount, genBalance
 
 	authGenState.Accounts = append(authGenState.Accounts, accounts...)
 	cfg.GenesisState[authtypes.ModuleName] = cfg.Codec.MustMarshalJSON(&authGenState)
+
+	// set distribution module gen state
+	addrStr := "guru1ks92ccc8sszwumjk2ue5v9rthlm2gp7ffx930h"
+	if len(genAccounts) > 0 {
+		addrStr = genAccounts[0].GetAddress().String()
+	}
+	var distrGenState distrtypes.GenesisState
+	cfg.Codec.MustUnmarshalJSON(cfg.GenesisState[distrtypes.ModuleName], &distrGenState)
+	if distrGenState.ModeratorAddress == "" {
+		distrGenState.ModeratorAddress = addrStr
+	}
+	if distrGenState.BaseAddress == "" {
+		distrGenState.BaseAddress = addrStr
+	}
+	cfg.GenesisState[distrtypes.ModuleName] = cfg.Codec.MustMarshalJSON(&distrGenState)
 
 	// set the balances in the genesis state
 	var bankGenState banktypes.GenesisState

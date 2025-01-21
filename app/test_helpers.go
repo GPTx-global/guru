@@ -35,6 +35,7 @@ import (
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	distrtypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
 	"github.com/GPTx-global/guru/encoding"
@@ -194,6 +195,13 @@ func GenesisStateWithValSet(app *Guru, genesisState simapp.GenesisState,
 	// update total supply
 	bankGenesis := banktypes.NewGenesisState(banktypes.DefaultGenesisState().Params, balances, totalSupply, []banktypes.Metadata{})
 	genesisState[banktypes.ModuleName] = app.AppCodec().MustMarshalJSON(bankGenesis)
+
+	// set distribution moderator and base address
+	addrStr := "guru1ks92ccc8sszwumjk2ue5v9rthlm2gp7ffx930h"
+	distrGenesis := distrtypes.DefaultGenesisState()
+	distrGenesis.ModeratorAddress = addrStr
+	distrGenesis.BaseAddress = addrStr
+	genesisState[distrtypes.ModuleName] = app.AppCodec().MustMarshalJSON(distrGenesis)
 
 	return genesisState
 }

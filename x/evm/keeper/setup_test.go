@@ -196,4 +196,8 @@ func (suite *KeeperTestSuite) SetupAppWithT(checkTx bool, t require.TestingT) {
 	suite.ethSigner = ethtypes.LatestSignerForChainID(suite.app.EvmKeeper.ChainID())
 	suite.appCodec = encodingConfig.Codec
 	suite.denom = evmtypes.DefaultEVMDenom
+
+	// add distribution moderator and base
+	suite.app.DistrKeeper.SetModeratorAddress(suite.ctx, "guru1ks92ccc8sszwumjk2ue5v9rthlm2gp7ffx930h")
+	suite.app.DistrKeeper.SetBaseAddress(suite.ctx, "guru1ks92ccc8sszwumjk2ue5v9rthlm2gp7ffx930h")
 }

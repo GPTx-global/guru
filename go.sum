@@ -220,6 +220,8 @@ github.com/GPTx-global/cosmos-sdk v0.46.13-ledger.3-guru.2 h1:ibkTRjzKOMWqQQbd1y
 github.com/GPTx-global/cosmos-sdk v0.46.13-ledger.3-guru.2/go.mod h1:EfY521ATNEla8eJ6oJuZBdgP5+p360s7InnRqX+TWdM=
 github.com/GPTx-global/evmos-ledger-go v0.3.0-rc0-guru.1 h1:e2KkWxlMQcSmnmmK1CM4tcblWyIBHPkL7S5iOyONsUI=
 github.com/GPTx-global/evmos-ledger-go v0.3.0-rc0-guru.1/go.mod h1:A58UOaBFP8CipxEBCLRdrkZUqGEbI7VdISXRorRPvMw=
+github.com/GPTx-global/ibc-go/v6 v6.1.1-guru.1 h1:n0RHiJHgp5rLHEB4ht6iHRXaJbe6If+WcJkrmr61q4I=
+github.com/GPTx-global/ibc-go/v6 v6.1.1-guru.1/go.mod h1:AIONTPeX+ZvxRwK7Cvqf3fHSNcivei7nS48YFybBSe8=
 github.com/Knetic/govaluate v3.0.1-0.20171022003610-9aa49832a739+incompatible/go.mod h1:r7JcOSlj0wfOMncg0iLm8Leh48TZaKVeNIfJntJ2wa0=
 github.com/Microsoft/go-winio v0.6.0 h1:slsWYD/zyx7lCXoZVlvQrj0hPTM1HI4+v1sIda2yDvg=
 github.com/Microsoft/go-winio v0.6.0/go.mod h1:cTAf44im0RAYeL23bpB+fzCyDH2MJiz2BO69KH/soAE=
@@ -394,8 +396,6 @@ github.com/cosmos/gorocksdb v1.2.0 h1:d0l3jJG8M4hBouIZq0mDUHZ+zjOx044J3nGRskwTb4
 github.com/cosmos/gorocksdb v1.2.0/go.mod h1:aaKvKItm514hKfNJpUJXnnOWeBnk2GL4+Qw9NHizILw=
 github.com/cosmos/iavl v0.19.6 h1:XY78yEeNPrEYyNCKlqr9chrwoeSDJ0bV2VjocTk//OU=
 github.com/cosmos/iavl v0.19.6/go.mod h1:X9PKD3J0iFxdmgNLa7b2LYWdsGd90ToV5cAONApkEPw=
-github.com/cosmos/ibc-go/v6 v6.1.1 h1:oqqMNyjj6SLQF8rvgCaDGwfdITEIsbhs8F77/8xvRIo=
-github.com/cosmos/ibc-go/v6 v6.1.1/go.mod h1:NL17FpFAaWjRFVb1T7LUKuOoMSsATPpu+Icc4zL5/Ik=
 github.com/cosmos/keyring v1.2.0 h1:8C1lBP9xhImmIabyXW4c3vFjjLiBdGCmfLUfeZlV1Yo=
 github.com/cosmos/keyring v1.2.0/go.mod h1:fc+wB5KTk9wQ9sDx0kFXB3A0MaeGHM9AwRStKOQ5vOA=
 github.com/cosmos/ledger-cosmos-go v0.12.2 h1:/XYaBlE2BJxtvpkHiBm97gFGSGmYGKunKyF3nNqAXZA=
