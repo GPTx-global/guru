@@ -24,6 +24,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
@@ -116,6 +117,10 @@ func (suite *KeeperTestSuite) DoSetupTest(t require.TestingT) {
 		sdk.NewCoins(sdk.NewCoin(utils.BaseDenom, amt)),
 	)
 	suite.Require().NoError(err)
+
+	// add distribution moderator and base
+	suite.app.DistrKeeper.SetModeratorAddress(suite.ctx, "guru1ks92ccc8sszwumjk2ue5v9rthlm2gp7ffx930h")
+	suite.app.DistrKeeper.SetBaseAddress(suite.ctx, "guru1ks92ccc8sszwumjk2ue5v9rthlm2gp7ffx930h")
 
 	// TODO change to setup with 1 validator
 	validators := s.app.StakingKeeper.GetValidators(s.ctx, 2)

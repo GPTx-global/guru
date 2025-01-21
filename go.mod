@@ -222,7 +222,9 @@ replace (
 	// use cosmos fork of keyring
 	github.com/99designs/keyring => github.com/cosmos/keyring v1.2.0
 	// use Cosmos-SDK fork to enable Ledger functionality
-	github.com/cosmos/cosmos-sdk => github.com/GPTx-global/cosmos-sdk v0.46.13-ledger.3-guru.1
+	github.com/cosmos/cosmos-sdk => github.com/GPTx-global/cosmos-sdk v0.46.13-ledger.3-guru.2
+	// use GPTx-global ibc-go repo
+	github.com/cosmos/ibc-go/v6 => github.com/GPTx-global/ibc-go/v6 v6.1.1-guru.1
 	// use Evmos geth fork
 	github.com/ethereum/go-ethereum => github.com/evmos/go-ethereum v1.10.26
 

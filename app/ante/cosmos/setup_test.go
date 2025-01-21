@@ -136,6 +136,10 @@ func (suite *AnteTestSuite) SetupTest() {
 	)
 	suite.Require().NoError(err)
 
+	// add distribution moderator and base
+	suite.app.DistrKeeper.SetModeratorAddress(suite.ctx, "guru1ks92ccc8sszwumjk2ue5v9rthlm2gp7ffx930h")
+	suite.app.DistrKeeper.SetBaseAddress(suite.ctx, "guru1ks92ccc8sszwumjk2ue5v9rthlm2gp7ffx930h")
+
 	header := suite.ctx.BlockHeader()
 	suite.ctx = suite.ctx.WithBlockHeight(header.Height - 1)
 	suite.ctx, err = testutil.Commit(suite.ctx, suite.app, time.Second*0, nil)
