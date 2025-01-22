@@ -67,8 +67,18 @@ make build
 arr=()
 
 init_func() {
+
+    GENESIS=$DATA_DIR$i/config/genesis.json
+    TMP_GENESIS=$DATA_DIR$i/config/tmp_genesis.json
+
     "$PWD"/build/gurud keys add $KEY"$i" --keyring-backend test --home "$DATA_DIR$i" --no-backup --algo "eth_secp256k1"
     "$PWD"/build/gurud init $MONIKER --chain-id $CHAINID --home "$DATA_DIR$i"
+
+	# Set the distribution module moderator and base address:
+	jq -r --arg moderator_address "$("$PWD"/build/gurud keys show $KEY"$i" --address --keyring-backend test --home "$DATA_DIR$i")" '.app_state["distribution"]["moderator_address"] = $moderator_address' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
+	jq -r --arg base_address "$("$PWD"/build/gurud keys show $KEY"$i" --address --keyring-backend test --home "$DATA_DIR$i")" '.app_state["distribution"]["base_address"] = $base_address' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
+
+
     "$PWD"/build/gurud add-genesis-account \
     "$("$PWD"/build/gurud keys show "$KEY$i" --keyring-backend test -a --home "$DATA_DIR$i")" 1000000000000000000aguru,1000000000000000000stake \
     --keyring-backend test --home "$DATA_DIR$i"
