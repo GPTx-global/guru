@@ -54,8 +54,10 @@ jobs:
       - uses: technote-space/get-diff-action@v6.1.2
         with:
           PATTERNS: |
-            .github/workflows/test.yml
-            ./scripts/**
+            **/**.go
+            go.mod
+            go.sum
+            *.toml
       - name: Test E2E
         run: |
           make test-e2e
