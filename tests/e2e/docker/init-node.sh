@@ -66,10 +66,10 @@ jq '.app_state.claims.params.duration_until_decay="100000s"' "$GENESIS" > "$TMP_
 jq -r --arg amount_to_claim "$amount_to_claim" '.app_state.bank.balances += [{"address":"guru15cvq3ljql6utxseh0zau9m8ve2j8erz8lq9ma5","coins":[{"denom":"aguru", "amount":$amount_to_claim}]}]' "$GENESIS" > "$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
 
 # Set the distribution module moderator and base address:
-mod_key=$KEY
-base_key=$KEY
-jq -r --arg moderator_address "$(gurud keys show $mod_key --address --keyring-backend "$KEYRING" --home "$HOMEDIR")" '.app_state["distribution"]["moderator_address"] = $moderator_address' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
-jq -r --arg base_address "$(gurud keys show $base_key --address --keyring-backend "$KEYRING" --home "$HOMEDIR")" '.app_state["distribution"]["base_address"] = $base_address' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
+# jq -r --arg moderator_address "$(gurud keys show $KEY --address --keyring-backend "$KEYRING" --home "$HOMEDIR")" '.app_state["distribution"]["moderator_address"] = $moderator_address' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
+# jq -r --arg base_address "$(gurud keys show $KEY --address --keyring-backend "$KEYRING" --home "$HOMEDIR")" '.app_state["distribution"]["base_address"] = $base_address' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
+jq -r --arg moderator_address "$(gurud keys show $KEY --address --keyring-backend "$KEYRING" --home "$HOMEDIR")" '.app_state["distribution"]["moderator_address"]="guru17w6zfhy9yvpan0x28460wrz5ln0x7emenpzek9"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
+jq -r --arg base_address "$(gurud keys show $KEY --address --keyring-backend "$KEYRING" --home "$HOMEDIR")" '.app_state["distribution"]["base_address"]="guru17w6zfhy9yvpan0x28460wrz5ln0x7emenpzek9"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
 
 
 # disable produce empty block

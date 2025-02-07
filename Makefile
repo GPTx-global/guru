@@ -317,6 +317,8 @@ test-e2e:
 	@INITIAL_VERSION=$(INITIAL_VERSION) TARGET_VERSION=$(TARGET_VERSION) \
 	E2E_SKIP_CLEANUP=$(E2E_SKIP_CLEANUP) MOUNT_PATH=$(MOUNT_PATH) CHAIN_ID=$(CHAIN_ID) \
 	go test -v ./tests/e2e -run ^TestIntegrationTestSuite$
+test-integration:
+	go test -v ./tests/e2e -run ^TestIntegrationTestSuite$
 
 run-tests:
 ifneq (,$(shell which tparse 2>/dev/null))
