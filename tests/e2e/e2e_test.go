@@ -4,12 +4,14 @@ import (
 	"context"
 	"fmt"
 	"strings"
+
+	cmd "github.com/GPTx-global/guru/tests/e2e/cmd"
 )
 
 // TestCLITxs executes different types of transactions against an Evmos node
 // using the CLI client. The node used for the test has the latest changes introduced.
 func (s *IntegrationTestSuite) TestCLITxs() {
-	for _, tc := range TestCases {
+	for _, tc := range cmd.TestCases {
 		s.Run(fmt.Sprintf("%s :: %s", tc.Module, tc.Name), func() {
 			ctx, cancel := context.WithCancel(context.Background())
 			defer cancel()

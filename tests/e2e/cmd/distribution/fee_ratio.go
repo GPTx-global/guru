@@ -1,11 +1,12 @@
-package e2e
+package cmd
 
 import (
+	cmd "github.com/GPTx-global/guru/tests/e2e/cmd"
 	bankcmd "github.com/GPTx-global/guru/tests/e2e/cmd/bank"
 )
 
-func init() {
-	AddTestCase(&TestCase{
+func addFeeRatioDistributionCases() {
+	cmd.AddTestCase(&cmd.TestCase{
 		Reset:   true,
 		Branch:  "main",
 		Module:  "distribution",
@@ -13,7 +14,7 @@ func init() {
 		Cmd:     bankcmd.CreateSendCmd("mykey", "guru1ks92ccc8sszwumjk2ue5v9rthlm2gp7ffx930h", "10aguru", "630000000000aguru", "30000"),
 		ExpPass: true,
 		ExpErr:  "",
-		PassCheck: []CheckCase{
+		PassCheck: []cmd.CheckCase{
 			{
 				Module:   "bank",
 				Query:    "balances",
@@ -27,7 +28,7 @@ func init() {
 				Expected: "pagination:\n  next_key: null\n  total: \"0\"\nsupply:\n- amount: \"100000000000000000000010000\"\n  denom: aguru\n",
 			},
 		},
-		FailCheck: []CheckCase{},
+		FailCheck: []cmd.CheckCase{},
 		PassCheckFunc: func() error {
 			return nil
 		},

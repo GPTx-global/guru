@@ -1,20 +1,19 @@
-package e2e
+package cmd
 
 import (
-	bankcmd "github.com/GPTx-global/guru/tests/e2e/cmd/bank"
+	cmd "github.com/GPTx-global/guru/tests/e2e/cmd"
 )
 
-func init() {
-
-	AddTestCase(&TestCase{
+func addMsgSendCases() {
+	cmd.AddTestCase(&cmd.TestCase{
 		Reset:   false,
 		Branch:  "main",
 		Module:  "bank",
 		Name:    "should pass - send",
-		Cmd:     bankcmd.CreateSendCmd("mykey", "guru1ks92ccc8sszwumjk2ue5v9rthlm2gp7ffx930h", "10aguru", "630000000000aguru", "30000"),
+		Cmd:     CreateSendCmd("mykey", "guru1ks92ccc8sszwumjk2ue5v9rthlm2gp7ffx930h", "10aguru", "630000000000aguru", "30000"),
 		ExpPass: true,
 		ExpErr:  "",
-		PassCheck: []CheckCase{
+		PassCheck: []cmd.CheckCase{
 			{
 				Module:   "bank",
 				Query:    "balances",
@@ -22,7 +21,7 @@ func init() {
 				Expected: "balances:\n- amount: \"10\"\n  denom: aguru\npagination:\n  next_key: null\n  total: \"0\"\n",
 			},
 		},
-		FailCheck: []CheckCase{},
+		FailCheck: []cmd.CheckCase{},
 		PassCheckFunc: func() error {
 			return nil
 		},
@@ -31,16 +30,16 @@ func init() {
 		},
 	})
 
-	AddTestCase(&TestCase{
+	cmd.AddTestCase(&cmd.TestCase{
 		Reset:     true,
 		Branch:    "main",
 		Module:    "bank",
 		Name:      "should fail - send",
-		Cmd:       bankcmd.CreateSendCmd("mykey1", "guru1ks92ccc8sszwumjk2ue5v9rthlm2gp7ffx930h", "10aguru", "630000000000aguru", "30000"),
+		Cmd:       CreateSendCmd("mykey1", "guru1ks92ccc8sszwumjk2ue5v9rthlm2gp7ffx930h", "10aguru", "630000000000aguru", "30000"),
 		ExpPass:   false,
 		ExpErr:    "",
-		PassCheck: []CheckCase{},
-		FailCheck: []CheckCase{
+		PassCheck: []cmd.CheckCase{},
+		FailCheck: []cmd.CheckCase{
 			{
 				Module:   "bank",
 				Query:    "balances",

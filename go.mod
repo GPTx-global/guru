@@ -21,7 +21,6 @@ require (
 	github.com/gorilla/mux v1.8.0
 	github.com/gorilla/websocket v1.5.0
 	github.com/grpc-ecosystem/grpc-gateway v1.16.0
-	github.com/hashicorp/go-version v1.6.0
 	github.com/improbable-eng/grpc-web v0.15.0
 	github.com/miguelmota/go-ethereum-hdwallet v0.1.1
 	github.com/onsi/ginkgo/v2 v2.9.0
@@ -133,6 +132,7 @@ require (
 	github.com/hashicorp/go-getter v1.7.0 // indirect
 	github.com/hashicorp/go-immutable-radix v1.3.1 // indirect
 	github.com/hashicorp/go-safetemp v1.0.0 // indirect
+	github.com/hashicorp/go-version v1.6.0 // indirect
 	github.com/hashicorp/golang-lru v0.5.5-0.20210104140557-80c98217689d // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/hdevalence/ed25519consensus v0.0.0-20220222234857-c00d1f31bab3 // indirect
