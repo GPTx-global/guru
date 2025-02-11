@@ -14,7 +14,7 @@ func addFeeRatioDistributionCases() {
 		Cmd:     bankcmd.CreateSendCmd("mykey", "guru1ks92ccc8sszwumjk2ue5v9rthlm2gp7ffx930h", "10aguru", "630000000000aguru", "30000"),
 		ExpPass: true,
 		ExpErr:  "",
-		PassCheck: []cmd.CheckCase{
+		CheckCases: []cmd.CheckCase{
 			{
 				Module:   "bank",
 				Query:    "balances",
@@ -28,11 +28,10 @@ func addFeeRatioDistributionCases() {
 				Expected: "pagination:\n  next_key: null\n  total: \"0\"\nsupply:\n- amount: \"100000000000000000000010000\"\n  denom: aguru\n",
 			},
 		},
-		FailCheck: []cmd.CheckCase{},
-		PassCheckFunc: func() error {
+		Malleate_pre: func() error {
 			return nil
 		},
-		FailCheckFunc: func() error {
+		Malleate_post: func() error {
 			return nil
 		},
 	})

@@ -13,7 +13,7 @@ func addMsgSendCases() {
 		Cmd:     CreateSendCmd("mykey", "guru1ks92ccc8sszwumjk2ue5v9rthlm2gp7ffx930h", "10aguru", "630000000000aguru", "30000"),
 		ExpPass: true,
 		ExpErr:  "",
-		PassCheck: []cmd.CheckCase{
+		CheckCases: []cmd.CheckCase{
 			{
 				Module:   "bank",
 				Query:    "balances",
@@ -21,25 +21,23 @@ func addMsgSendCases() {
 				Expected: "balances:\n- amount: \"10\"\n  denom: aguru\npagination:\n  next_key: null\n  total: \"0\"\n",
 			},
 		},
-		FailCheck: []cmd.CheckCase{},
-		PassCheckFunc: func() error {
+		Malleate_pre: func() error {
 			return nil
 		},
-		FailCheckFunc: func() error {
+		Malleate_post: func() error {
 			return nil
 		},
 	})
 
 	cmd.AddTestCase(&cmd.TestCase{
-		Reset:     true,
-		Branch:    "main",
-		Module:    "bank",
-		Name:      "should fail - send",
-		Cmd:       CreateSendCmd("mykey1", "guru1ks92ccc8sszwumjk2ue5v9rthlm2gp7ffx930h", "10aguru", "630000000000aguru", "30000"),
-		ExpPass:   false,
-		ExpErr:    "",
-		PassCheck: []cmd.CheckCase{},
-		FailCheck: []cmd.CheckCase{
+		Reset:   true,
+		Branch:  "main",
+		Module:  "bank",
+		Name:    "should fail - send",
+		Cmd:     CreateSendCmd("mykey1", "guru1ks92ccc8sszwumjk2ue5v9rthlm2gp7ffx930h", "10aguru", "630000000000aguru", "30000"),
+		ExpPass: false,
+		ExpErr:  "",
+		CheckCases: []cmd.CheckCase{
 			{
 				Module:   "bank",
 				Query:    "balances",
@@ -47,10 +45,10 @@ func addMsgSendCases() {
 				Expected: "balances: []\npagination:\n  next_key: null\n  total: \"0\"\n",
 			},
 		},
-		PassCheckFunc: func() error {
+		Malleate_pre: func() error {
 			return nil
 		},
-		FailCheckFunc: func() error {
+		Malleate_post: func() error {
 			return nil
 		},
 	})

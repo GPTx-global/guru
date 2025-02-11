@@ -8,17 +8,16 @@ type CheckCase struct {
 }
 
 type TestCase struct {
-	Reset         bool     // whether to reset the docker container
-	Branch        string   // which branch to run the test on
-	Module        string   // name of module
-	Name          string   // test case
-	Cmd           []string // command to execute
-	ExpPass       bool     // should pass or not?
-	ExpErr        string   // expected error (only if ExpPass == false)
-	PassCheck     []CheckCase
-	FailCheck     []CheckCase
-	PassCheckFunc func() error // conditions to check in case of ExpPass == true
-	FailCheckFunc func() error // conditions to check in case of ExpPass == false
+	Reset         bool         // whether to reset the docker container
+	Branch        string       // which branch to run the test on
+	Module        string       // name of module
+	Name          string       // test case
+	Malleate_pre  func() error // change the state before execution of Cmd
+	Cmd           []string     // command to execute
+	ExpPass       bool         // should pass or not?
+	ExpErr        string       // expected error (only if ExpPass == false)
+	CheckCases    []CheckCase  // test cases
+	Malleate_post func() error // change & check the state after execution of Cmd
 }
 
 var TestCases []TestCase

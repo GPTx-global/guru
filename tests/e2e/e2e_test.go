@@ -23,6 +23,9 @@ func (s *IntegrationTestSuite) TestCLITxs() {
 			// run node if not exist yet
 			s.runNodeIfNotExist(tc.Branch)
 
+			// execute the pre-state changes
+			s.Require().NoError(tc.Malleate_pre())
+
 			exec, err := s.manager.CreateExec(tc.Cmd, s.manager.ContainerID(tc.Branch))
 			s.Require().NoError(err)
 
@@ -35,33 +38,25 @@ func (s *IntegrationTestSuite) TestCLITxs() {
 					strings.Contains(outBuf.String(), "code: 0"),
 					"tx returned non code 0:\nstdout: %s\nstderr: %s", outBuf.String(), errBuf.String(),
 				)
-				for _, check := range tc.PassCheck {
-					queryExec, err := s.manager.CreateQueryExec(tc.Branch, check.Module, check.Query, check.Args...)
-					s.Require().NoError(err)
-					outBuf, errBuf, err := s.manager.RunExec(ctx, queryExec)
-					s.Require().NoError(err)
-					s.Require().Empty(errBuf.String())
-
-					s.Require().Equal(outBuf.String(), check.Expected)
-				}
-				s.Require().NoError(tc.PassCheckFunc())
 			} else {
 				s.Require().NotContains(outBuf.String(), "code: 0")
 				s.Require().Truef(
 					strings.Contains(outBuf.String(), tc.ExpErr) || strings.Contains(errBuf.String(), tc.ExpErr),
 					"tx returned non code 0 but with unexpected error:\nstdout: %s\nstderr: %s", outBuf.String(), errBuf.String(),
 				)
-				for _, check := range tc.FailCheck {
-					queryExec, err := s.manager.CreateQueryExec(tc.Branch, check.Module, check.Query, check.Args...)
-					s.Require().NoError(err)
-					outBuf, errBuf, err := s.manager.RunExec(ctx, queryExec)
-					s.Require().NoError(err)
-					s.Require().Empty(errBuf.String())
-
-					s.Require().Equal(outBuf.String(), check.Expected)
-				}
-				s.Require().NoError(tc.FailCheckFunc())
 			}
+
+			// test for post execution cases
+			for _, check := range tc.CheckCases {
+				queryExec, err := s.manager.CreateQueryExec(tc.Branch, check.Module, check.Query, check.Args...)
+				s.Require().NoError(err)
+				outBuf, errBuf, err := s.manager.RunExec(ctx, queryExec)
+				s.Require().NoError(err)
+				s.Require().Empty(errBuf.String())
+
+				s.Require().Equal(outBuf.String(), check.Expected)
+			}
+			s.Require().NoError(tc.Malleate_post())
 		})
 	}
 
