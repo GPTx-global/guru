@@ -149,7 +149,6 @@ require (
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/mtibben/percent v0.2.1 // indirect
 	github.com/olekukonko/tablewriter v0.0.5 // indirect
-	github.com/opencontainers/runc v1.1.4 // indirect
 	github.com/pelletier/go-toml/v2 v2.0.7 // indirect
 	github.com/petermattis/goid v0.0.0-20230317030725-371a4b8eda08 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
@@ -196,7 +195,7 @@ require (
 	gopkg.in/natefinch/npipe.v2 v2.0.0-20160621034901-c1b8fa8bdcce // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	nhooyr.io/websocket v1.8.7 // indirect
+	nhooyr.io/websocket v1.8.6 // indirect
 )
 
 replace (
@@ -207,7 +206,7 @@ replace (
 	// use GPTx-global ibc-go repo
 	github.com/cosmos/ibc-go/v6 => github.com/GPTx-global/ibc-go/v6 v6.1.1-guru.1
 	// use GPTx-global geth fork
-	github.com/ethereum/go-ethereum => github.com/GPTx-global/go-ethereum v1.10.26-evmos-rc4-guru-1
+	github.com/ethereum/go-ethereum => github.com/GPTx-global/go-ethereum v1.10.26-evmos-rc4-guru.1
 
 	github.com/evmos/evmos-ledger-go => github.com/GPTx-global/evmos-ledger-go v0.3.0-rc0-guru.1
 	// Security Advisory https://github.com/advisories/GHSA-h395-qcrw-5vmq
