@@ -17,6 +17,7 @@ package statedb
 
 import (
 	"bytes"
+	"fmt"
 	"math/big"
 	"sort"
 
@@ -60,6 +61,23 @@ func (s Storage) SortedKeys() []common.Hash {
 		return bytes.Compare(keys[i].Bytes(), keys[j].Bytes()) < 0
 	})
 	return keys
+}
+
+func (s Storage) String() (str string) {
+	for key, value := range s {
+		str += fmt.Sprintf("%X : %X\n", key, value)
+	}
+
+	return
+}
+
+func (s Storage) Copy() Storage {
+	cpy := make(Storage, len(s))
+	for key, value := range s {
+		cpy[key] = value
+	}
+
+	return cpy
 }
 
 // stateObject is the state of an acount
