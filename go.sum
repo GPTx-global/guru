@@ -219,8 +219,8 @@ github.com/GPTx-global/cosmos-sdk v0.46.13-ledger.3-guru.2 h1:ibkTRjzKOMWqQQbd1y
 github.com/GPTx-global/cosmos-sdk v0.46.13-ledger.3-guru.2/go.mod h1:EfY521ATNEla8eJ6oJuZBdgP5+p360s7InnRqX+TWdM=
 github.com/GPTx-global/evmos-ledger-go v0.3.0-rc0-guru.1 h1:e2KkWxlMQcSmnmmK1CM4tcblWyIBHPkL7S5iOyONsUI=
 github.com/GPTx-global/evmos-ledger-go v0.3.0-rc0-guru.1/go.mod h1:A58UOaBFP8CipxEBCLRdrkZUqGEbI7VdISXRorRPvMw=
-github.com/GPTx-global/go-ethereum v1.10.26-evmos-rc4-guru.1 h1:2KwUczow0xat9w0a6gmTzeODVTJW1nn8IXGOtaL6AP4=
-github.com/GPTx-global/go-ethereum v1.10.26-evmos-rc4-guru.1/go.mod h1:/6CsT5Ceen2WPLI/oCA3xMcZ5sWMF/D46SjM/ayY0Oo=
+github.com/GPTx-global/go-ethereum v1.10.26-evmos-rc4-guru.2 h1:E83qX+Qe1C5MKMhK/Z3YCv3nI43XY3Rzl1g3hHlmzJs=
+github.com/GPTx-global/go-ethereum v1.10.26-evmos-rc4-guru.2/go.mod h1:/6CsT5Ceen2WPLI/oCA3xMcZ5sWMF/D46SjM/ayY0Oo=
 github.com/GPTx-global/ibc-go/v6 v6.1.1-guru.1 h1:n0RHiJHgp5rLHEB4ht6iHRXaJbe6If+WcJkrmr61q4I=
 github.com/GPTx-global/ibc-go/v6 v6.1.1-guru.1/go.mod h1:AIONTPeX+ZvxRwK7Cvqf3fHSNcivei7nS48YFybBSe8=
 github.com/Knetic/govaluate v3.0.1-0.20171022003610-9aa49832a739+incompatible/go.mod h1:r7JcOSlj0wfOMncg0iLm8Leh48TZaKVeNIfJntJ2wa0=
