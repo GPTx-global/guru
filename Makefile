@@ -318,7 +318,7 @@ test-e2e:
 	E2E_SKIP_CLEANUP=$(E2E_SKIP_CLEANUP) MOUNT_PATH=$(MOUNT_PATH) CHAIN_ID=$(CHAIN_ID) \
 	go test -v ./tests/e2e -run ^TestIntegrationTestSuite$
 test-integration:
-	go test -v ./tests/e2e -run ^TestIntegrationTestSuite$
+	go test -v ./tests/itest -run ^TestIntegrationTestSuite$
 
 run-tests:
 ifneq (,$(shell which tparse 2>/dev/null))

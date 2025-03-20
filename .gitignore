@@ -83,3 +83,6 @@ dependency-graph.png
 
 # OpenZeppelin contracts
 contracts/@openzeppelin/*
+
+# Integration test
+tests/itest/docker/genesis*

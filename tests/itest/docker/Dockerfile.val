@@ -1,0 +1,37 @@
+FROM golang:1.20.0-bullseye AS build-env
+
+ARG BRANCH_NAME
+
+WORKDIR /go/src/github.com/GPTx-global/
+
+RUN git clone "https://github.com/GPTx-global/guru.git"
+
+WORKDIR /go/src/github.com/GPTx-global/guru
+
+RUN apt-get update -y
+
+RUN git checkout ${BRANCH_NAME}
+
+RUN make build
+
+FROM golang:1.20.0-bullseye
+
+RUN apt-get update \ 
+&& apt-get install jq=1.6-2.1 -y --no-install-recommends \ 
+&& apt-get clean \
+&& rm -rf /var/lib/apt/lists/*
+
+WORKDIR /go/src/github.com/GPTx-global/guru
+
+COPY ./docker/env.sh .
+COPY ./docker/init-validator-node.sh .
+
+# permission to make .sh files executable
+RUN chmod +x env.sh
+RUN chmod +x init-validator-node.sh
+
+COPY --from=build-env /go/src/github.com/GPTx-global/guru/build/gurud /usr/bin/gurud
+
+EXPOSE 26656 26657 1317 9090 8545 8546
+
+# CMD ["bash", "./init-node.sh", "val", "0"]
