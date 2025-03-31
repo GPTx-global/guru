@@ -19,6 +19,8 @@ import (
 	utiltx "github.com/GPTx-global/guru/testutil/tx"
 	evmtypes "github.com/GPTx-global/guru/x/evm/types"
 	feemarkettypes "github.com/GPTx-global/guru/x/feemarket/types"
+
+	"github.com/ethereum/go-ethereum/common/math"
 )
 
 func (suite *BackendTestSuite) TestBaseFee() {
@@ -324,7 +326,7 @@ func (suite *BackendTestSuite) TestFeeHistory() {
 	testCases := []struct {
 		name           string
 		registerMock   func(validator sdk.AccAddress)
-		userBlockCount ethrpc.DecimalOrHex
+		userBlockCount math.HexOrDecimal64
 		latestBlock    ethrpc.BlockNumber
 		expFeeHistory  *rpc.FeeHistoryResult
 		validator      sdk.AccAddress

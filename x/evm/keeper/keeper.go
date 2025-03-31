@@ -33,7 +33,6 @@ import (
 	"github.com/tendermint/tendermint/libs/log"
 
 	evmostypes "github.com/GPTx-global/guru/types"
-	"github.com/GPTx-global/guru/x/evm/statedb"
 	"github.com/GPTx-global/guru/x/evm/types"
 )
 
@@ -275,7 +274,7 @@ func (k Keeper) Tracer(ctx sdk.Context, msg core.Message, ethCfg *params.ChainCo
 
 // GetAccountWithoutBalance load nonce and codehash without balance,
 // more efficient in cases where balance is not needed.
-func (k *Keeper) GetAccountWithoutBalance(ctx sdk.Context, addr common.Address) *statedb.Account {
+func (k *Keeper) GetAccountWithoutBalance(ctx sdk.Context, addr common.Address) *types.StateAccount {
 	cosmosAddr := sdk.AccAddress(addr.Bytes())
 	acct := k.accountKeeper.GetAccount(ctx, cosmosAddr)
 	if acct == nil {
@@ -285,26 +284,28 @@ func (k *Keeper) GetAccountWithoutBalance(ctx sdk.Context, addr common.Address) 
 	codeHash := types.EmptyCodeHash
 	ethAcct, ok := acct.(evmostypes.EthAccountI)
 	if ok {
-		codeHash = ethAcct.GetCodeHash().Bytes()
+		codeHash = ethAcct.GetCodeHash()
 	}
 
-	return &statedb.Account{
+	return &types.StateAccount{
 		Nonce:    acct.GetSequence(),
-		CodeHash: codeHash,
+		CodeHash: codeHash.Bytes(),
+		Root:     types.EmptyRootHash,
 	}
 }
 
 // GetAccountOrEmpty returns empty account if not exist, returns error if it's not `EthAccount`
-func (k *Keeper) GetAccountOrEmpty(ctx sdk.Context, addr common.Address) statedb.Account {
+func (k *Keeper) GetAccountOrEmpty(ctx sdk.Context, addr common.Address) types.StateAccount {
 	acct := k.GetAccount(ctx, addr)
 	if acct != nil {
 		return *acct
 	}
 
 	// empty account
-	return statedb.Account{
+	return types.StateAccount{
 		Balance:  new(big.Int),
-		CodeHash: types.EmptyCodeHash,
+		Root:     types.EmptyRootHash,
+		CodeHash: types.EmptyCodeHash.Bytes(),
 	}
 }
 

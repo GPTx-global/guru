@@ -18,7 +18,6 @@ package types
 import (
 	"math/big"
 	"os"
-	"time"
 
 	"github.com/ethereum/go-ethereum/eth/tracers/logger"
 
@@ -45,8 +44,8 @@ func NewTracer(tracer string, msg core.Message, cfg *params.ChainConfig, height 
 
 	switch tracer {
 	case TracerAccessList:
-		preCompiles := vm.DefaultActivePrecompiles(cfg.Rules(big.NewInt(height), cfg.MergeNetsplitBlock != nil))
-		return logger.NewAccessListTracer(msg.AccessList(), msg.From(), *msg.To(), preCompiles)
+		preCompiles := vm.ActivePrecompiles(cfg.Rules(big.NewInt(height), cfg.MergeNetsplitBlock != nil, 0))
+		return logger.NewAccessListTracer(msg.AccessList, msg.From, *msg.To, preCompiles)
 	case TracerJSON:
 		return logger.NewJSONLogger(logCfg, os.Stderr)
 	case TracerMarkdown:
@@ -68,6 +67,10 @@ var _ vm.EVMLogger = &NoOpTracer{}
 
 // NoOpTracer is an empty implementation of vm.Tracer interface
 type NoOpTracer struct{}
+
+// CaptureEnd implements vm.EVMLogger.
+func (dt *NoOpTracer) CaptureEnd(output []byte, gasUsed uint64, err error) {
+}
 
 // NewNoOpTracer creates a no-op vm.Tracer
 func NewNoOpTracer() *NoOpTracer {
@@ -98,10 +101,10 @@ func (dt NoOpTracer) CaptureState(pc uint64, op vm.OpCode, gas, cost uint64, sco
 func (dt NoOpTracer) CaptureFault(pc uint64, op vm.OpCode, gas, cost uint64, scope *vm.ScopeContext, depth int, err error) {
 }
 
-// CaptureEnd implements vm.Tracer interface
+// CaptureTxEnd implements vm.Tracer interface
 //
 //nolint:revive // allow unused parameters to indicate expected signature
-func (dt NoOpTracer) CaptureEnd(output []byte, gasUsed uint64, tm time.Duration, err error) {}
+func (dt NoOpTracer) CaptureTxEnd(restGas uint64) {}
 
 // CaptureEnter implements vm.Tracer interface
 //
@@ -118,8 +121,3 @@ func (dt NoOpTracer) CaptureExit(output []byte, gasUsed uint64, err error) {}
 //
 //nolint:revive // allow unused parameters to indicate expected signature
 func (dt NoOpTracer) CaptureTxStart(gasLimit uint64) {}
-
-// CaptureTxEnd implements vm.Tracer interface
-//
-//nolint:revive // allow unused parameters to indicate expected signature
-func (dt NoOpTracer) CaptureTxEnd(restGas uint64) {}

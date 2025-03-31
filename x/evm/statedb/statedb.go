@@ -21,11 +21,13 @@ import (
 	"sort"
 
 	errorsmod "cosmossdk.io/errors"
+	"github.com/GPTx-global/guru/x/evm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/core/vm"
 	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/ethereum/go-ethereum/params"
 )
 
 // revision is the identifier of a version of state.
@@ -36,7 +38,23 @@ type revision struct {
 	journalIndex int
 }
 
+var (
+	// emptyRoot is the known root hash of an empty trie.
+	emptyRoot = common.HexToHash("56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421")
+)
+
 var _ vm.StateDB = &StateDB{}
+
+type proofList [][]byte
+
+func (n *proofList) Put(key []byte, value []byte) error {
+	*n = append(*n, value)
+	return nil
+}
+
+func (n *proofList) Delete(key []byte) error {
+	panic("not supported")
+}
 
 // StateDB structs within the ethereum protocol are used to store anything
 // within the merkle trie. StateDBs take care of caching and storing
@@ -61,13 +79,51 @@ type StateDB struct {
 	refund uint64
 
 	// Per-transaction logs
-	logs []*ethtypes.Log
+	// logs []*ethtypes.Log
+	thash   common.Hash
+	txIndex int
+	logs    map[common.Hash][]*ethtypes.Log
+	logSize uint
 
 	// Per-transaction access list
 	accessList *accessList
 
 	// Transient storage
 	transientStorage transientStorage
+}
+
+// HasSelfDestructed implements vm.StateDB.
+func (s *StateDB) HasSelfDestructed(addr common.Address) bool {
+	stateObject := s.getStateObject(addr)
+	if stateObject != nil {
+		return stateObject.selfDestructed
+	}
+	return false
+}
+
+// Prepare implements vm.StateDB.
+func (s *StateDB) Prepare(rules params.Rules, sender common.Address, coinbase common.Address, dest *common.Address, precompiles []common.Address, txAccesses ethtypes.AccessList) {
+	panic("unimplemented")
+}
+
+// SelfDestruct implements vm.StateDB.
+func (s *StateDB) SelfDestruct(addr common.Address) {
+	stateObject := s.getStateObject(addr)
+	if stateObject == nil {
+		return
+	}
+	s.journal.append(selfDestructChange{
+		account:     &addr,
+		prev:        stateObject.selfDestructed,
+		prevbalance: new(big.Int).Set(stateObject.Balance()),
+	})
+	stateObject.markSelfdestructed()
+	stateObject.data.Balance = new(big.Int)
+}
+
+// Selfdestruct6780 implements vm.StateDB.
+func (s *StateDB) Selfdestruct6780(common.Address) {
+	panic("unimplemented")
 }
 
 // New creates a new state from a given trie.
@@ -78,6 +134,7 @@ func New(ctx sdk.Context, keeper Keeper, txConfig TxConfig) *StateDB {
 		stateObjects: make(map[common.Address]*stateObject),
 		journal:      newJournal(),
 		accessList:   newAccessList(),
+		logs:         make(map[common.Hash][]*ethtypes.Log),
 
 		transientStorage: newTransientStorage(),
 
@@ -95,20 +152,39 @@ func (s *StateDB) GetContext() sdk.Context {
 	return s.ctx
 }
 
-// AddLog adds a log, called by evm.
 func (s *StateDB) AddLog(log *ethtypes.Log) {
-	s.journal.append(addLogChange{})
+	// s.journal.append(addLogChange{txhash: s.thash})
+
+	// log.TxHash = s.thash
+	// log.TxIndex = uint(s.txIndex)
+	// log.Index = s.logSize
+	// s.logs[s.thash] = append(s.logs[s.thash], log)
+	// s.logSize++
+
+	s.journal.append(addLogChange{txhash: s.thash})
 
 	log.TxHash = s.txConfig.TxHash
 	log.BlockHash = s.txConfig.BlockHash
 	log.TxIndex = s.txConfig.TxIndex
 	log.Index = s.txConfig.LogIndex + uint(len(s.logs))
-	s.logs = append(s.logs, log)
+	// s.logs = append(s.logs, log)
+	s.logs[s.thash] = append(s.logs[s.thash], log)
 }
 
-// Logs returns the logs of current transaction.
+func (s *StateDB) GetLogs(hash common.Hash, blockHash common.Hash) []*ethtypes.Log {
+	logs := s.logs[hash]
+	for _, l := range logs {
+		l.BlockHash = blockHash
+	}
+	return logs
+}
+
 func (s *StateDB) Logs() []*ethtypes.Log {
-	return s.logs
+	var logs []*ethtypes.Log
+	for _, lgs := range s.logs {
+		logs = append(logs, lgs...)
+	}
+	return logs
 }
 
 // AddRefund adds gas to the refund counter
@@ -213,7 +289,7 @@ func (s *StateDB) GetRefund() uint64 {
 func (s *StateDB) HasSuicided(addr common.Address) bool {
 	stateObject := s.getStateObject(addr)
 	if stateObject != nil {
-		return stateObject.suicided
+		return stateObject.selfDestructed
 	}
 	return false
 }
@@ -256,7 +332,7 @@ func (s *StateDB) getOrNewStateObject(addr common.Address) *stateObject {
 func (s *StateDB) createObject(addr common.Address) (newobj, prev *stateObject) {
 	prev = s.getStateObject(addr)
 
-	newobj = newObject(s, addr, Account{})
+	newobj = newObject(s, addr, types.StateAccount{})
 	if prev == nil {
 		s.journal.append(createObjectChange{account: &addr})
 	} else {
@@ -282,7 +358,7 @@ func (s *StateDB) createObject(addr common.Address) (newobj, prev *stateObject) 
 func (s *StateDB) CreateAccount(addr common.Address) {
 	newObj, prev := s.createObject(addr)
 	if prev != nil {
-		newObj.setBalance(prev.account.Balance)
+		newObj.setBalance(prev.data.Balance)
 	}
 }
 
@@ -362,13 +438,13 @@ func (s *StateDB) Suicide(addr common.Address) bool {
 	if stateObject == nil {
 		return false
 	}
-	s.journal.append(suicideChange{
+	s.journal.append(selfDestructChange{
 		account:     &addr,
-		prev:        stateObject.suicided,
+		prev:        stateObject.selfDestructed,
 		prevbalance: new(big.Int).Set(stateObject.Balance()),
 	})
-	stateObject.markSuicided()
-	stateObject.account.Balance = new(big.Int)
+	stateObject.markSelfdestructed()
+	stateObject.data.Balance = new(big.Int)
 
 	return true
 }
@@ -486,7 +562,7 @@ func (s *StateDB) RevertToSnapshot(revid int) {
 	snapshot := s.validRevisions[idx].journalIndex
 
 	// Replay the journal to undo changes and remove invalidated snapshots
-	s.journal.Revert(s, snapshot)
+	s.journal.revert(s, snapshot)
 	s.validRevisions = s.validRevisions[:idx]
 }
 
@@ -495,7 +571,7 @@ func (s *StateDB) RevertToSnapshot(revid int) {
 func (s *StateDB) Commit() error {
 	for _, addr := range s.journal.sortedDirties() {
 		obj := s.stateObjects[addr]
-		if obj.suicided {
+		if obj.selfDestructed {
 			if err := s.keeper.DeleteAccount(s.ctx, obj.Address()); err != nil {
 				return errorsmod.Wrap(err, "failed to delete account")
 			}
@@ -503,7 +579,7 @@ func (s *StateDB) Commit() error {
 			if obj.code != nil && obj.dirtyCode {
 				s.keeper.SetCode(s.ctx, obj.CodeHash(), obj.code)
 			}
-			if err := s.keeper.SetAccount(s.ctx, obj.Address(), obj.account); err != nil {
+			if err := s.keeper.SetAccount(s.ctx, obj.Address(), obj.data); err != nil {
 				return errorsmod.Wrap(err, "failed to set account")
 			}
 			for _, key := range obj.dirtyStorage.SortedKeys() {

@@ -239,7 +239,7 @@ func (suite *KeeperTestSuite) TestGetCodeHash() {
 		{
 			"account not EthAccount type, EmptyCodeHash",
 			addr,
-			common.BytesToHash(types.EmptyCodeHash),
+			common.BytesToHash(types.EmptyCodeHash.Bytes()),
 			func(vm.StateDB) {},
 		},
 		{
@@ -506,7 +506,7 @@ func (suite *KeeperTestSuite) TestExist() {
 	}{
 		{"success, account exists", suite.address, func(vm.StateDB) {}, true},
 		{"success, has suicided", suite.address, func(vmdb vm.StateDB) {
-			vmdb.Suicide(suite.address)
+			vmdb.SelfDestruct(suite.address)
 		}, true},
 		{"success, account doesn't exist", utiltx.GenerateAddress(), func(vm.StateDB) {}, false},
 	}

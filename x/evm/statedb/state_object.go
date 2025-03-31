@@ -21,11 +21,12 @@ import (
 	"math/big"
 	"sort"
 
+	"github.com/GPTx-global/guru/x/evm/types"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 )
 
-var emptyCodeHash = crypto.Keccak256(nil)
+type Code []byte
 
 // Account is the Ethereum consensus representation of accounts.
 // These objects are stored in the storage of auth module.
@@ -36,16 +37,17 @@ type Account struct {
 }
 
 // NewEmptyAccount returns an empty account.
-func NewEmptyAccount() *Account {
-	return &Account{
+func NewEmptyAccount() *types.StateAccount {
+	return &types.StateAccount{
 		Balance:  new(big.Int),
-		CodeHash: emptyCodeHash,
+		CodeHash: types.EmptyCodeHash.Bytes(),
+		Root:     types.EmptyRootHash,
 	}
 }
 
 // IsContract returns if the account contains contract code.
 func (acct Account) IsContract() bool {
-	return !bytes.Equal(acct.CodeHash, emptyCodeHash)
+	return !bytes.Equal(acct.CodeHash, types.EmptyCodeHash.Bytes())
 }
 
 // Storage represents in-memory cache/buffer of contract storage.
@@ -82,46 +84,65 @@ func (s Storage) Copy() Storage {
 
 // stateObject is the state of an acount
 type stateObject struct {
-	db *StateDB
+	db       *StateDB
+	address  common.Address      // address of ethereum account
+	addrHash common.Hash         // hash of ethereum address of the account
+	origin   *types.StateAccount // Account original data without any change applied, nil means it was not existent
+	data     types.StateAccount  // Account data with all mutations applied in the scope of block
 
-	account Account
-	code    []byte
+	// Write caches.
+	trie Trie // storage trie, which becomes non-nil on first access
+	code Code // contract bytecode, which gets set when code is loaded
 
-	// state storage
-	originStorage Storage
-	dirtyStorage  Storage
+	originStorage  Storage // Storage cache of original entries to dedup rewrites
+	pendingStorage Storage // Storage entries that need to be flushed to disk, at the end of an entire block
+	dirtyStorage   Storage // Storage entries that have been modified in the current transaction execution, reset for every transaction
 
-	address common.Address
+	// Cache flags.
+	dirtyCode bool // true if the code was updated
 
-	// flags
-	dirtyCode bool
-	suicided  bool
+	// Flag whether the account was marked as self-destructed. The self-destructed account
+	// is still accessible in the scope of same transaction.
+	selfDestructed bool
+
+	// Flag whether the account was marked as deleted. A self-destructed account
+	// or an account that is considered as empty will be marked as deleted at
+	// the end of transaction and no longer accessible anymore.
+	deleted bool
+
+	// Flag whether the object was created in the current transaction
+	created bool
 }
 
 // newObject creates a state object.
-func newObject(db *StateDB, address common.Address, account Account) *stateObject {
-	if account.Balance == nil {
-		account.Balance = new(big.Int)
+func newObject(db *StateDB, address common.Address, data types.StateAccount) *stateObject {
+	if data.Balance == nil {
+		data.Balance = new(big.Int)
 	}
-	if account.CodeHash == nil {
-		account.CodeHash = emptyCodeHash
+	if data.CodeHash == nil {
+		data.CodeHash = types.EmptyCodeHash.Bytes()
+	}
+	if data.Root == (common.Hash{}) {
+		data.Root = emptyRoot
 	}
 	return &stateObject{
-		db:            db,
-		address:       address,
-		account:       account,
-		originStorage: make(Storage),
-		dirtyStorage:  make(Storage),
+		db:             db,
+		address:        address,
+		addrHash:       crypto.Keccak256Hash(address[:]),
+		data:           data,
+		originStorage:  make(Storage),
+		pendingStorage: make(Storage),
+		dirtyStorage:   make(Storage),
 	}
 }
 
 // empty returns whether the account is considered empty.
 func (s *stateObject) empty() bool {
-	return s.account.Nonce == 0 && s.account.Balance.Sign() == 0 && bytes.Equal(s.account.CodeHash, emptyCodeHash)
+	return s.data.Nonce == 0 && s.data.Balance.Sign() == 0 && bytes.Equal(s.data.CodeHash, types.EmptyCodeHash.Bytes())
 }
 
-func (s *stateObject) markSuicided() {
-	s.suicided = true
+func (s *stateObject) markSelfdestructed() {
+	s.selfDestructed = true
 }
 
 // AddBalance adds amount to s's balance.
@@ -146,13 +167,13 @@ func (s *stateObject) SubBalance(amount *big.Int) {
 func (s *stateObject) SetBalance(amount *big.Int) {
 	s.db.journal.append(balanceChange{
 		account: &s.address,
-		prev:    new(big.Int).Set(s.account.Balance),
+		prev:    new(big.Int).Set(s.data.Balance),
 	})
 	s.setBalance(amount)
 }
 
 func (s *stateObject) setBalance(amount *big.Int) {
-	s.account.Balance = amount
+	s.data.Balance = amount
 }
 
 //
@@ -169,7 +190,7 @@ func (s *stateObject) Code() []byte {
 	if s.code != nil {
 		return s.code
 	}
-	if bytes.Equal(s.CodeHash(), emptyCodeHash) {
+	if bytes.Equal(s.CodeHash(), types.EmptyCodeHash.Bytes()) {
 		return nil
 	}
 	code := s.db.keeper.GetCode(s.db.ctx, common.BytesToHash(s.CodeHash()))
@@ -196,7 +217,7 @@ func (s *stateObject) SetCode(codeHash common.Hash, code []byte) {
 
 func (s *stateObject) setCode(codeHash common.Hash, code []byte) {
 	s.code = code
-	s.account.CodeHash = codeHash[:]
+	s.data.CodeHash = codeHash[:]
 	s.dirtyCode = true
 }
 
@@ -204,28 +225,28 @@ func (s *stateObject) setCode(codeHash common.Hash, code []byte) {
 func (s *stateObject) SetNonce(nonce uint64) {
 	s.db.journal.append(nonceChange{
 		account: &s.address,
-		prev:    s.account.Nonce,
+		prev:    s.data.Nonce,
 	})
 	s.setNonce(nonce)
 }
 
 func (s *stateObject) setNonce(nonce uint64) {
-	s.account.Nonce = nonce
+	s.data.Nonce = nonce
 }
 
 // CodeHash returns the code hash of account
 func (s *stateObject) CodeHash() []byte {
-	return s.account.CodeHash
+	return s.data.CodeHash
 }
 
 // Balance returns the balance of account
 func (s *stateObject) Balance() *big.Int {
-	return s.account.Balance
+	return s.data.Balance
 }
 
 // Nonce returns the nonce of account
 func (s *stateObject) Nonce() uint64 {
-	return s.account.Nonce
+	return s.data.Nonce
 }
 
 // GetCommittedState query the committed state
