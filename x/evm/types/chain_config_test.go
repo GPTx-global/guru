@@ -16,6 +16,11 @@ func newIntPtr(i int64) *sdkmath.Int {
 	return &v
 }
 
+func newUIntPtr(i uint64) *sdkmath.Uint {
+	v := sdkmath.NewUint(i)
+	return &v
+}
+
 func TestChainConfigValidate(t *testing.T) {
 	testCases := []struct {
 		name     string
@@ -39,8 +44,8 @@ func TestChainConfigValidate(t *testing.T) {
 				MuirGlacierBlock:    newIntPtr(0),
 				BerlinBlock:         newIntPtr(0),
 				LondonBlock:         newIntPtr(0),
-				CancunBlock:         newIntPtr(0),
-				ShanghaiBlock:       newIntPtr(0),
+				CancunTime:          newUIntPtr(0),
+				ShanghaiTime:        newUIntPtr(0),
 			},
 			false,
 		},
@@ -60,8 +65,8 @@ func TestChainConfigValidate(t *testing.T) {
 				MuirGlacierBlock:    nil,
 				BerlinBlock:         nil,
 				LondonBlock:         nil,
-				CancunBlock:         nil,
-				ShanghaiBlock:       nil,
+				CancunTime:          nil,
+				ShanghaiTime:        nil,
 			},
 			false,
 		},
@@ -321,7 +326,7 @@ func TestChainConfigValidate(t *testing.T) {
 			true,
 		},
 		{
-			"invalid ShanghaiBlock",
+			"invalid ShanghaiTime",
 			ChainConfig{
 				HomesteadBlock:      newIntPtr(0),
 				DAOForkBlock:        newIntPtr(0),
@@ -335,16 +340,16 @@ func TestChainConfigValidate(t *testing.T) {
 				IstanbulBlock:       newIntPtr(0),
 				MuirGlacierBlock:    newIntPtr(0),
 				BerlinBlock:         newIntPtr(0),
-				LondonBlock:         newIntPtr(0),
+				LondonBlock:         newIntPtr(2),
 				ArrowGlacierBlock:   newIntPtr(0),
 				GrayGlacierBlock:    newIntPtr(0),
 				MergeNetsplitBlock:  newIntPtr(0),
-				ShanghaiBlock:       newIntPtr(-1),
+				ShanghaiTime:        newUIntPtr(1),
 			},
 			true,
 		},
 		{
-			"invalid CancunBlock",
+			"invalid CancunTime",
 			ChainConfig{
 				HomesteadBlock:      newIntPtr(0),
 				DAOForkBlock:        newIntPtr(0),
@@ -362,8 +367,8 @@ func TestChainConfigValidate(t *testing.T) {
 				ArrowGlacierBlock:   newIntPtr(0),
 				GrayGlacierBlock:    newIntPtr(0),
 				MergeNetsplitBlock:  newIntPtr(0),
-				ShanghaiBlock:       newIntPtr(0),
-				CancunBlock:         newIntPtr(-1),
+				ShanghaiTime:        newUIntPtr(2),
+				CancunTime:          newUIntPtr(1),
 			},
 			true,
 		},

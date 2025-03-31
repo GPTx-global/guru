@@ -591,7 +591,7 @@ func (suite *EvmTestSuite) deployERC20Contract() common.Address {
 	nonce := k.GetNonce(suite.ctx, suite.from)
 	ctorArgs, err := types.ERC20Contract.ABI.Pack("", suite.from, big.NewInt(10000000000))
 	suite.Require().NoError(err)
-	msg := ethtypes.NewMessage(
+	msg := core.NewMessage(
 		suite.from,
 		nil,
 		nonce,
@@ -679,7 +679,7 @@ func (suite *EvmTestSuite) TestERC20TransferReverted() {
 
 			txData, err := types.UnpackTxData(tx.Data)
 			suite.Require().NoError(err)
-			fees, err := keeper.VerifyFee(txData, types.DefaultEVMDenom, baseFee, true, true, suite.ctx.IsCheckTx())
+			fees, err := keeper.VerifyFee(txData, types.DefaultEVMDenom, baseFee, true, true, true, suite.ctx.IsCheckTx())
 			suite.Require().NoError(err)
 			err = k.DeductTxCostsFromUserBalance(suite.ctx, fees, common.HexToAddress(tx.From))
 			suite.Require().NoError(err)
@@ -710,7 +710,7 @@ func (suite *EvmTestSuite) TestERC20TransferReverted() {
 }
 
 func (suite *EvmTestSuite) TestContractDeploymentRevert() {
-	intrinsicGas := uint64(134180)
+	intrinsicGas := uint64(234180) //134180
 	testCases := []struct {
 		msg      string
 		gasLimit uint64

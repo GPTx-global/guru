@@ -18,7 +18,6 @@ package debug
 import (
 	"bytes"
 	"errors"
-	"fmt"
 	"io"
 	"os"
 	"runtime" // #nosec G702
@@ -39,7 +38,6 @@ import (
 	rpctypes "github.com/GPTx-global/guru/rpc/types"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
-	"github.com/ethereum/go-ethereum/consensus/ethash"
 	"github.com/ethereum/go-ethereum/rlp"
 	"github.com/tendermint/tendermint/libs/log"
 )
@@ -332,14 +330,14 @@ func (a *API) PrintBlock(number uint64) (string, error) {
 }
 
 // SeedHash retrieves the seed hash of a block.
-func (a *API) SeedHash(number uint64) (string, error) {
-	_, err := a.backend.HeaderByNumber(rpctypes.BlockNumber(number))
-	if err != nil {
-		return "", err
-	}
+// func (a *API) SeedHash(number uint64) (string, error) {
+// 	_, err := a.backend.HeaderByNumber(rpctypes.BlockNumber(number))
+// 	if err != nil {
+// 		return "", err
+// 	}
 
-	return fmt.Sprintf("0x%x", ethash.SeedHash(number)), nil
-}
+// 	return fmt.Sprintf("0x%x", ethash.SeedHash(number)), nil
+// }
 
 // IntermediateRoots executes a block, and returns a list
 // of intermediate roots: the stateroot after each transaction.

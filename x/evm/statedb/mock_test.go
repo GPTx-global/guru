@@ -6,6 +6,7 @@ import (
 	"math/big"
 
 	"github.com/GPTx-global/guru/x/evm/statedb"
+	"github.com/GPTx-global/guru/x/evm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -18,7 +19,7 @@ var (
 )
 
 type MockAcount struct {
-	account statedb.Account
+	account types.StateAccount
 	states  statedb.Storage
 }
 
@@ -34,7 +35,7 @@ func NewMockKeeper() *MockKeeper {
 	}
 }
 
-func (k MockKeeper) GetAccount(_ sdk.Context, addr common.Address) *statedb.Account {
+func (k MockKeeper) GetAccount(_ sdk.Context, addr common.Address) *types.StateAccount {
 	acct, ok := k.accounts[addr]
 	if !ok {
 		return nil
@@ -60,7 +61,7 @@ func (k MockKeeper) ForEachStorage(_ sdk.Context, addr common.Address, cb func(k
 	}
 }
 
-func (k MockKeeper) SetAccount(_ sdk.Context, addr common.Address, account statedb.Account) error {
+func (k MockKeeper) SetAccount(_ sdk.Context, addr common.Address, account types.StateAccount) error {
 	if addr == errAddress {
 		return errors.New("mock db error")
 	}

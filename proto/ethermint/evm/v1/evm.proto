@@ -118,14 +118,14 @@ message ChainConfig {
     (gogoproto.moretags) = "yaml:\"merge_netsplit_block\""
   ];
   // shanghai_block switch block (nil = no fork, 0 = already on shanghai)
-  string shanghai_block = 22 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
-    (gogoproto.moretags) = "yaml:\"shanghai_block\""
+  string shanghai_time = 22 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Uint",
+    (gogoproto.moretags) = "yaml:\"shanghai_time\""
   ];
   // cancun_block switch block (nil = no fork, 0 = already on cancun)
-  string cancun_block = 23 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
-    (gogoproto.moretags) = "yaml:\"cancun_block\""
+  string cancun_time = 23 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Uint",
+    (gogoproto.moretags) = "yaml:\"cancun_time\""
   ];
 }
 
@@ -240,3 +240,4 @@ message TraceConfig {
   // tracer_json_config configures the tracer using a JSON string
   string tracer_json_config = 13 [(gogoproto.jsontag) = "tracerConfig"];
 }
+
