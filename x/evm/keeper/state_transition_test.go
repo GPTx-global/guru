@@ -206,7 +206,7 @@ func (suite *KeeperTestSuite) TestGetEthIntrinsicGas() {
 			1,
 			true,
 			true,
-			params.TxGas + params.TxDataNonZeroGasFrontier*1,
+			params.TxGas + params.TxDataNonZeroGasFrontier*1 + 2,
 		},
 		{
 			"no data, one accesslist, not contract creation, not homestead, not istanbul",
