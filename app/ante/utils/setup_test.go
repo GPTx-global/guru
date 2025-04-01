@@ -56,12 +56,13 @@ func (suite *AnteTestSuite) SetupTest() {
 		evmGenesis.Params.AllowUnprotectedTxs = false
 		if !suite.enableLondonHF {
 			maxInt := sdkmath.NewInt(math.MaxInt64)
+			maxUint := sdkmath.NewUint(math.MaxUint64)
 			evmGenesis.Params.ChainConfig.LondonBlock = &maxInt
 			evmGenesis.Params.ChainConfig.ArrowGlacierBlock = &maxInt
 			evmGenesis.Params.ChainConfig.GrayGlacierBlock = &maxInt
 			evmGenesis.Params.ChainConfig.MergeNetsplitBlock = &maxInt
-			evmGenesis.Params.ChainConfig.ShanghaiTime = &maxInt
-			evmGenesis.Params.ChainConfig.CancunTime = &maxInt
+			evmGenesis.Params.ChainConfig.ShanghaiTime = &maxUint
+			evmGenesis.Params.ChainConfig.CancunTime = &maxUint
 		}
 		if suite.evmParamsOption != nil {
 			suite.evmParamsOption(&evmGenesis.Params)

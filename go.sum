@@ -228,6 +228,8 @@ github.com/GPTx-global/cosmos-sdk v0.46.13-ledger.3-guru.2 h1:ibkTRjzKOMWqQQbd1y
 github.com/GPTx-global/cosmos-sdk v0.46.13-ledger.3-guru.2/go.mod h1:EfY521ATNEla8eJ6oJuZBdgP5+p360s7InnRqX+TWdM=
 github.com/GPTx-global/evmos-ledger-go v0.3.0-rc0-guru.1 h1:e2KkWxlMQcSmnmmK1CM4tcblWyIBHPkL7S5iOyONsUI=
 github.com/GPTx-global/evmos-ledger-go v0.3.0-rc0-guru.1/go.mod h1:A58UOaBFP8CipxEBCLRdrkZUqGEbI7VdISXRorRPvMw=
+github.com/GPTx-global/go-ethereum v1.12.1-guru.1 h1:tHaXxX0OgNmhYXBRaCqhwgD7IBhzWbyIMEi7yxfQfWE=
+github.com/GPTx-global/go-ethereum v1.12.1-guru.1/go.mod h1:lcopTyj+UWTrYG1unolKOpbfJKCaBFtE8HeN9FIiE9c=
 github.com/GPTx-global/ibc-go/v6 v6.1.1-guru.1 h1:n0RHiJHgp5rLHEB4ht6iHRXaJbe6If+WcJkrmr61q4I=
 github.com/GPTx-global/ibc-go/v6 v6.1.1-guru.1/go.mod h1:AIONTPeX+ZvxRwK7Cvqf3fHSNcivei7nS48YFybBSe8=
 github.com/HdrHistogram/hdrhistogram-go v1.1.2/go.mod h1:yDgFjdqOqDEKOvasDdhWNXYg9BVp4O+o5f6V/ehm6Oo=
