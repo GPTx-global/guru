@@ -51,6 +51,25 @@ import (
 	"github.com/tendermint/tendermint/version"
 )
 
+func createInputWithMethidAndValue(method []byte, argValue []byte) []byte {
+	argLength := big.NewInt(int64(len(argValue)))
+	argOffset := big.NewInt(32)
+
+	offsetBytes := make([]byte, 32)
+	argOffset.FillBytes(offsetBytes)
+
+	lengthBytes := make([]byte, 32)
+	argLength.FillBytes(lengthBytes)
+
+	valueBytes := make([]byte, 32)
+	copy(valueBytes, argValue)
+
+	input := append(method, offsetBytes...)
+	input = append(input, lengthBytes...)
+	input = append(input, valueBytes...)
+	return input
+}
+
 type EvmTestSuite struct {
 	suite.Suite
 
@@ -850,23 +869,8 @@ func (suite *EvmTestSuite) TestEIP5656_MCOPY() {
 
 	// keccak-256("copyMemory(bytes)")
 	bytecode = common.FromHex("0xc83aa2f3")
-
 	argValue := common.FromHex("0xff")
-	argLength := big.NewInt(int64(len(argValue)))
-	argOffset := big.NewInt(32)
-
-	offsetBytes := make([]byte, 32)
-	argOffset.FillBytes(offsetBytes)
-
-	lengthBytes := make([]byte, 32)
-	argLength.FillBytes(lengthBytes)
-
-	valueBytes := make([]byte, 32)
-	copy(valueBytes, argValue)
-
-	input := append(bytecode, offsetBytes...)
-	input = append(input, lengthBytes...)
-	input = append(input, valueBytes...)
+	input := createInputWithMethidAndValue(bytecode, argValue)
 
 	ethTxParams = &types.EvmTxArgs{
 		ChainID:  suite.chainID,
