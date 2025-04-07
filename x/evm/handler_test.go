@@ -2,12 +2,15 @@ package evm_test
 
 import (
 	"errors"
+	"fmt"
 	"math/big"
+	"strings"
 	"testing"
 	"time"
 
 	"github.com/GPTx-global/guru/utils"
 	"github.com/GPTx-global/guru/x/evm/keeper"
+	"github.com/status-im/keycard-go/hexutils"
 
 	sdkmath "cosmossdk.io/math"
 	"github.com/gogo/protobuf/proto"
@@ -402,6 +405,7 @@ func (suite *EvmTestSuite) TestDeployAndCallContract() {
 	gasPrice = big.NewInt(100)
 	receiver := crypto.CreateAddress(suite.from, 1)
 
+	// keccak256("changeOwner(address)") => a6f9dae1
 	storeAddr := "0xa6f9dae10000000000000000000000006a82e4a67715c8412a9114fbd2cbaefbc8181424"
 	bytecode = common.FromHex(storeAddr)
 
@@ -445,6 +449,9 @@ func (suite *EvmTestSuite) TestDeployAndCallContract() {
 	err = proto.Unmarshal(result.Data, &res)
 	suite.Require().NoError(err, "failed to decode result data")
 	suite.Require().Equal(res.VmError, "", "failed to handle eth tx msg")
+
+	getAddr := strings.ToLower(hexutils.BytesToHex(res.Ret))
+	fmt.Println("getAddr", getAddr)
 
 	// FIXME: correct owner?
 	// getAddr := strings.ToLower(hexutils.BytesToHex(res.Ret))
@@ -776,4 +783,137 @@ type FailureHook struct{}
 
 func (dh *FailureHook) PostTxProcessing(_ sdk.Context, _ core.Message, _ *ethtypes.Receipt) error {
 	return errors.New("mock error")
+}
+
+func (suite *EvmTestSuite) TestEIP5656_MCOPY() {
+	// Test contract:
+	//
+	// // SPDX-License-Identifier: MIT
+	// pragma solidity ^0.8.24;
+	//
+	// contract MCopyExample {
+	//     bytes public copyData;
+	//
+	//     function copyMemory(bytes memory source) public returns (bytes memory) {
+	//         bytes memory destination = new bytes(source.length);
+	//
+	//         assembly {
+	//             // Use MCOPY
+	//             // Args: desc offset, src offset, bytes
+	//             mcopy(
+	//                 add(destination, 0x20),
+	//                 add(source, 0x20),
+	//                 mload(source)
+	//             )
+	//         }
+	//
+	//         copyData = destination;
+	//
+	//         return destination;
+	//     }
+	//
+	//     function getData() public view returns (bytes memory) {
+	//         return copyData;
+	//     }
+	// }
+	//
+
+	// Deploy contract - MCopyExample
+	gasLimit := uint64(100000000)
+	gasPrice := big.NewInt(10000)
+
+	bytecode := common.FromHex("6080604052348015600e575f80fd5b5061075b8061001c5f395ff3fe608060405234801561000f575f80fd5b506004361061003f575f3560e01c80632f703e08146100435780633bc5de3014610061578063c83aa2f31461007f575b5f80fd5b61004b6100af565b60405161005891906102af565b60405180910390f35b61006961013a565b60405161007691906102af565b60405180910390f35b6100996004803603810190610094919061040c565b6101c9565b6040516100a691906102af565b60405180910390f35b5f80546100bb90610480565b80601f01602080910402602001604051908101604052809291908181526020018280546100e790610480565b80156101325780601f1061010957610100808354040283529160200191610132565b820191905f5260205f20905b81548152906001019060200180831161011557829003601f168201915b505050505081565b60605f805461014890610480565b80601f016020809104026020016040519081016040528092919081815260200182805461017490610480565b80156101bf5780601f10610196576101008083540402835291602001916101bf565b820191905f5260205f20905b8154815290600101906020018083116101a257829003601f168201915b5050505050905090565b60605f825167ffffffffffffffff8111156101e7576101e66102e8565b5b6040519080825280601f01601f1916602001820160405280156102195781602001600182028036833780820191505090505b509050825160208401602083015e805f90816102359190610656565b5080915050919050565b5f81519050919050565b5f82825260208201905092915050565b8281835e5f83830152505050565b5f601f19601f8301169050919050565b5f6102818261023f565b61028b8185610249565b935061029b818560208601610259565b6102a481610267565b840191505092915050565b5f6020820190508181035f8301526102c78184610277565b905092915050565b5f604051905090565b5f80fd5b5f80fd5b5f80fd5b5f80fd5b7f4e487b71000000000000000000000000000000000000000000000000000000005f52604160045260245ffd5b61031e82610267565b810181811067ffffffffffffffff8211171561033d5761033c6102e8565b5b80604052505050565b5f61034f6102cf565b905061035b8282610315565b919050565b5f67ffffffffffffffff82111561037a576103796102e8565b5b61038382610267565b9050602081019050919050565b828183375f83830152505050565b5f6103b06103ab84610360565b610346565b9050828152602081018484840111156103cc576103cb6102e4565b5b6103d7848285610390565b509392505050565b5f82601f8301126103f3576103f26102e0565b5b813561040384826020860161039e565b91505092915050565b5f60208284031215610421576104206102d8565b5b5f82013567ffffffffffffffff81111561043e5761043d6102dc565b5b61044a848285016103df565b91505092915050565b7f4e487b71000000000000000000000000000000000000000000000000000000005f52602260045260245ffd5b5f600282049050600182168061049757607f821691505b6020821081036104aa576104a9610453565b5b50919050565b5f819050815f5260205f209050919050565b5f6020601f8301049050919050565b5f82821b905092915050565b5f6008830261050c7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff826104d1565b61051686836104d1565b95508019841693508086168417925050509392505050565b5f819050919050565b5f819050919050565b5f61055a6105556105508461052e565b610537565b61052e565b9050919050565b5f819050919050565b61057383610540565b61058761057f82610561565b8484546104dd565b825550505050565b5f90565b61059b61058f565b6105a681848461056a565b505050565b5b818110156105c9576105be5f82610593565b6001810190506105ac565b5050565b601f82111561060e576105df816104b0565b6105e8846104c2565b810160208510156105f7578190505b61060b610603856104c2565b8301826105ab565b50505b505050565b5f82821c905092915050565b5f61062e5f1984600802610613565b1980831691505092915050565b5f610646838361061f565b9150826002028217905092915050565b61065f8261023f565b67ffffffffffffffff811115610678576106776102e8565b5b6106828254610480565b61068d8282856105cd565b5f60209050601f8311600181146106be575f84156106ac578287015190505b6106b6858261063b565b86555061071d565b601f1984166106cc866104b0565b5f5b828110156106f3578489015182556001820191506020850194506020810190506106ce565b86831015610710578489015161070c601f89168261061f565b8355505b6001600288020188555050505b50505050505056fea264697066735822122030d42ff52cb7d83dd87a0c04c38e75d22c09b9581f0d624c4d38fed76ff596ba64736f6c634300081a0033")
+	ethTxParams := &types.EvmTxArgs{
+		ChainID:  suite.chainID,
+		Nonce:    1,
+		Amount:   big.NewInt(0),
+		GasPrice: gasPrice,
+		GasLimit: gasLimit,
+		Input:    bytecode,
+	}
+	tx := types.NewTx(ethTxParams)
+	suite.SignTx(tx)
+
+	result, err := suite.handler(suite.ctx, tx)
+	suite.Require().NoError(err, "failed to handle eth tx msg")
+
+	var res types.MsgEthereumTxResponse
+
+	err = proto.Unmarshal(result.Data, &res)
+	suite.Require().NoError(err, "failed to decode result data")
+	suite.Require().Equal(res.VmError, "", "failed to handle eth tx msg")
+
+	// Call copyMemory
+	gasLimit = uint64(100000000000)
+	gasPrice = big.NewInt(100)
+	receiver := crypto.CreateAddress(suite.from, 1)
+
+	// keccak-256("copyMemory(bytes)")
+	bytecode = common.FromHex("0xc83aa2f3")
+
+	argValue := common.FromHex("0xff")
+	argLength := big.NewInt(int64(len(argValue)))
+	argOffset := big.NewInt(32)
+
+	offsetBytes := make([]byte, 32)
+	argOffset.FillBytes(offsetBytes)
+
+	lengthBytes := make([]byte, 32)
+	argLength.FillBytes(lengthBytes)
+
+	valueBytes := make([]byte, 32)
+	copy(valueBytes, argValue)
+
+	input := append(bytecode, offsetBytes...)
+	input = append(input, lengthBytes...)
+	input = append(input, valueBytes...)
+
+	ethTxParams = &types.EvmTxArgs{
+		ChainID:  suite.chainID,
+		Nonce:    2,
+		To:       &receiver,
+		Amount:   big.NewInt(0),
+		GasPrice: gasPrice,
+		GasLimit: gasLimit,
+		Input:    input,
+	}
+	tx = types.NewTx(ethTxParams)
+	suite.SignTx(tx)
+
+	result, err = suite.handler(suite.ctx, tx)
+	suite.Require().NoError(err, "failed to handle eth tx msg")
+
+	err = proto.Unmarshal(result.Data, &res)
+	suite.Require().NoError(err, "failed to decode result data")
+	suite.Require().Equal(res.VmError, "", "failed to handle eth tx msg")
+
+	// Call getData
+	// keccak-256("copyMemory(bytes)")
+	bytecode = common.FromHex("0x3bc5de30")
+
+	ethTxParams = &types.EvmTxArgs{
+		ChainID:  suite.chainID,
+		Nonce:    3,
+		To:       &receiver,
+		Amount:   big.NewInt(0),
+		GasPrice: gasPrice,
+		GasLimit: gasLimit,
+		Input:    bytecode,
+	}
+	tx = types.NewTx(ethTxParams)
+	suite.SignTx(tx)
+
+	result, err = suite.handler(suite.ctx, tx)
+	suite.Require().NoError(err, "failed to handle eth tx msg")
+
+	err = proto.Unmarshal(result.Data, &res)
+	suite.Require().NoError(err, "failed to decode result data")
+	suite.Require().Equal(res.VmError, "", "failed to handle eth tx msg")
+
+	data := strings.ToLower(hexutils.BytesToHex(res.Ret))
+	//32byetes + 32bytes + 32bytes
+	//0x20 = 32
+	//0x01 = 1
+	suite.Require().Equal(data, "00000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000001ff00000000000000000000000000000000000000000000000000000000000000", "failed to call getData")
+	// fmt.Println("Data:", data)
 }
