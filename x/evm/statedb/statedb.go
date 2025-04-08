@@ -122,8 +122,15 @@ func (s *StateDB) SelfDestruct(addr common.Address) {
 }
 
 // Selfdestruct6780 implements vm.StateDB.
-func (s *StateDB) Selfdestruct6780(common.Address) {
-	panic("unimplemented")
+func (s *StateDB) Selfdestruct6780(addr common.Address) {
+	stateObject := s.getStateObject(addr)
+	if stateObject == nil {
+		return
+	}
+
+	if stateObject.created {
+		s.SelfDestruct(addr)
+	}
 }
 
 // New creates a new state from a given trie.
