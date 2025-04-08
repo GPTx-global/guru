@@ -51,6 +51,22 @@ import (
 	"github.com/tendermint/tendermint/version"
 )
 
+type EvmTestSuite struct {
+	suite.Suite
+
+	ctx     sdk.Context
+	handler sdk.Handler
+	app     *app.Guru
+	chainID *big.Int
+
+	signer    keyring.Signer
+	ethSigner ethtypes.Signer
+	from      common.Address
+	to        sdk.AccAddress
+
+	dynamicTxFee bool
+}
+
 func createInputWithMethidAndValue(method []byte, argValue []byte) []byte {
 	argLength := big.NewInt(int64(len(argValue)))
 	argOffset := big.NewInt(32)
@@ -68,22 +84,6 @@ func createInputWithMethidAndValue(method []byte, argValue []byte) []byte {
 	input = append(input, lengthBytes...)
 	input = append(input, valueBytes...)
 	return input
-}
-
-type EvmTestSuite struct {
-	suite.Suite
-
-	ctx     sdk.Context
-	handler sdk.Handler
-	app     *app.Guru
-	chainID *big.Int
-
-	signer    keyring.Signer
-	ethSigner ethtypes.Signer
-	from      common.Address
-	to        sdk.AccAddress
-
-	dynamicTxFee bool
 }
 
 // DoSetupTest setup test environment, it uses`require.TestingT` to support both `testing.T` and `testing.B`.
@@ -817,8 +817,6 @@ func (suite *EvmTestSuite) TestEIP5656_MCOPY() {
 	//         bytes memory destination = new bytes(source.length);
 	//
 	//         assembly {
-	//             // Use MCOPY
-	//             // Args: desc offset, src offset, bytes
 	//             mcopy(
 	//                 add(destination, 0x20),
 	//                 add(source, 0x20),
@@ -867,7 +865,8 @@ func (suite *EvmTestSuite) TestEIP5656_MCOPY() {
 	gasPrice = big.NewInt(100)
 	receiver := crypto.CreateAddress(suite.from, 1)
 
-	// keccak-256("copyMemory(bytes)")
+	// ABI Encoding: Method(4bytes) + Arg offset(32bytes) + Arg offset(32bytes) + Arg value(include padding 32bytes)
+	// keccak-256("copyMemory(bytes)") => c83aa2f325bdbf4402c849d4b1952e56ad2f8a385d6710cf232a2828779d645e
 	bytecode = common.FromHex("0xc83aa2f3")
 	argValue := common.FromHex("0xff")
 	input := createInputWithMethidAndValue(bytecode, argValue)
@@ -920,4 +919,177 @@ func (suite *EvmTestSuite) TestEIP5656_MCOPY() {
 	//0x01 = 1
 	suite.Require().Equal(data, "00000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000001ff00000000000000000000000000000000000000000000000000000000000000", "failed to call getData")
 	// fmt.Println("Data:", data)
+}
+
+func (suite *EvmTestSuite) TestEIP1153_TransientStorage() {
+	// Test contract:
+	// // SPDX-License-Identifier: MIT
+	// pragma solidity ^0.8.28;
+	//
+	// contract TransientStorageTest {
+	//     uint transient tStore;
+	//     uint public nStore; // Normal storage variable
+	//
+	//     // Private function to store value in transient storage
+	//     function store(uint _v) private {
+	//         tStore = _v;
+	//     }
+	//
+	//     // Public function to test transient storage within a single transaction
+	//     function testTransientStorage(uint _in) public returns (uint256) {
+	//         store(_in); // Store input in transient storage
+	//         nStore = tStore; // Copy transient storage to normal storage
+	//         return tStore; // Return value from transient storage
+	//     }
+	//
+	//     // Public function to test transient storage in a subsequent transaction
+	//     function testTransientStorage2() public returns (uint256) {
+	//         nStore = tStore; // Copy transient storage (should be 0) to normal storage
+	//         return tStore; // Return value from transient storage (should be 0)
+	//     }
+	// }
+	// Bytecode: 6080604052348015600e575f5ffd5b506101a68061001c5f395ff3fe608060405234801561000f575f5ffd5b506004361061003f575f3560e01c806323be0d1014610043578063363b976e14610061578063f63f3a9914610091575b5f5ffd5b61004b6100af565b60405161005891906100fe565b60405180910390f35b61007b60048036038101906100769190610145565b6100be565b60405161008891906100fe565b60405180910390f35b6100996100d8565b6040516100a691906100fe565b60405180910390f35b5f5f5c5f819055505f5c905090565b5f6100c8826100dd565b5f5c5f819055505f5c9050919050565b5f5481565b805f81905d5050565b5f819050919050565b6100f8816100e6565b82525050565b5f6020820190506101115f8301846100ef565b92915050565b5f5ffd5b610124816100e6565b811461012e575f5ffd5b50565b5f8135905061013f8161011b565b92915050565b5f6020828403121561015a57610159610117565b5b5f61016784828501610131565b9150509291505056fea2646970667358221220f66c263c5fa7352912625828ca030bd498d350dd60249338bc8a16078e2cb6ce64736f6c634300081c0033
+	// testTransientStorage(uint256) selector: 0x363b976e
+	// testTransientStorage2() selector: 0x23be0d10
+	// nStore() selector: 0xf63f3a99
+
+	// Deploy contract
+	gasLimit := uint64(1000000)
+	gasPrice := big.NewInt(10000)
+	// Updated Bytecode for the new contract
+	bytecode := common.FromHex("6080604052348015600e575f5ffd5b506101a68061001c5f395ff3fe608060405234801561000f575f5ffd5b506004361061003f575f3560e01c806323be0d1014610043578063363b976e14610061578063f63f3a9914610091575b5f5ffd5b61004b6100af565b60405161005891906100fe565b60405180910390f35b61007b60048036038101906100769190610145565b6100be565b60405161008891906100fe565b60405180910390f35b6100996100d8565b6040516100a691906100fe565b60405180910390f35b5f5f5c5f819055505f5c905090565b5f6100c8826100dd565b5f5c5f819055505f5c9050919050565b5f5481565b805f81905d5050565b5f819050919050565b6100f8816100e6565b82525050565b5f6020820190506101115f8301846100ef565b92915050565b5f5ffd5b610124816100e6565b811461012e575f5ffd5b50565b5f8135905061013f8161011b565b92915050565b5f6020828403121561015a57610159610117565b5b5f61016784828501610131565b9150509291505056fea2646970667358221220f66c263c5fa7352912625828ca030bd498d350dd60249338bc8a16078e2cb6ce64736f6c634300081c0033")
+
+	ethTxParams := &types.EvmTxArgs{
+		ChainID:  suite.chainID,
+		Nonce:    1, // Assuming nonce starts at 1 after setup
+		Amount:   big.NewInt(0),
+		GasPrice: gasPrice,
+		GasLimit: gasLimit,
+		Input:    bytecode,
+	}
+	tx := types.NewTx(ethTxParams)
+	suite.SignTx(tx)
+
+	result, err := suite.handler(suite.ctx, tx)
+	suite.Require().NoError(err, "failed to handle contract deployment tx")
+
+	var res types.MsgEthereumTxResponse
+	err = proto.Unmarshal(result.Data, &res)
+	suite.Require().NoError(err, "failed to decode deployment result data")
+	suite.Require().Equal(res.VmError, "", "contract deployment failed")
+	suite.Require().NotEmpty(res.Ret, "contract deployment returned empty address")
+	// contractAddr := common.BytesToAddress(res.Ret) // Get the deployed contract address
+	contractAddr := crypto.CreateAddress(suite.from, 1)
+
+	// fmt.Println("Contract Address:", contractAddr.Hex())
+	// fmt.Println("receiver Address:", receiver.Hex())
+
+	// Call testTransientStorage(42)
+	valueToStore := big.NewInt(42)
+	testTransientStorageSelector := common.FromHex("0x363b976e") // Updated selector
+
+	valueBytes := make([]byte, 32)
+	valueToStore.FillBytes(valueBytes)
+
+	inputData := append(testTransientStorageSelector, valueBytes...)
+
+	ethTxParams = &types.EvmTxArgs{
+		ChainID:  suite.chainID,
+		Nonce:    2, // Increment nonce for the next transaction
+		To:       &contractAddr,
+		Amount:   big.NewInt(0),
+		GasPrice: gasPrice,
+		GasLimit: gasLimit,
+		Input:    inputData,
+	}
+	tx = types.NewTx(ethTxParams)
+	suite.SignTx(tx)
+
+	result, err = suite.handler(suite.ctx, tx)
+	suite.Require().NoError(err, "failed to handle testTransientStorage tx")
+
+	err = proto.Unmarshal(result.Data, &res)
+	suite.Require().NoError(err, "failed to decode testTransientStorage result data")
+	// Expect no VM error now that Shanghai should be active
+	suite.Require().Equal("", res.VmError, "testTransientStorage call failed")
+	suite.Require().NotEmpty(res.Ret, "testTransientStorage returned empty data")
+
+	returnedValue := new(big.Int).SetBytes(res.Ret)
+	suite.Require().Equal(valueToStore, returnedValue, "testTransientStorage returned incorrect value")
+
+	// Call nStore() to check normal storage
+	nStoreSelector := common.FromHex("0xf63f3a99") // Updated selector
+	ethTxParams = &types.EvmTxArgs{
+		ChainID:  suite.chainID,
+		Nonce:    3, // Increment nonce
+		To:       &contractAddr,
+		Amount:   big.NewInt(0),
+		GasPrice: gasPrice,
+		GasLimit: gasLimit,
+		Input:    nStoreSelector,
+	}
+	tx = types.NewTx(ethTxParams)
+	suite.SignTx(tx)
+
+	result, err = suite.handler(suite.ctx, tx)
+	suite.Require().NoError(err, "failed to handle nStore read tx")
+	err = proto.Unmarshal(result.Data, &res)
+	suite.Require().NoError(err, "failed to decode nStore read result data")
+	suite.Require().Equal("", res.VmError, "nStore read call failed")
+	suite.Require().NotEmpty(res.Ret, "nStore read returned empty data")
+
+	nStoreValue := new(big.Int).SetBytes(res.Ret)
+	suite.Require().Equal(valueToStore, nStoreValue, "nStore has incorrect value after testTransientStorage")
+
+	// Call testTransientStorage2() in a NEW transaction
+	testTransientStorage2Selector := common.FromHex("0x23be0d10") // Updated selector
+
+	ethTxParams = &types.EvmTxArgs{
+		ChainID:  suite.chainID,
+		Nonce:    4, // Increment nonce again
+		To:       &contractAddr,
+		Amount:   big.NewInt(0),
+		GasPrice: gasPrice,
+		GasLimit: gasLimit,
+		Input:    testTransientStorage2Selector,
+	}
+	tx = types.NewTx(ethTxParams)
+	suite.SignTx(tx)
+
+	result, err = suite.handler(suite.ctx, tx)
+	suite.Require().NoError(err, "failed to handle testTransientStorage2 tx")
+
+	err = proto.Unmarshal(result.Data, &res)
+	suite.Require().NoError(err, "failed to decode testTransientStorage2 result data")
+	suite.Require().Equal("", res.VmError, "testTransientStorage2 call failed")
+	suite.Require().NotEmpty(res.Ret, "testTransientStorage2 returned empty data")
+
+	returnedValueAfter := new(big.Int).SetBytes(res.Ret)
+	// tStore should be 0 in a new transaction
+	suite.Require().Equal(uint64(0), returnedValueAfter.Uint64(), "testTransientStorage2 returned non-zero value from tStore")
+
+	// Call nStore() again to check normal storage after testTransientStorage2
+	ethTxParams = &types.EvmTxArgs{
+		ChainID:  suite.chainID,
+		Nonce:    5, // Increment nonce
+		To:       &contractAddr,
+		Amount:   big.NewInt(0),
+		GasPrice: gasPrice,
+		GasLimit: gasLimit,
+		Input:    nStoreSelector, // Reuse selector
+	}
+	tx = types.NewTx(ethTxParams)
+	suite.SignTx(tx)
+
+	result, err = suite.handler(suite.ctx, tx)
+	suite.Require().NoError(err, "failed to handle second nStore read tx")
+
+	err = proto.Unmarshal(result.Data, &res)
+	suite.Require().NoError(err, "failed to decode second nStore read result data")
+	suite.Require().Equal("", res.VmError, "second nStore read call failed")
+	suite.Require().NotEmpty(res.Ret, "second nStore read returned empty data")
+
+	nStoreValueAfter := new(big.Int).SetBytes(res.Ret)
+	// nStore should have been updated to 0 by testTransientStorage2
+	suite.Require().Equal(uint64(0), nStoreValueAfter.Uint64(), "nStore has incorrect value after testTransientStorage2")
 }
