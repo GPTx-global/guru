@@ -834,6 +834,10 @@ func (suite *EvmTestSuite) TestEIP5656_MCOPY() {
 	//     }
 	// }
 	//
+	// bytecode: 6080604052348015600e575f5ffd5b5061075e8061001c5f395ff3fe608060405234801561000f575f5ffd5b506004361061003f575f3560e01c80632f703e08146100435780633bc5de3014610061578063c83aa2f31461007f575b5f5ffd5b61004b6100af565b60405161005891906102af565b60405180910390f35b61006961013a565b60405161007691906102af565b60405180910390f35b6100996004803603810190610094919061040c565b6101c9565b6040516100a691906102af565b60405180910390f35b5f80546100bb90610480565b80601f01602080910402602001604051908101604052809291908181526020018280546100e790610480565b80156101325780601f1061010957610100808354040283529160200191610132565b820191905f5260205f20905b81548152906001019060200180831161011557829003601f168201915b505050505081565b60605f805461014890610480565b80601f016020809104026020016040519081016040528092919081815260200182805461017490610480565b80156101bf5780601f10610196576101008083540402835291602001916101bf565b820191905f5260205f20905b8154815290600101906020018083116101a257829003601f168201915b5050505050905090565b60605f825167ffffffffffffffff8111156101e7576101e66102e8565b5b6040519080825280601f01601f1916602001820160405280156102195781602001600182028036833780820191505090505b509050825160208401602083015e805f90816102359190610659565b5080915050919050565b5f81519050919050565b5f82825260208201905092915050565b8281835e5f83830152505050565b5f601f19601f8301169050919050565b5f6102818261023f565b61028b8185610249565b935061029b818560208601610259565b6102a481610267565b840191505092915050565b5f6020820190508181035f8301526102c78184610277565b905092915050565b5f604051905090565b5f5ffd5b5f5ffd5b5f5ffd5b5f5ffd5b7f4e487b71000000000000000000000000000000000000000000000000000000005f52604160045260245ffd5b61031e82610267565b810181811067ffffffffffffffff8211171561033d5761033c6102e8565b5b80604052505050565b5f61034f6102cf565b905061035b8282610315565b919050565b5f67ffffffffffffffff82111561037a576103796102e8565b5b61038382610267565b9050602081019050919050565b828183375f83830152505050565b5f6103b06103ab84610360565b610346565b9050828152602081018484840111156103cc576103cb6102e4565b5b6103d7848285610390565b509392505050565b5f82601f8301126103f3576103f26102e0565b5b813561040384826020860161039e565b91505092915050565b5f60208284031215610421576104206102d8565b5b5f82013567ffffffffffffffff81111561043e5761043d6102dc565b5b61044a848285016103df565b91505092915050565b7f4e487b71000000000000000000000000000000000000000000000000000000005f52602260045260245ffd5b5f600282049050600182168061049757607f821691505b6020821081036104aa576104a9610453565b5b50919050565b5f819050815f5260205f209050919050565b5f6020601f8301049050919050565b5f82821b905092915050565b5f6008830261050c7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff826104d1565b61051686836104d1565b95508019841693508086168417925050509392505050565b5f819050919050565b5f819050919050565b5f61055a6105556105508461052e565b610537565b61052e565b9050919050565b5f819050919050565b61057383610540565b61058761057f82610561565b8484546104dd565b825550505050565b5f5f905090565b61059e61058f565b6105a981848461056a565b505050565b5b818110156105cc576105c15f82610596565b6001810190506105af565b5050565b601f821115610611576105e2816104b0565b6105eb846104c2565b810160208510156105fa578190505b61060e610606856104c2565b8301826105ae565b50505b505050565b5f82821c905092915050565b5f6106315f1984600802610616565b1980831691505092915050565b5f6106498383610622565b9150826002028217905092915050565b6106628261023f565b67ffffffffffffffff81111561067b5761067a6102e8565b5b6106858254610480565b6106908282856105d0565b5f60209050601f8311600181146106c1575f84156106af578287015190505b6106b9858261063e565b865550610720565b601f1984166106cf866104b0565b5f5b828110156106f6578489015182556001820191506020850194506020810190506106d1565b86831015610713578489015161070f601f891682610622565b8355505b6001600288020188555050505b50505050505056fea2646970667358221220ca9668f26243808a963af74de512261559d1275573a383f803ae55b7e30bd20564736f6c634300081d0033
+	// "2f703e08": "copyData()",
+	// "c83aa2f3": "copyMemory(bytes)",
+	// "3bc5de30": "getData()"
 
 	// Deploy contract - MCopyExample
 	gasLimit := uint64(100000000)
@@ -891,7 +895,6 @@ func (suite *EvmTestSuite) TestEIP5656_MCOPY() {
 	suite.Require().Equal(res.VmError, "", "failed to handle eth tx msg")
 
 	// Call getData
-	// keccak-256("copyMemory(bytes)")
 	bytecode = common.FromHex("0x3bc5de30")
 
 	ethTxParams = &types.EvmTxArgs{
@@ -1092,4 +1095,389 @@ func (suite *EvmTestSuite) TestEIP1153_TransientStorage() {
 	nStoreValueAfter := new(big.Int).SetBytes(res.Ret)
 	// nStore should have been updated to 0 by testTransientStorage2
 	suite.Require().Equal(uint64(0), nStoreValueAfter.Uint64(), "nStore has incorrect value after testTransientStorage2")
+}
+
+func (suite *EvmTestSuite) TestEIP6780_Selfdestruct() {
+	// Test contract:
+	// // SPDX-License-Identifier: MIT
+	// pragma solidity ^0.8.20;
+	//
+	// /**
+	//  * @title Victim Contract
+	//  * @notice This contract is designed to be destroyed using SELFDESTRUCT.
+	//  * It contains a function to trigger selfdestruct and can receive Ether.
+	//  */
+	// contract Victim {
+	//     event Destroyed(address indexed target, uint amount);
+	//
+	//     /**
+	//      * @notice Constructor is marked payable to allow receiving Ether during creation.
+	//      */
+	//     constructor() payable {
+	//         // 생성 시 특별히 할 작업이 없더라도 payable로 선언해야
+	//         // new Victim{value: ...}() 구문으로 ETH를 받을 수 있습니다.
+	//     }
+	//
+	//     // Allow receiving Ether so it has a balance to transfer on selfdestruct
+	//     receive() external payable {}
+	//
+	//     /**
+	//      * @notice Triggers the selfdestruct opcode, attempting to send
+	//      * the contract's balance to the specified target address.
+	//      * @param target The address to receive the contract's Ether balance.
+	//      */
+	//     function destroy(address payable target) public {
+	//         uint balance = address(this).balance;
+	//         emit Destroyed(target, balance);
+	//         // The core opcode being tested
+	//         selfdestruct(target);
+	//     }
+	//
+	//     /**
+	//      * @notice A simple function to check if the contract's code is still executable.
+	//      * If the contract is destroyed, calling this function (externally) should fail
+	//      * or behave as if calling an EOA with no code.
+	//      * @return bool Always returns true if the code is executing.
+	//      */
+	//     function isAlive() public pure returns (bool) {
+	//         return true;
+	//     }
+	// }
+	//
+	// /**
+	//  * @title EIP-6780 Tester Contract
+	//  * @notice This contract facilitates testing the behavior of SELFDESTRUCT
+	//  * under EIP-6780 rules by running two scenarios.
+	//  */
+	// contract Tester {
+	//     address public victimAddressForScenarioA; // Scenario A에서 사용할 Victim 컨트랙트 주소 저장
+	//     address public victimAddressForScenarioB; // Scenario B에서 사용할 Victim 컨트랙트 주소 저장
+	//
+	//     // Tester 컨트랙트가 ETH를 받을 수 있도록 함 (Victim 자금 조달 및 selfdestruct로부터 자금 수신)
+	//     receive() external payable {}
+	//
+	//     // --- 시나리오 A: 같은 트랜잭션에서 생성 및 파괴 ---
+	//     /**
+	//      * @notice Scenario A: Creates a Victim contract and immediately calls its
+	//      * 'destroy' function within the SAME transaction.
+	//      * Sends any received Ether to the Victim upon creation.
+	//      * The Victim attempts to selfdestruct, sending its balance back to this Tester contract.
+	//      * @dev According to EIP-6780, the Victim contract SHOULD be destroyed.
+	//      */
+	//     function testCreateAndDestroySameTx() public payable {
+	//         // 1. Victim 컨트랙트 생성 (이 함수로 전송된 ETH 전달)
+	//         Victim victim = new Victim{value: msg.value}();
+	//         address victimAddress = address(victim);
+	//
+	//         victimAddressForScenarioA = victimAddress;
+	//
+	//         // 2. 즉시 Victim의 destroy 함수 호출 (자금을 이 Tester 컨트랙트로 다시 보냄)
+	//         // selfdestruct의 대상 주소는 이 Tester 컨트랙트
+	//         victim.destroy(payable(address(this)));
+	//
+	//         // 참고: 동일 트랜잭션 내에서 selfdestruct 직후 코드 크기 확인은 EVM 실행 순서에 따라
+	//         // 예상과 다를 수 있습니다. 트랜잭션 완료 *후* 외부에서 확인하는 것이 더 확실합니다.
+	//         // 이 시나리오에서는 victimAddress의 코드가 0이 될 것으로 예상합니다.
+	//     }
+	//
+	//     // --- 시나리오 B: 다른 트랜잭션에서 생성 후 파괴 ---
+	//
+	//     /**
+	//      * @notice Scenario B - Step 1: Creates a Victim contract and stores its address.
+	//      * Sends any received Ether to the Victim upon creation.
+	//      * This transaction ONLY creates the Victim.
+	//      */
+	//     function createVictimForScenarioB() public payable {
+	//         Victim victim = new Victim{value: msg.value}();
+	//         victimAddressForScenarioB = address(victim);
+	//     }
+	//
+	//     /**
+	//      * @notice Scenario B - Step 2: Calls the 'destroy' function on the Victim
+	//      * contract created in a PREVIOUS transaction (via createVictimForScenarioB).
+	//      * This happens in a SEPARATE transaction from the creation.
+	//      * @dev According to EIP-6780, the Victim contract SHOULD NOT be destroyed,
+	//      * but its Ether balance SHOULD be transferred to this Tester contract.
+	//      */
+	//     function destroyVictimFromScenarioB() public {
+	//         require(victimAddressForScenarioB != address(0), "Victim for Scenario B not created yet");
+	//
+	//         Victim victimInstance = Victim(payable(victimAddressForScenarioB));
+	//
+	//         // 대상 Victim의 destroy 함수 호출
+	//         // selfdestruct의 대상 주소는 이 Tester 컨트랙트
+	//         victimInstance.destroy(payable(address(this)));
+	//
+	//         // 이 시나리오에서는 victimAddressForScenarioB의 코드가 0이 아니어야 합니다. (파괴되지 않음)
+	//         // 하지만 ETH 잔액은 이 Tester 컨트랙트로 전송되어야 합니다.
+	//     }
+	//
+	//     // --- 검증 헬퍼 함수 (트랜잭션 실행 후 외부에서 호출하여 확인) ---
+	//
+	//     /**
+	//      * @notice Checks the code size of a given address.
+	//      * @param _addr The address to check.
+	//      * @return uint The size of the code at the address (0 if destroyed or EOA).
+	//      */
+	//     function getCodeSize(address _addr) public view returns (uint) {
+	//         return _addr.code.length;
+	//     }
+	//
+	//     /**
+	//      * @notice Checks the Ether balance of a given address.
+	//      * @param _addr The address to check.
+	//      * @return uint The Ether balance in Wei.
+	//      */
+	//     function getBalance(address _addr) public view returns (uint) {
+	//         return _addr.balance;
+	//     }
+	//
+	//     /**
+	//      * @notice Checks if the Victim from Scenario B still has code (is alive).
+	//      * Call this AFTER running destroyVictimFromScenarioB().
+	//      * @return bool True if the Victim contract still has code, false otherwise.
+	//      */
+	//     function isVictimBAlive() public view returns (bool) {
+	//          if (victimAddressForScenarioB == address(0)) {
+	//              return false; // 아직 생성되지 않음
+	//          }
+	//          return getCodeSize(victimAddressForScenarioB) > 0;
+	//     }
+	// }
+	// Bytecode: 608060405234801561000f575f80fd5b506109818061001d5f395ff3fe60806040526004361061007e575f3560e01c80639c9e99851161004d5780639c9e9985146100dd578063b51c4f9614610107578063e10004dd14610143578063f8b2cb4f1461016d57610085565b80635a0e98531461008957806369a832f714610093578063734bf311146100bd57806380ebf041146100d357610085565b3661008557005b5f80fd5b6100916101a9565b005b34801561009e575f80fd5b506100a7610281565b6040516100b4919061056f565b60405180910390f35b3480156100c8575f80fd5b506100d16102a4565b005b6100db6103c0565b005b3480156100e8575f80fd5b506100f161042f565b6040516100fe91906105a2565b60405180910390f35b348015610112575f80fd5b5061012d600480360381019061012891906105e9565b6104be565b60405161013a919061062c565b60405180910390f35b34801561014e575f80fd5b506101576104de565b604051610164919061056f565b60405180910390f35b348015610178575f80fd5b50610193600480360381019061018e91906105e9565b610503565b6040516101a0919061062c565b60405180910390f35b5f346040516101b790610523565b6040518091039082f09050801580156101d2573d5f803e3d5ffd5b5090505f819050805f806101000a81548173ffffffffffffffffffffffffffffffffffffffff021916908373ffffffffffffffffffffffffffffffffffffffff1602179055508173ffffffffffffffffffffffffffffffffffffffff1662f55d9d306040518263ffffffff1660e01b81526004016102509190610665565b5f604051808303815f87803b158015610267575f80fd5b505af1158015610279573d5f803e3d5ffd5b505050505050565b5f8054906101000a900473ffffffffffffffffffffffffffffffffffffffff1681565b5f73ffffffffffffffffffffffffffffffffffffffff1660015f9054906101000a900473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1603610333576040517f08c379a000000000000000000000000000000000000000000000000000000000815260040161032a906106fe565b60405180910390fd5b5f60015f9054906101000a900473ffffffffffffffffffffffffffffffffffffffff1690508073ffffffffffffffffffffffffffffffffffffffff1662f55d9d306040518263ffffffff1660e01b81526004016103909190610665565b5f604051808303815f87803b1580156103a7575f80fd5b505af11580156103b9573d5f803e3d5ffd5b5050505050565b5f346040516103ce90610523565b6040518091039082f09050801580156103e9573d5f803e3d5ffd5b5090508060015f6101000a81548173ffffffffffffffffffffffffffffffffffffffff021916908373ffffffffffffffffffffffffffffffffffffffff16021790555050565b5f8073ffffffffffffffffffffffffffffffffffffffff1660015f9054906101000a900473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff160361048c575f90506104bb565b5f6104b760015f9054906101000a900473ffffffffffffffffffffffffffffffffffffffff166104be565b1190505b90565b5f8173ffffffffffffffffffffffffffffffffffffffff163b9050919050565b60015f9054906101000a900473ffffffffffffffffffffffffffffffffffffffff1681565b5f8173ffffffffffffffffffffffffffffffffffffffff16319050919050565b61022f8061071d83390190565b5f73ffffffffffffffffffffffffffffffffffffffff82169050919050565b5f61055982610530565b9050919050565b6105698161054f565b82525050565b5f6020820190506105825f830184610560565b92915050565b5f8115159050919050565b61059c81610588565b82525050565b5f6020820190506105b55f830184610593565b92915050565b5f80fd5b6105c88161054f565b81146105d2575f80fd5b50565b5f813590506105e3816105bf565b92915050565b5f602082840312156105fe576105fd6105bb565b5b5f61060b848285016105d5565b91505092915050565b5f819050919050565b61062681610614565b82525050565b5f60208201905061063f5f83018461061d565b92915050565b5f61064f82610530565b9050919050565b61065f81610645565b82525050565b5f6020820190506106785f830184610656565b92915050565b5f82825260208201905092915050565b7f56696374696d20666f72205363656e6172696f2042206e6f74206372656174655f8201527f6420796574000000000000000000000000000000000000000000000000000000602082015250565b5f6106e860258361067e565b91506106f38261068e565b604082019050919050565b5f6020820190508181035f830152610715816106dc565b905091905056fe608060405261021e806100115f395ff3fe60806040526004361061002b575f3560e01c8062f55d9d146100365780634136aa351461005e57610032565b3661003257005b5f80fd5b348015610041575f80fd5b5061005c60048036038101906100579190610159565b610088565b005b348015610069575f80fd5b506100726100f3565b60405161007f919061019e565b60405180910390f35b5f4790508173ffffffffffffffffffffffffffffffffffffffff167f789ec66f21698ed1b990c0a8a8be99cf6f5fb8eb3826ee4ee9384870e8db25b1826040516100d291906101cf565b60405180910390a28173ffffffffffffffffffffffffffffffffffffffff16ff5b5f6001905090565b5f80fd5b5f73ffffffffffffffffffffffffffffffffffffffff82169050919050565b5f610128826100ff565b9050919050565b6101388161011e565b8114610142575f80fd5b50565b5f813590506101538161012f565b92915050565b5f6020828403121561016e5761016d6100fb565b5b5f61017b84828501610145565b91505092915050565b5f8115159050919050565b61019881610184565b82525050565b5f6020820190506101b15f83018461018f565b92915050565b5f819050919050565b6101c9816101b7565b82525050565b5f6020820190506101e25f8301846101c0565b9291505056fea264697066735822122044d0802fb391d00f19322c84ab9d7131d07bee75d07c44254436419c7e0e809964736f6c63430008140033a2646970667358221220d683b3b16a0364301b40f4df517829a41da75df133e159e406032b323960085e64736f6c63430008140033
+	// "80ebf041": "createVictimForScenarioB()",
+	// "734bf311": "destroyVictimFromScenarioB()",
+	// "f8b2cb4f": "getBalance(address)",
+	// "b51c4f96": "getCodeSize(address)",
+	// "9c9e9985": "isVictimBAlive()",
+	// "5a0e9853": "testCreateAndDestroySameTx()",
+	// "69a832f7": "victimAddressForScenarioA()",
+	// "e10004dd": "victimAddressForScenarioB()"
+
+	// Deploy contract
+	gasLimit := uint64(1000000)
+	gasPrice := big.NewInt(10000)
+	// Updated Bytecode for the new contract
+	bytecode := common.FromHex("608060405234801561000f575f80fd5b506109818061001d5f395ff3fe60806040526004361061007e575f3560e01c80639c9e99851161004d5780639c9e9985146100dd578063b51c4f9614610107578063e10004dd14610143578063f8b2cb4f1461016d57610085565b80635a0e98531461008957806369a832f714610093578063734bf311146100bd57806380ebf041146100d357610085565b3661008557005b5f80fd5b6100916101a9565b005b34801561009e575f80fd5b506100a7610281565b6040516100b4919061056f565b60405180910390f35b3480156100c8575f80fd5b506100d16102a4565b005b6100db6103c0565b005b3480156100e8575f80fd5b506100f161042f565b6040516100fe91906105a2565b60405180910390f35b348015610112575f80fd5b5061012d600480360381019061012891906105e9565b6104be565b60405161013a919061062c565b60405180910390f35b34801561014e575f80fd5b506101576104de565b604051610164919061056f565b60405180910390f35b348015610178575f80fd5b50610193600480360381019061018e91906105e9565b610503565b6040516101a0919061062c565b60405180910390f35b5f346040516101b790610523565b6040518091039082f09050801580156101d2573d5f803e3d5ffd5b5090505f819050805f806101000a81548173ffffffffffffffffffffffffffffffffffffffff021916908373ffffffffffffffffffffffffffffffffffffffff1602179055508173ffffffffffffffffffffffffffffffffffffffff1662f55d9d306040518263ffffffff1660e01b81526004016102509190610665565b5f604051808303815f87803b158015610267575f80fd5b505af1158015610279573d5f803e3d5ffd5b505050505050565b5f8054906101000a900473ffffffffffffffffffffffffffffffffffffffff1681565b5f73ffffffffffffffffffffffffffffffffffffffff1660015f9054906101000a900473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1603610333576040517f08c379a000000000000000000000000000000000000000000000000000000000815260040161032a906106fe565b60405180910390fd5b5f60015f9054906101000a900473ffffffffffffffffffffffffffffffffffffffff1690508073ffffffffffffffffffffffffffffffffffffffff1662f55d9d306040518263ffffffff1660e01b81526004016103909190610665565b5f604051808303815f87803b1580156103a7575f80fd5b505af11580156103b9573d5f803e3d5ffd5b5050505050565b5f346040516103ce90610523565b6040518091039082f09050801580156103e9573d5f803e3d5ffd5b5090508060015f6101000a81548173ffffffffffffffffffffffffffffffffffffffff021916908373ffffffffffffffffffffffffffffffffffffffff16021790555050565b5f8073ffffffffffffffffffffffffffffffffffffffff1660015f9054906101000a900473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff160361048c575f90506104bb565b5f6104b760015f9054906101000a900473ffffffffffffffffffffffffffffffffffffffff166104be565b1190505b90565b5f8173ffffffffffffffffffffffffffffffffffffffff163b9050919050565b60015f9054906101000a900473ffffffffffffffffffffffffffffffffffffffff1681565b5f8173ffffffffffffffffffffffffffffffffffffffff16319050919050565b61022f8061071d83390190565b5f73ffffffffffffffffffffffffffffffffffffffff82169050919050565b5f61055982610530565b9050919050565b6105698161054f565b82525050565b5f6020820190506105825f830184610560565b92915050565b5f8115159050919050565b61059c81610588565b82525050565b5f6020820190506105b55f830184610593565b92915050565b5f80fd5b6105c88161054f565b81146105d2575f80fd5b50565b5f813590506105e3816105bf565b92915050565b5f602082840312156105fe576105fd6105bb565b5b5f61060b848285016105d5565b91505092915050565b5f819050919050565b61062681610614565b82525050565b5f60208201905061063f5f83018461061d565b92915050565b5f61064f82610530565b9050919050565b61065f81610645565b82525050565b5f6020820190506106785f830184610656565b92915050565b5f82825260208201905092915050565b7f56696374696d20666f72205363656e6172696f2042206e6f74206372656174655f8201527f6420796574000000000000000000000000000000000000000000000000000000602082015250565b5f6106e860258361067e565b91506106f38261068e565b604082019050919050565b5f6020820190508181035f830152610715816106dc565b905091905056fe608060405261021e806100115f395ff3fe60806040526004361061002b575f3560e01c8062f55d9d146100365780634136aa351461005e57610032565b3661003257005b5f80fd5b348015610041575f80fd5b5061005c60048036038101906100579190610159565b610088565b005b348015610069575f80fd5b506100726100f3565b60405161007f919061019e565b60405180910390f35b5f4790508173ffffffffffffffffffffffffffffffffffffffff167f789ec66f21698ed1b990c0a8a8be99cf6f5fb8eb3826ee4ee9384870e8db25b1826040516100d291906101cf565b60405180910390a28173ffffffffffffffffffffffffffffffffffffffff16ff5b5f6001905090565b5f80fd5b5f73ffffffffffffffffffffffffffffffffffffffff82169050919050565b5f610128826100ff565b9050919050565b6101388161011e565b8114610142575f80fd5b50565b5f813590506101538161012f565b92915050565b5f6020828403121561016e5761016d6100fb565b5b5f61017b84828501610145565b91505092915050565b5f8115159050919050565b61019881610184565b82525050565b5f6020820190506101b15f83018461018f565b92915050565b5f819050919050565b6101c9816101b7565b82525050565b5f6020820190506101e25f8301846101c0565b9291505056fea264697066735822122044d0802fb391d00f19322c84ab9d7131d07bee75d07c44254436419c7e0e809964736f6c63430008140033a2646970667358221220d683b3b16a0364301b40f4df517829a41da75df133e159e406032b323960085e64736f6c63430008140033")
+
+	ethTxParams := &types.EvmTxArgs{
+		ChainID:  suite.chainID,
+		Nonce:    1, // Assuming nonce starts at 1 after setup
+		Amount:   big.NewInt(0),
+		GasPrice: gasPrice,
+		GasLimit: gasLimit,
+		Input:    bytecode,
+	}
+	tx := types.NewTx(ethTxParams)
+	suite.SignTx(tx)
+
+	result, err := suite.handler(suite.ctx, tx)
+	suite.Require().NoError(err, "failed to handle contract deployment tx")
+
+	var res types.MsgEthereumTxResponse
+	err = proto.Unmarshal(result.Data, &res)
+	suite.Require().NoError(err, "failed to decode deployment result data")
+	suite.Require().Equal(res.VmError, "", "contract deployment failed")
+	suite.Require().NotEmpty(res.Ret, "contract deployment returned empty address")
+	// contractAddr := common.BytesToAddress(res.Ret) // Get the deployed contract address
+	contractAddr := crypto.CreateAddress(suite.from, 1)
+
+	// fmt.Println("Contract Address:", contractAddr.Hex())
+
+	//////////////////////////////////////////////////////////////////////
+	// Scenario A: Construct and destroy in the same transaction
+	//////////////////////////////////////////////////////////////////////
+
+	// Call testCreateAndDestroySameTx()
+	bytecode = common.FromHex("0x5a0e9853")
+
+	ethTxParams = &types.EvmTxArgs{
+		ChainID:  suite.chainID,
+		Nonce:    2,
+		To:       &contractAddr,
+		Amount:   big.NewInt(0),
+		GasPrice: gasPrice,
+		GasLimit: gasLimit,
+		Input:    bytecode,
+	}
+	tx = types.NewTx(ethTxParams)
+	suite.SignTx(tx)
+
+	result, err = suite.handler(suite.ctx, tx)
+	suite.Require().NoError(err, "failed to handle eth tx msg")
+
+	err = proto.Unmarshal(result.Data, &res)
+	suite.Require().NoError(err, "failed to decode result data")
+	suite.Require().Equal(res.VmError, "", "failed to handle eth tx msg")
+
+	// Call victimAddressForScenarioA()
+	bytecode = common.FromHex("0x69a832f7")
+
+	ethTxParams = &types.EvmTxArgs{
+		ChainID:  suite.chainID,
+		Nonce:    3,
+		To:       &contractAddr,
+		Amount:   big.NewInt(0),
+		GasPrice: gasPrice,
+		GasLimit: gasLimit,
+		Input:    bytecode,
+	}
+	tx = types.NewTx(ethTxParams)
+	suite.SignTx(tx)
+
+	result, err = suite.handler(suite.ctx, tx)
+	suite.Require().NoError(err, "failed to handle eth tx msg")
+
+	err = proto.Unmarshal(result.Data, &res)
+	suite.Require().NoError(err, "failed to decode result data")
+	suite.Require().Equal(res.VmError, "", "failed to handle eth tx msg")
+
+	victimAddressForScenarioA := common.BytesToAddress(res.Ret)
+	fmt.Println("Victim Address for Scenario A:", victimAddressForScenarioA.Hex())
+
+	// Call getCodeSize()
+	bytecode = common.FromHex("0xb51c4f96")
+	argValue := common.FromHex(victimAddressForScenarioA.Hex())
+	input := createInputWithMethidAndValue(bytecode, argValue)
+
+	ethTxParams = &types.EvmTxArgs{
+		ChainID:  suite.chainID,
+		Nonce:    4,
+		To:       &contractAddr,
+		Amount:   big.NewInt(0),
+		GasPrice: gasPrice,
+		GasLimit: gasLimit,
+		Input:    input,
+	}
+	tx = types.NewTx(ethTxParams)
+	suite.SignTx(tx)
+
+	result, err = suite.handler(suite.ctx, tx)
+	suite.Require().NoError(err, "failed to handle eth tx msg")
+
+	err = proto.Unmarshal(result.Data, &res)
+	suite.Require().NoError(err, "failed to decode result data")
+	suite.Require().Equal(res.VmError, "", "failed to handle eth tx msg")
+
+	// Check the code size of the victim contract
+	codeSize := new(big.Int).SetBytes(res.Ret)
+	suite.Require().Equal(uint64(0), codeSize.Uint64(), "Victim contract should be destroyed in Scenario A")
+
+	//TODO: Check the balance of the tester contract
+
+	// // Check the balance of the victim contract
+	// balance := new(big.Int).SetBytes(res.Ret)
+	// suite.Require().Equal(uint64(0), balance.Uint64(), "Victim contract should have no balance in Scenario A")
+	// // Check the balance of the tester contract
+	// testerBalance := new(big.Int).SetBytes(res.Ret)
+	// suite.Require().Equal(uint64(0), testerBalance.Uint64(), "Tester contract should have no balance in Scenario A")
+
+	//////////////////////////////////////////////////////////////////////
+	// Scenario B: Destroy Tx after construct Tx
+	//////////////////////////////////////////////////////////////////////
+	// Call createVictimForScenarioB()
+	bytecode = common.FromHex("0x80ebf041")
+
+	ethTxParams = &types.EvmTxArgs{
+		ChainID:  suite.chainID,
+		Nonce:    5,
+		To:       &contractAddr,
+		Amount:   big.NewInt(0),
+		GasPrice: gasPrice,
+		GasLimit: gasLimit,
+		Input:    bytecode,
+	}
+	tx = types.NewTx(ethTxParams)
+	suite.SignTx(tx)
+
+	result, err = suite.handler(suite.ctx, tx)
+	suite.Require().NoError(err, "failed to handle eth tx msg")
+
+	err = proto.Unmarshal(result.Data, &res)
+	suite.Require().NoError(err, "failed to decode result data")
+	suite.Require().Equal(res.VmError, "", "failed to handle eth tx msg")
+
+	// Call victimAddressForScenarioB()
+	bytecode = common.FromHex("0xe10004dd")
+
+	ethTxParams = &types.EvmTxArgs{
+		ChainID:  suite.chainID,
+		Nonce:    6,
+		To:       &contractAddr,
+		Amount:   big.NewInt(0),
+		GasPrice: gasPrice,
+		GasLimit: gasLimit,
+		Input:    bytecode,
+	}
+	tx = types.NewTx(ethTxParams)
+	suite.SignTx(tx)
+
+	result, err = suite.handler(suite.ctx, tx)
+	suite.Require().NoError(err, "failed to handle eth tx msg")
+
+	err = proto.Unmarshal(result.Data, &res)
+	suite.Require().NoError(err, "failed to decode result data")
+	suite.Require().Equal(res.VmError, "", "failed to handle eth tx msg")
+
+	victimAddressForScenarioB := common.BytesToAddress(res.Ret)
+	fmt.Println("Victim Address for Scenario B:", victimAddressForScenarioB.Hex())
+
+	// Call destroyVictimFromScenarioB()
+	bytecode = common.FromHex("0x734bf311")
+
+	ethTxParams = &types.EvmTxArgs{
+		ChainID:  suite.chainID,
+		Nonce:    7,
+		To:       &contractAddr,
+		Amount:   big.NewInt(0),
+		GasPrice: gasPrice,
+		GasLimit: gasLimit,
+		Input:    bytecode,
+	}
+	tx = types.NewTx(ethTxParams)
+	suite.SignTx(tx)
+
+	result, err = suite.handler(suite.ctx, tx)
+	suite.Require().NoError(err, "failed to handle eth tx msg")
+
+	err = proto.Unmarshal(result.Data, &res)
+	suite.Require().NoError(err, "failed to decode result data")
+	suite.Require().Equal(res.VmError, "", "failed to handle eth tx msg")
+
+	// Call isVictimBAlive()
+	bytecode = common.FromHex("0x9c9e9985")
+
+	ethTxParams = &types.EvmTxArgs{
+		ChainID:  suite.chainID,
+		Nonce:    8,
+		To:       &contractAddr,
+		Amount:   big.NewInt(0),
+		GasPrice: gasPrice,
+		GasLimit: gasLimit,
+		Input:    bytecode,
+	}
+	tx = types.NewTx(ethTxParams)
+	suite.SignTx(tx)
+
+	result, err = suite.handler(suite.ctx, tx)
+	suite.Require().NoError(err, "failed to handle eth tx msg")
+
+	err = proto.Unmarshal(result.Data, &res)
+	suite.Require().NoError(err, "failed to decode result data")
+	suite.Require().Equal(res.VmError, "", "failed to handle eth tx msg")
+
+	// Check the code size of the victim contract
+	isAlive := new(big.Int).SetBytes(res.Ret)
+	suite.Require().True(isAlive.Uint64() > 0, "Victim contract should not be destroyed in Scenario B")
+	// suite.Require().Equal(uint64(1), isAlive.Uint64(), "Victim contract should not be destroyed in Scenario B")
+
+	//TODO: Check the balance of the tester contract
+
+	// // Check the balance of the victim contract
+	// balance := new(big.Int).SetBytes(res.Ret)
+	// suite.Require().Equal(uint64(0), balance.Uint64(), "Victim contract should have no balance in Scenario B")
+	// // Check the balance of the tester contract
+	// testerBalance := new(big.Int).SetBytes(res.Ret)
+	// suite.Require().Equal(uint64(0), testerBalance.Uint64(), "Tester contract should have no balance in Scenario B")
+
 }
