@@ -49,6 +49,8 @@ import (
 	tmversion "github.com/tendermint/tendermint/proto/tendermint/version"
 
 	"github.com/tendermint/tendermint/version"
+
+	"github.com/GPTx-global/guru/testutil"
 )
 
 type EvmTestSuite struct {
@@ -94,6 +96,7 @@ func (suite *EvmTestSuite) DoSetupTest(t require.TestingT) {
 	priv, err := ethsecp256k1.GenerateKey()
 	require.NoError(t, err)
 	address := common.BytesToAddress(priv.PubKey().Address().Bytes())
+	b32AccAddress := sdk.MustBech32ifyAddressBytes(sdk.GetConfig().GetBech32AccountAddrPrefix(), priv.PubKey().Address().Bytes())
 	suite.signer = utiltx.NewSigner(priv)
 	suite.from = address
 	// consensus key
@@ -111,10 +114,16 @@ func (suite *EvmTestSuite) DoSetupTest(t require.TestingT) {
 		return genesis
 	})
 
-	coins := sdk.NewCoins(sdk.NewCoin(types.DefaultEVMDenom, sdkmath.NewInt(100000000000000)))
+	stakeDenom := stakingtypes.DefaultParams().BondDenom
+
+	coins := sdk.NewCoins(sdk.NewCoin(types.DefaultEVMDenom, sdkmath.NewInt(100000000000000)), sdk.NewCoin(stakeDenom, sdkmath.NewInt(100000000000000)))
 	genesisState := app.NewTestGenesisState(suite.app.AppCodec())
 	b32address := sdk.MustBech32ifyAddressBytes(sdk.GetConfig().GetBech32AccountAddrPrefix(), priv.PubKey().Address().Bytes())
 	balances := []banktypes.Balance{
+		{
+			Address: b32AccAddress,
+			Coins:   coins,
+		},
 		{
 			Address: b32address,
 			Coins:   coins,
@@ -128,7 +137,7 @@ func (suite *EvmTestSuite) DoSetupTest(t require.TestingT) {
 	suite.app.AppCodec().MustUnmarshalJSON(genesisState[banktypes.ModuleName], &bankGenesis)
 	// Update balances and total supply
 	bankGenesis.Balances = append(bankGenesis.Balances, balances...)
-	bankGenesis.Supply = bankGenesis.Supply.Add(coins...).Add(coins...)
+	bankGenesis.Supply = bankGenesis.Supply.Add(coins...).Add(coins...).Add(coins...)
 	genesisState[banktypes.ModuleName] = suite.app.AppCodec().MustMarshalJSON(&bankGenesis)
 
 	stateBytes, err := tmjson.MarshalIndent(genesisState, "", " ")
@@ -178,17 +187,33 @@ func (suite *EvmTestSuite) DoSetupTest(t require.TestingT) {
 	suite.app.AccountKeeper.SetAccount(suite.ctx, acc)
 
 	valAddr := sdk.ValAddress(address.Bytes())
+	accAddr := sdk.AccAddress(address.Bytes())
 	validator, err := stakingtypes.NewValidator(valAddr, priv.PubKey(), stakingtypes.Description{})
 	require.NoError(t, err)
 
 	err = suite.app.StakingKeeper.SetValidatorByConsAddr(suite.ctx, validator)
 	require.NoError(t, err)
-	err = suite.app.StakingKeeper.SetValidatorByConsAddr(suite.ctx, validator)
-	require.NoError(t, err)
+	// err = suite.app.StakingKeeper.SetValidatorByConsAddr(suite.ctx, validator)
+	// require.NoError(t, err)
 	suite.app.StakingKeeper.SetValidator(suite.ctx, validator)
+
+	// Manually set indices for the first time
+	// suite.app.StakingKeeper.SetValidatorByConsAddr(suite.ctx, validator)
+	// suite.app.StakingKeeper.SetValidatorByPowerIndex(suite.ctx, validator)
+
+	// call the after-creation hook
+	if err := suite.app.StakingKeeper.AfterValidatorCreated(suite.ctx, validator.GetOperator()); err != nil {
+		panic(err)
+	}
+	_, err = suite.app.StakingKeeper.Delegate(suite.ctx, accAddr, sdkmath.NewInt(1), 1, validator, true)
+	require.NoError(t, err)
 
 	suite.ethSigner = ethtypes.LatestSignerForChainID(suite.app.EvmKeeper.ChainID())
 	suite.handler = evm.NewHandler(suite.app.EvmKeeper)
+
+	// add distribution moderator and base
+	suite.app.DistrKeeper.SetModeratorAddress(suite.ctx, "guru1ks92ccc8sszwumjk2ue5v9rthlm2gp7ffx930h")
+	suite.app.DistrKeeper.SetBaseAddress(suite.ctx, "guru1ks92ccc8sszwumjk2ue5v9rthlm2gp7ffx930h")
 }
 
 func (suite *EvmTestSuite) SetupTest() {
@@ -1256,7 +1281,7 @@ func (suite *EvmTestSuite) TestEIP6780_Selfdestruct() {
 
 	// Deploy contract
 	gasLimit := uint64(1000000)
-	gasPrice := big.NewInt(10000)
+	gasPrice := big.NewInt(0)
 	// Updated Bytecode for the new contract
 	bytecode := common.FromHex("608060405234801561000f575f80fd5b506109818061001d5f395ff3fe60806040526004361061007e575f3560e01c80639c9e99851161004d5780639c9e9985146100dd578063b51c4f9614610107578063e10004dd14610143578063f8b2cb4f1461016d57610085565b80635a0e98531461008957806369a832f714610093578063734bf311146100bd57806380ebf041146100d357610085565b3661008557005b5f80fd5b6100916101a9565b005b34801561009e575f80fd5b506100a7610281565b6040516100b4919061056f565b60405180910390f35b3480156100c8575f80fd5b506100d16102a4565b005b6100db6103c0565b005b3480156100e8575f80fd5b506100f161042f565b6040516100fe91906105a2565b60405180910390f35b348015610112575f80fd5b5061012d600480360381019061012891906105e9565b6104be565b60405161013a919061062c565b60405180910390f35b34801561014e575f80fd5b506101576104de565b604051610164919061056f565b60405180910390f35b348015610178575f80fd5b50610193600480360381019061018e91906105e9565b610503565b6040516101a0919061062c565b60405180910390f35b5f346040516101b790610523565b6040518091039082f09050801580156101d2573d5f803e3d5ffd5b5090505f819050805f806101000a81548173ffffffffffffffffffffffffffffffffffffffff021916908373ffffffffffffffffffffffffffffffffffffffff1602179055508173ffffffffffffffffffffffffffffffffffffffff1662f55d9d306040518263ffffffff1660e01b81526004016102509190610665565b5f604051808303815f87803b158015610267575f80fd5b505af1158015610279573d5f803e3d5ffd5b505050505050565b5f8054906101000a900473ffffffffffffffffffffffffffffffffffffffff1681565b5f73ffffffffffffffffffffffffffffffffffffffff1660015f9054906101000a900473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1603610333576040517f08c379a000000000000000000000000000000000000000000000000000000000815260040161032a906106fe565b60405180910390fd5b5f60015f9054906101000a900473ffffffffffffffffffffffffffffffffffffffff1690508073ffffffffffffffffffffffffffffffffffffffff1662f55d9d306040518263ffffffff1660e01b81526004016103909190610665565b5f604051808303815f87803b1580156103a7575f80fd5b505af11580156103b9573d5f803e3d5ffd5b5050505050565b5f346040516103ce90610523565b6040518091039082f09050801580156103e9573d5f803e3d5ffd5b5090508060015f6101000a81548173ffffffffffffffffffffffffffffffffffffffff021916908373ffffffffffffffffffffffffffffffffffffffff16021790555050565b5f8073ffffffffffffffffffffffffffffffffffffffff1660015f9054906101000a900473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff160361048c575f90506104bb565b5f6104b760015f9054906101000a900473ffffffffffffffffffffffffffffffffffffffff166104be565b1190505b90565b5f8173ffffffffffffffffffffffffffffffffffffffff163b9050919050565b60015f9054906101000a900473ffffffffffffffffffffffffffffffffffffffff1681565b5f8173ffffffffffffffffffffffffffffffffffffffff16319050919050565b61022f8061071d83390190565b5f73ffffffffffffffffffffffffffffffffffffffff82169050919050565b5f61055982610530565b9050919050565b6105698161054f565b82525050565b5f6020820190506105825f830184610560565b92915050565b5f8115159050919050565b61059c81610588565b82525050565b5f6020820190506105b55f830184610593565b92915050565b5f80fd5b6105c88161054f565b81146105d2575f80fd5b50565b5f813590506105e3816105bf565b92915050565b5f602082840312156105fe576105fd6105bb565b5b5f61060b848285016105d5565b91505092915050565b5f819050919050565b61062681610614565b82525050565b5f60208201905061063f5f83018461061d565b92915050565b5f61064f82610530565b9050919050565b61065f81610645565b82525050565b5f6020820190506106785f830184610656565b92915050565b5f82825260208201905092915050565b7f56696374696d20666f72205363656e6172696f2042206e6f74206372656174655f8201527f6420796574000000000000000000000000000000000000000000000000000000602082015250565b5f6106e860258361067e565b91506106f38261068e565b604082019050919050565b5f6020820190508181035f830152610715816106dc565b905091905056fe608060405261021e806100115f395ff3fe60806040526004361061002b575f3560e01c8062f55d9d146100365780634136aa351461005e57610032565b3661003257005b5f80fd5b348015610041575f80fd5b5061005c60048036038101906100579190610159565b610088565b005b348015610069575f80fd5b506100726100f3565b60405161007f919061019e565b60405180910390f35b5f4790508173ffffffffffffffffffffffffffffffffffffffff167f789ec66f21698ed1b990c0a8a8be99cf6f5fb8eb3826ee4ee9384870e8db25b1826040516100d291906101cf565b60405180910390a28173ffffffffffffffffffffffffffffffffffffffff16ff5b5f6001905090565b5f80fd5b5f73ffffffffffffffffffffffffffffffffffffffff82169050919050565b5f610128826100ff565b9050919050565b6101388161011e565b8114610142575f80fd5b50565b5f813590506101538161012f565b92915050565b5f6020828403121561016e5761016d6100fb565b5b5f61017b84828501610145565b91505092915050565b5f8115159050919050565b61019881610184565b82525050565b5f6020820190506101b15f83018461018f565b92915050565b5f819050919050565b6101c9816101b7565b82525050565b5f6020820190506101e25f8301846101c0565b9291505056fea264697066735822122044d0802fb391d00f19322c84ab9d7131d07bee75d07c44254436419c7e0e809964736f6c63430008140033a2646970667358221220d683b3b16a0364301b40f4df517829a41da75df133e159e406032b323960085e64736f6c63430008140033")
 
@@ -1273,6 +1298,9 @@ func (suite *EvmTestSuite) TestEIP6780_Selfdestruct() {
 
 	result, err := suite.handler(suite.ctx, tx)
 	suite.Require().NoError(err, "failed to handle contract deployment tx")
+
+	suite.ctx, err = testutil.Commit(suite.ctx, suite.app, 0*time.Second, nil)
+	suite.Require().NoError(err)
 
 	var res types.MsgEthereumTxResponse
 	err = proto.Unmarshal(result.Data, &res)
@@ -1310,6 +1338,9 @@ func (suite *EvmTestSuite) TestEIP6780_Selfdestruct() {
 	suite.Require().NoError(err, "failed to decode result data")
 	suite.Require().Equal(res.VmError, "", "failed to handle eth tx msg")
 
+	suite.ctx, err = testutil.Commit(suite.ctx, suite.app, 0*time.Second, nil)
+	suite.Require().NoError(err)
+
 	// Call victimAddressForScenarioA()
 	bytecode = common.FromHex("0x69a832f7")
 
@@ -1333,7 +1364,9 @@ func (suite *EvmTestSuite) TestEIP6780_Selfdestruct() {
 	suite.Require().Equal(res.VmError, "", "failed to handle eth tx msg")
 
 	victimAddressForScenarioA := common.BytesToAddress(res.Ret)
-	fmt.Println("Victim Address for Scenario A:", victimAddressForScenarioA.Hex())
+
+	suite.ctx, err = testutil.Commit(suite.ctx, suite.app, 0*time.Second, nil)
+	suite.Require().NoError(err)
 
 	// Call getCodeSize()
 	bytecode = common.FromHex("0xb51c4f96")
@@ -1371,6 +1404,9 @@ func (suite *EvmTestSuite) TestEIP6780_Selfdestruct() {
 	// // Check the balance of the tester contract
 	// testerBalance := new(big.Int).SetBytes(res.Ret)
 	// suite.Require().Equal(uint64(0), testerBalance.Uint64(), "Tester contract should have no balance in Scenario A")
+
+	suite.ctx, err = testutil.Commit(suite.ctx, suite.app, 0*time.Second, nil)
+	suite.Require().NoError(err)
 
 	//////////////////////////////////////////////////////////////////////
 	// Scenario B: Destroy Tx after construct Tx
@@ -1419,8 +1455,8 @@ func (suite *EvmTestSuite) TestEIP6780_Selfdestruct() {
 	suite.Require().NoError(err, "failed to decode result data")
 	suite.Require().Equal(res.VmError, "", "failed to handle eth tx msg")
 
-	victimAddressForScenarioB := common.BytesToAddress(res.Ret)
-	fmt.Println("Victim Address for Scenario B:", victimAddressForScenarioB.Hex())
+	suite.ctx, err = testutil.Commit(suite.ctx, suite.app, 0*time.Second, nil)
+	suite.Require().NoError(err)
 
 	// Call destroyVictimFromScenarioB()
 	bytecode = common.FromHex("0x734bf311")
@@ -1443,6 +1479,9 @@ func (suite *EvmTestSuite) TestEIP6780_Selfdestruct() {
 	err = proto.Unmarshal(result.Data, &res)
 	suite.Require().NoError(err, "failed to decode result data")
 	suite.Require().Equal(res.VmError, "", "failed to handle eth tx msg")
+
+	suite.ctx, err = testutil.Commit(suite.ctx, suite.app, 0*time.Second, nil)
+	suite.Require().NoError(err)
 
 	// Call isVictimBAlive()
 	bytecode = common.FromHex("0x9c9e9985")
@@ -1479,5 +1518,8 @@ func (suite *EvmTestSuite) TestEIP6780_Selfdestruct() {
 	// // Check the balance of the tester contract
 	// testerBalance := new(big.Int).SetBytes(res.Ret)
 	// suite.Require().Equal(uint64(0), testerBalance.Uint64(), "Tester contract should have no balance in Scenario B")
+
+	suite.ctx, err = testutil.Commit(suite.ctx, suite.app, 0*time.Second, nil)
+	suite.Require().NoError(err)
 
 }
