@@ -569,7 +569,7 @@ func (suite *StateDBTestSuite) TestIterateStorage() {
 	suite.Require().Equal(1, len(storage))
 }
 
-func CollectContractStorage(db vm.StateDB) statedb.Storage {
+func CollectContractStorage(db *statedb.StateDB) statedb.Storage {
 	storage := make(statedb.Storage)
 	err := db.ForEachStorage(address, func(k, v common.Hash) bool {
 		storage[k] = v

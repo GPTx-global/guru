@@ -14,7 +14,7 @@ require (
 	github.com/cosmos/gogoproto v1.4.8
 	github.com/cosmos/ibc-go/v6 v6.1.1
 	github.com/davecgh/go-spew v1.1.1
-	github.com/ethereum/go-ethereum v1.10.26
+	github.com/ethereum/go-ethereum v1.12.1
 	github.com/evmos/evmos-ledger-go v0.3.0-rc0
 	github.com/gogo/protobuf v1.3.3
 	github.com/golang/protobuf v1.5.4
@@ -227,7 +227,7 @@ replace (
 	// use GPTx-global ibc-go repo
 	github.com/cosmos/ibc-go/v6 => github.com/GPTx-global/ibc-go/v6 v6.1.1-guru.1
 	// use GPTx-global geth fork
-	github.com/ethereum/go-ethereum => github.com/GPTx-global/go-ethereum v1.12.1-guru.1
+	// github.com/ethereum/go-ethereum => github.com/GPTx-global/go-ethereum v1.12.1-guru.1
 
 	github.com/evmos/evmos-ledger-go => github.com/GPTx-global/evmos-ledger-go v0.3.0-rc0-guru.1
 	// Security Advisory https://github.com/advisories/GHSA-h395-qcrw-5vmq

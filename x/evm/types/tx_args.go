@@ -240,7 +240,20 @@ func (args *TransactionArgs) ToMessage(globalGasCap uint64, baseFee *big.Int) (c
 		nonce = uint64(*args.Nonce)
 	}
 
-	msg := core.NewMessage(addr, args.To, nonce, value, gas, gasPrice, gasFeeCap, gasTipCap, data, accessList, true)
+	//msg := core.NewMessage(addr, args.To, nonce, value, gas, gasPrice, gasFeeCap, gasTipCap, data, accessList, true)
+	msg := core.Message{
+		From:       addr,
+		To:         args.To,
+		Nonce:      nonce,
+		Value:      value,
+		GasLimit:   gas,
+		GasPrice:   gasPrice,
+		GasFeeCap:  gasFeeCap,
+		GasTipCap:  gasTipCap,
+		Data:       data,
+		AccessList: accessList,
+	}
+
 	return msg, nil
 }
 

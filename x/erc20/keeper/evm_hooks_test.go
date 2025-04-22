@@ -205,19 +205,32 @@ func (suite *KeeperTestSuite) TestPostTxProcessing() {
 		pair    *types.TokenPair
 	)
 
-	msg := core.NewMessage(
-		types.ModuleAddress,
-		&common.Address{},
-		0,
-		big.NewInt(0), // amount
-		uint64(0),     // gasLimit
-		big.NewInt(0), // gasFeeCap
-		big.NewInt(0), // gasTipCap
-		big.NewInt(0), // gasPrice
-		[]byte{},
-		ethtypes.AccessList{}, // AccessList
-		true,                  // checkNonce
-	)
+	// msg := core.NewMessage(
+	// 	types.ModuleAddress,
+	// 	&common.Address{},
+	// 	0,
+	// 	big.NewInt(0), // amount
+	// 	uint64(0),     // gasLimit
+	// 	big.NewInt(0), // gasFeeCap
+	// 	big.NewInt(0), // gasTipCap
+	// 	big.NewInt(0), // gasPrice
+	// 	[]byte{},
+	// 	ethtypes.AccessList{}, // AccessList
+	// 	true,                  // checkNonce
+	// )
+
+	msg := core.Message{
+		From:       types.ModuleAddress,
+		To:         &common.Address{},
+		Nonce:      0,
+		Value:      big.NewInt(0),
+		GasLimit:   uint64(0),
+		GasPrice:   big.NewInt(0),
+		GasFeeCap:  big.NewInt(0),
+		GasTipCap:  big.NewInt(0),
+		Data:       []byte{},
+		AccessList: ethtypes.AccessList{},
+	}
 
 	account := utiltx.GenerateAddress()
 
