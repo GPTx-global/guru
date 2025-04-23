@@ -91,7 +91,6 @@ type stateObject struct {
 	data     types.StateAccount  // Account data with all mutations applied in the scope of block
 
 	// Write caches.
-	trie Trie // storage trie, which becomes non-nil on first access
 	code Code // contract bytecode, which gets set when code is loaded
 
 	originStorage  Storage // Storage cache of original entries to dedup rewrites

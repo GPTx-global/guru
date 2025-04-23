@@ -345,6 +345,10 @@ func (s *StateDB) createObject(addr common.Address) (newobj, prev *stateObject) 
 	} else {
 		s.journal.append(resetObjectChange{prev: prev})
 	}
+
+	newobj.created = true
+	newobj.selfDestructed = false
+
 	s.setStateObject(newobj)
 	if prev != nil {
 		return newobj, prev
