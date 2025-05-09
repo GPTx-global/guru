@@ -1,0 +1,28 @@
+syntax = "proto3";
+package guru.cex.v1;
+
+import "gogoproto/gogo.proto";
+import "cosmos/base/v1beta1/coin.proto";
+import "cosmos_proto/cosmos.proto";
+
+option go_package = "github.com/GPTx-global/guru/x/cex/types";
+
+
+// CurrencyRate defines the action, current rate for exchange.
+message CoinPair {
+  // admin can set the currency ratio for the pair
+  string admin_address = 1;
+  
+  // base coin
+  // string base_denom = 2;
+  
+  // quote coin
+  // string quote_denom = 3;
+
+  // currency rate
+  string rate = 2 [
+    (cosmos_proto.scalar)  = "cosmos.Dec",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable)   = false
+  ];
+}

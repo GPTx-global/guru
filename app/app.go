@@ -154,6 +154,10 @@ import (
 	vestingkeeper "github.com/GPTx-global/guru/x/vesting/keeper"
 	vestingtypes "github.com/GPTx-global/guru/x/vesting/types"
 
+	"github.com/GPTx-global/guru/x/cex"
+	cexkeeper "github.com/GPTx-global/guru/x/cex/keeper"
+	cextypes "github.com/GPTx-global/guru/x/cex/types"
+
 	// NOTE: override ICS20 keeper to support IBC transfers of ERC20 tokens
 	"github.com/GPTx-global/guru/x/ibc/transfer"
 	transferkeeper "github.com/GPTx-global/guru/x/ibc/transfer/keeper"
@@ -221,6 +225,7 @@ var (
 		inflation.AppModuleBasic{},
 		erc20.AppModuleBasic{},
 		epochs.AppModuleBasic{},
+		cex.AppModuleBasic{},
 	)
 
 	// module account permissions
@@ -235,6 +240,7 @@ var (
 		evmtypes.ModuleName:            {authtypes.Minter, authtypes.Burner}, // used for secure addition and subtraction of balance using module account
 		inflationtypes.ModuleName:      {authtypes.Minter},
 		erc20types.ModuleName:          {authtypes.Minter, authtypes.Burner},
+		cextypes.ModuleName:            {authtypes.Minter, authtypes.Burner},
 	}
 
 	// module accounts that are allowed to receive tokens
@@ -296,6 +302,9 @@ type Guru struct {
 	EpochsKeeper    epochskeeper.Keeper
 	VestingKeeper   vestingkeeper.Keeper
 
+	// Guru keepers
+	CexKeeper cexkeeper.Keeper
+
 	// the module manager
 	mm *module.Manager
 
@@ -352,6 +361,8 @@ func NewEvmos(
 		// evmos keys
 		inflationtypes.StoreKey, erc20types.StoreKey,
 		epochstypes.StoreKey, vestingtypes.StoreKey,
+		// guru keys
+		cextypes.StoreKey,
 	)
 
 	// Add the EVM transient store key
@@ -512,6 +523,11 @@ func NewEvmos(
 
 	// NOTE: app.Erc20Keeper is already initialized elsewhere
 
+	// Guru keepers
+	app.CexKeeper = cexkeeper.NewKeeper(
+		appCodec, keys[cextypes.StoreKey], app.AccountKeeper, app.BankKeeper,
+	)
+
 	// Override the ICS20 app module
 	transferModule := transfer.NewAppModule(app.TransferKeeper)
 
@@ -609,6 +625,8 @@ func NewEvmos(
 			app.GetSubspace(erc20types.ModuleName)),
 		epochs.NewAppModule(appCodec, app.EpochsKeeper),
 		vesting.NewAppModule(app.VestingKeeper, app.AccountKeeper, app.BankKeeper, app.StakingKeeper),
+		// Guru app modules
+		cex.NewAppModule(appCodec, app.CexKeeper, app.BankKeeper),
 	)
 
 	// During begin block slashing happens after distr.BeginBlocker so that
@@ -643,6 +661,8 @@ func NewEvmos(
 		vestingtypes.ModuleName,
 		inflationtypes.ModuleName,
 		erc20types.ModuleName,
+		// Guru modules
+		cextypes.ModuleName,
 	)
 
 	// NOTE: fee market module must go last in order to retrieve the block gas used.
@@ -673,6 +693,8 @@ func NewEvmos(
 		vestingtypes.ModuleName,
 		inflationtypes.ModuleName,
 		erc20types.ModuleName,
+		// Guru modules
+		cextypes.ModuleName,
 	)
 
 	// NOTE: The genutils module must occur after staking so that pools are
@@ -709,6 +731,8 @@ func NewEvmos(
 		inflationtypes.ModuleName,
 		erc20types.ModuleName,
 		epochstypes.ModuleName,
+		// Guru modules
+		cextypes.ModuleName,
 		// NOTE: crisis module must go at the end to check for invariants on each module
 		crisistypes.ModuleName,
 	)

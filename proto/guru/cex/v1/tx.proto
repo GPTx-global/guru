@@ -1,0 +1,124 @@
+syntax = "proto3";
+package guru.cex.v1;
+
+import "cosmos/base/v1beta1/coin.proto";
+import "cosmos/msg/v1/msg.proto";
+import "cosmos_proto/cosmos.proto";
+import "gogoproto/gogo.proto";
+
+
+option go_package = "github.com/GPTx-global/guru/x/cex/types";
+
+
+// Msg defines the cex module Msg service.
+service Msg {
+  // Swap defines a method for swapping between two coins.
+  rpc Swap(MsgSwap) returns (MsgSwapResponse);
+
+  // RegisterReserveAccount defines a method for updating the reserve account address.
+  rpc RegisterReserveAccount(MsgRegisterReserveAccount) returns (MsgRegisterReserveAccountResponse);
+
+  // RegisterAdmin defines a method for registering admin for specific coin pair.
+  rpc RegisterAdmin(MsgRegisterAdmin) returns (MsgRegisterAdminResponse);
+
+  // UpdateRate defines a method for updating the currencsy rate for coin pair.
+  rpc UpdateRate(MsgUpdateRate) returns (MsgUpdateRateResponse);
+  
+  // ChangeModerator defines a method for changing moderator.
+  rpc ChangeModerator(MsgChangeModerator) returns (MsgChangeModeratorResponse);
+}
+
+// msg declaration for swapping coins.
+message MsgSwap {
+  option (cosmos.msg.v1.signer) = "from_address";
+  option (gogoproto.equal)           = false;
+  option (gogoproto.goproto_getters) = false;
+
+  string   from_address                 = 1 
+      [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  string   from_denom         = 2;
+  string   from_channel       = 3;
+  string   to_denom           = 4;
+  string   to_channel         = 5;
+  cosmos.base.v1beta1.Coin amount    = 6
+      [(gogoproto.nullable) = false, 
+       (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coin"];
+}
+
+// Response type for Msg/Swap.
+message MsgSwapResponse {
+}
+
+// msg declaration for registering the reserve address.
+message MsgRegisterReserveAccount {
+  option (cosmos.msg.v1.signer) = "moderator_address";
+
+  option (gogoproto.equal)           = false;
+  option (gogoproto.goproto_getters) = false;
+
+  string   moderator_address                 = 1 
+      [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  string   new_reserve_address     = 2 
+      [(cosmos_proto.scalar) = "cosmos.AddressString"];
+}
+
+// Response type for the Msg/ChangeReserveAddress.
+message MsgRegisterReserveAccountResponse {
+}
+
+// msg declaration for registering admin.
+message MsgRegisterAdmin {
+  option (cosmos.msg.v1.signer) = "moderator_address";
+
+  option (gogoproto.equal)           = false;
+  option (gogoproto.goproto_getters) = false;
+
+  string   moderator_address                 = 1 
+      [(cosmos_proto.scalar) = "cosmos.AddressString"];
+
+  string   new_admin_address          = 2
+      [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  
+  string pair_denom = 3;
+
+}
+
+// Response type for the Msg/RegisterAdmin.
+message MsgRegisterAdminResponse {
+}
+
+// msg declaration for updating the rate.
+message MsgUpdateRate {
+  option (cosmos.msg.v1.signer) = "admin_address";
+
+  option (gogoproto.equal)           = false;
+  option (gogoproto.goproto_getters) = false;
+
+  string   admin_address                 = 1 
+      [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  
+  string pair_denom = 2;
+
+  string   new_rate  = 3 ;
+}
+
+// Response type for the Msg/UpdateRate.
+message MsgUpdateRateResponse {
+}
+
+// msg declaration for changing the moderator.
+message MsgChangeModerator {
+  option (cosmos.msg.v1.signer) = "authomoderator_addressrity";
+
+  option (gogoproto.equal)           = false;
+  option (gogoproto.goproto_getters) = false;
+
+  string   moderator_address                 = 1 
+      [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  string   new_moderator_address     = 2 
+      [(cosmos_proto.scalar) = "cosmos.AddressString"];
+}
+
+// Response type for the Msg/ChangeModerator.
+message MsgChangeModeratorResponse {
+}

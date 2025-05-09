@@ -1,0 +1,95 @@
+syntax = "proto3";
+package guru.cex.v1;
+
+import "guru/cex/v1/cex.proto";
+import "cosmos/base/v1beta1/coin.proto";
+import "cosmos_proto/cosmos.proto";
+import "gogoproto/gogo.proto";
+import "google/api/annotations.proto";
+
+option go_package = "github.com/GPTx-global/guru/x/cex/types";
+
+
+// Query provides defines the gRPC querier service.
+service Query {
+ 
+  // ModeratorAddress returns the current moderator address
+  rpc ModeratorAddress(QueryModeratorAddressRequest) 
+        returns (QueryModeratorAddressResponse) {
+    option (google.api.http).get = "/guru/cex/v1/moderator_address";
+  }
+
+  // ReserveAccount returns the current reserve address
+  rpc ReserveAccount(QueryReserveAccountRequest) returns (QueryReserveAccountResponse) {
+    option (google.api.http).get = "/guru/cex/v1/reserve_account";
+  }
+
+  // Reserve returns the current reserve amount
+  rpc Reserve(QueryReserveRequest) returns (QueryReserveResponse) {
+    option (google.api.http).get = "/guru/cex/v1/reserve/{denom}";
+  }
+
+  // Rate returns current rate for the coin pair.
+  rpc Rate(QueryRateRequest) returns (QueryRateResponse) {
+    option (google.api.http).get = "/guru/cex/v1/rate/{pair_denom}";
+  }
+
+  // CoinPair returns current admin for the coin pair.
+  rpc Admin(QueryAdminRequest) returns (QueryAdminResponse) {
+    option (google.api.http).get = "/guru/cex/v1/admin/{pair_denom}";
+  }
+}
+
+// Request type for the Query/ModeratorAddress RPC method.
+message QueryModeratorAddressRequest {
+}
+
+// Response type for the Query/ModeratorAddress RPC method.
+message QueryModeratorAddressResponse {
+  string moderator_address = 1;
+}
+
+// Request type for the Query/ReserveAccount RPC method.
+message QueryReserveAccountRequest {
+}
+
+// Response type for the Query/ReserveAccount RPC method.
+message QueryReserveAccountResponse {
+  string address = 1;
+}
+
+// Request type for the Query/Reserve RPC method.
+message QueryReserveRequest {
+  string denom = 1;
+}
+
+// Response type for the Query/Reserve RPC method.
+message QueryReserveResponse {
+  cosmos.base.v1beta1.Coin reserve    = 1
+      [(gogoproto.nullable) = false, 
+       (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coin"];
+}
+
+// Request type for the Query/Rate RPC method.
+message QueryRateRequest {
+  string pair_denom = 1;
+}
+
+// Response type for the Query/Rate RPC method.
+message QueryRateResponse {
+  string rate = 1 [
+    (cosmos_proto.scalar)  = "cosmos.Dec",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable)   = false
+  ];
+}
+
+// Request type for the Query/Admin RPC method.
+message QueryAdminRequest {
+  string pair_denom = 1;
+}
+
+// Response type for the Query/Admin RPC method.
+message QueryAdminResponse {
+  string admin_address = 1;
+}
