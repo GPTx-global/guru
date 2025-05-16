@@ -20,6 +20,27 @@ func ValidateExchange(exchange *Exchange) error {
 }
 
 func ValidateExchangeRequiredKeys(exchange *Exchange) error {
+	size := len(RequiredKeysExchange)
+	count := 0
+
+	for _, attribute := range exchange.Attributes {
+		for _, key := range RequiredKeysExchange {
+			if attribute.Key == *key {
+				count++
+				break
+			}
+		}
+	}
+
+	keys := ""
+	for _, key := range RequiredKeysExchange {
+		keys += *key + ", "
+	}
+
+	if count <= size {
+		return errorsmod.Wrapf(ErrRequiredKey, "required keys: %s", keys)
+	}
+
 	return nil
 }
 
