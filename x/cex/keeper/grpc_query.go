@@ -3,8 +3,11 @@ package keeper
 import (
 	"context"
 
+	errorsmod "cosmossdk.io/errors"
+	"cosmossdk.io/math"
 	"github.com/GPTx-global/guru/x/cex/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/query"
 )
 
 // QueryServer implementation
@@ -18,34 +21,46 @@ func (k Keeper) ModeratorAddress(c context.Context, _ *types.QueryModeratorAddre
 	return &types.QueryModeratorAddressResponse{ModeratorAddress: moderator_address}, nil
 }
 
-// ReserveAccount returns the current reserve account.
-func (k Keeper) ReserveAccount(c context.Context, _ *types.QueryReserveAccountRequest) (*types.QueryReserveAccountResponse, error) {
+// Exchange returns the exchange attributes for the given key (key is optional).
+func (k Keeper) Attributes(c context.Context, req *types.QueryAttributesRequest) (*types.QueryAttributesResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
-	address := k.GetReserveAccount(ctx)
+	id, ok := math.NewIntFromString(req.Id)
+	if !ok {
+		return nil, errorsmod.Wrapf(types.ErrInvalidExchangeId, "%s", req.Id)
+	}
+	attributes, err := k.GetExchangeAttribute(ctx, id, req.Key)
+	if err != nil {
+		return nil, err
+	}
 
-	return &types.QueryReserveAccountResponse{Address: address}, nil
+	return &types.QueryAttributesResponse{Attributes: []types.Attribute{attributes}}, nil
 }
 
-// Reserve returns the current reserces amount for the coin denom.
-func (k Keeper) Reserve(c context.Context, req *types.QueryReserveRequest) (*types.QueryReserveResponse, error) {
+// List returns the list of all exchanges.
+func (k Keeper) Exchanges(c context.Context, req *types.QueryExchangesRequest) (*types.QueryExchangesResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
-	reserve := k.GetReserve(ctx, req.Denom)
+	exchanges, _, err := k.GetPaginatedExchanges(ctx, &query.PageRequest{Limit: query.MaxLimit})
+	if err != nil {
+		return nil, errorsmod.Wrapf(types.ErrUnableToFetch, "exchanges %s", err)
+	}
 
-	return &types.QueryReserveResponse{Reserve: reserve}, nil
+	return &types.QueryExchangesResponse{Exchanges: exchanges}, nil
 }
 
-// Rate returns the rate for pair_denom.
-func (k Keeper) Rate(c context.Context, req *types.QueryRateRequest) (*types.QueryRateResponse, error) {
+func (k Keeper) Admins(c context.Context, req *types.QueryAdminsRequest) (*types.QueryAdminsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
-	rate := k.GetRate(ctx, req.PairDenom)
+	admins, _, err := k.GetPaginatedAdmins(ctx, &query.PageRequest{Limit: query.MaxLimit})
+	if err != nil {
+		return nil, errorsmod.Wrapf(types.ErrUnableToFetch, "admins %s", err)
+	}
 
-	return &types.QueryRateResponse{Rate: rate}, nil
+	return &types.QueryAdminsResponse{Admins: admins}, nil
 }
 
-// Admin returns the admin address for pair_denom.
-func (k Keeper) Admin(c context.Context, req *types.QueryAdminRequest) (*types.QueryAdminResponse, error) {
+// NextExchangeId returns the next exchange id (RegisterExchange msg should match this id).
+func (k Keeper) NextExchangeId(c context.Context, _ *types.QueryNextExchangeIdRequest) (*types.QueryNextExchangeIdResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
-	addr := k.GetAdmin(ctx, req.PairDenom)
+	id := k.GetNextExchangeId(ctx)
 
-	return &types.QueryAdminResponse{AdminAddress: addr}, nil
+	return &types.QueryNextExchangeIdResponse{Id: id}, nil
 }

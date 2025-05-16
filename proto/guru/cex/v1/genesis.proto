@@ -11,6 +11,7 @@ message GenesisState {
   // moderator address for mining/burning coins
   string moderator_address = 1;
 
-  // coin_pairs stores the initial value for the coin pair information
-  repeated CoinPair coin_pairs = 2 [(gogoproto.nullable) = false];
+  repeated Exchange exchanges = 2 [(gogoproto.nullable) = false];
+
+  repeated Admin admins = 3 [(gogoproto.nullable) = false];
 }

@@ -17,14 +17,17 @@ func NewHandler(server types.MsgServer) sdk.Handler {
 		case *types.MsgSwap:
 			res, err := server.Swap(sdk.WrapSDKContext(ctx), msg)
 			return sdk.WrapServiceResult(ctx, res, err)
-		case *types.MsgRegisterReserveAccount:
-			res, err := server.RegisterReserveAccount(sdk.WrapSDKContext(ctx), msg)
-			return sdk.WrapServiceResult(ctx, res, err)
 		case *types.MsgRegisterAdmin:
 			res, err := server.RegisterAdmin(sdk.WrapSDKContext(ctx), msg)
 			return sdk.WrapServiceResult(ctx, res, err)
-		case *types.MsgUpdateRate:
-			res, err := server.UpdateRate(sdk.WrapSDKContext(ctx), msg)
+		case *types.MsgRemoveAdmin:
+			res, err := server.RemoveAdmin(sdk.WrapSDKContext(ctx), msg)
+			return sdk.WrapServiceResult(ctx, res, err)
+		case *types.MsgRegisterExchange:
+			res, err := server.RegisterExchange(sdk.WrapSDKContext(ctx), msg)
+			return sdk.WrapServiceResult(ctx, res, err)
+		case *types.MsgUpdateExchange:
+			res, err := server.UpdateExchange(sdk.WrapSDKContext(ctx), msg)
 			return sdk.WrapServiceResult(ctx, res, err)
 		case *types.MsgChangeModerator:
 			res, err := server.ChangeModerator(sdk.WrapSDKContext(ctx), msg)

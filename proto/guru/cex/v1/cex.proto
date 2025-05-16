@@ -7,22 +7,41 @@ import "cosmos_proto/cosmos.proto";
 
 option go_package = "github.com/GPTx-global/guru/x/cex/types";
 
+message Attribute {
+  // key for the attribute
+  string key = 1;
+
+  // value
+  string value = 2;
+}
+
 
 // CurrencyRate defines the action, current rate for exchange.
-message CoinPair {
+message Exchange {
   // admin can set the currency ratio for the pair
-  string admin_address = 1;
-  
-  // base coin
-  // string base_denom = 2;
-  
-  // quote coin
-  // string quote_denom = 3;
+  string id = 1 [
+    (cosmos_proto.scalar) = "cosmos.Int", 
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int", 
+    (gogoproto.nullable) = false
+  ];
 
-  // currency rate
-  string rate = 2 [
-    (cosmos_proto.scalar)  = "cosmos.Dec",
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-    (gogoproto.nullable)   = false
+  // additional attributes 
+  repeated Attribute attributes = 2 [
+    (gogoproto.nullable) = false
+  ];
+}
+
+message AdminExchanges {
+  repeated string ids = 1 [
+    (cosmos_proto.scalar) = "cosmos.Int", 
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int", 
+    (gogoproto.nullable) = false
+  ];
+}
+
+message Admin {
+  string address = 1;
+  AdminExchanges exchanges  = 2 [
+    (gogoproto.nullable) = false
   ];
 }

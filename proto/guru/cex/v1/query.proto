@@ -19,25 +19,22 @@ service Query {
     option (google.api.http).get = "/guru/cex/v1/moderator_address";
   }
 
-  // ReserveAccount returns the current reserve address
-  rpc ReserveAccount(QueryReserveAccountRequest) returns (QueryReserveAccountResponse) {
-    option (google.api.http).get = "/guru/cex/v1/reserve_account";
+  rpc Attributes(QueryAttributesRequest) returns (QueryAttributesResponse) {
+    option (google.api.http).get = "/guru/cex/v1/coin_pair/{id}/{key}";
   }
 
-  // Reserve returns the current reserve amount
-  rpc Reserve(QueryReserveRequest) returns (QueryReserveResponse) {
-    option (google.api.http).get = "/guru/cex/v1/reserve/{denom}";
+  rpc Exchanges(QueryExchangesRequest) returns (QueryExchangesResponse) {
+    option (google.api.http).get = "/guru/cex/v1/list";
   }
 
-  // Rate returns current rate for the coin pair.
-  rpc Rate(QueryRateRequest) returns (QueryRateResponse) {
-    option (google.api.http).get = "/guru/cex/v1/rate/{pair_denom}";
+  rpc Admins(QueryAdminsRequest) returns (QueryAdminsResponse) {
+    option (google.api.http).get = "/guru/cex/v1/list";
   }
 
-  // CoinPair returns current admin for the coin pair.
-  rpc Admin(QueryAdminRequest) returns (QueryAdminResponse) {
-    option (google.api.http).get = "/guru/cex/v1/admin/{pair_denom}";
+  rpc NextExchangeId(QueryNextExchangeIdRequest) returns (QueryNextExchangeIdResponse) {
+    option (google.api.http).get = "/guru/cex/v1/next_exchange_id";
   }
+
 }
 
 // Request type for the Query/ModeratorAddress RPC method.
@@ -49,47 +46,50 @@ message QueryModeratorAddressResponse {
   string moderator_address = 1;
 }
 
-// Request type for the Query/ReserveAccount RPC method.
-message QueryReserveAccountRequest {
+// Request type for the Query/Coin RPC method.
+message QueryAttributesRequest {
+  string id  = 1;
+  string key = 2;
 }
 
-// Response type for the Query/ReserveAccount RPC method.
-message QueryReserveAccountResponse {
-  string address = 1;
-}
-
-// Request type for the Query/Reserve RPC method.
-message QueryReserveRequest {
-  string denom = 1;
-}
-
-// Response type for the Query/Reserve RPC method.
-message QueryReserveResponse {
-  cosmos.base.v1beta1.Coin reserve    = 1
-      [(gogoproto.nullable) = false, 
-       (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coin"];
-}
-
-// Request type for the Query/Rate RPC method.
-message QueryRateRequest {
-  string pair_denom = 1;
-}
-
-// Response type for the Query/Rate RPC method.
-message QueryRateResponse {
-  string rate = 1 [
-    (cosmos_proto.scalar)  = "cosmos.Dec",
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+// Response type for the Query/Coin RPC method.
+message QueryAttributesResponse {
+  repeated Attribute attributes = 1 [
     (gogoproto.nullable)   = false
   ];
 }
 
-// Request type for the Query/Admin RPC method.
-message QueryAdminRequest {
-  string pair_denom = 1;
+// Request type for the Query/CoinPair RPC method.
+message QueryExchangesRequest {
 }
 
-// Response type for the Query/Admin RPC method.
-message QueryAdminResponse {
-  string admin_address = 1;
+// Response type for the Query/CoinPair RPC method.
+message QueryExchangesResponse {
+  repeated Exchange exchanges = 1 [
+    (gogoproto.nullable)   = false
+  ];
+}
+
+// Request type for the Query/CoinPair RPC method.
+message QueryAdminsRequest {
+}
+
+// Response type for the Query/CoinPair RPC method.
+message QueryAdminsResponse {
+  repeated Admin admins = 1 [
+    (gogoproto.nullable)   = false
+  ];
+}
+
+// Request type for the Query/CoinPair RPC method.
+message QueryNextExchangeIdRequest {
+}
+
+// Response type for the Query/CoinPair RPC method.
+message QueryNextExchangeIdResponse {
+  string id = 1 [
+    (cosmos_proto.scalar) = "cosmos.Int", 
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int", 
+    (gogoproto.nullable) = false
+  ];
 }

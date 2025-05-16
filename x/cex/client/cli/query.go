@@ -19,10 +19,10 @@ func GetQueryCmd() *cobra.Command {
 
 	cexQueryCmd.AddCommand(
 		GetCmdQueryModeratorAddress(),
-		GetCmdQueryReserveAccount(),
-		GetCmdQueryReserve(),
-		GetCmdQueryRate(),
-		GetCmdQueryAdmin(),
+		GetCmdQueryAttributes(),
+		GetCmdQueryExchanges(),
+		GetCmdQueryAdmins(),
+		GetCmdQueryNextExchangeId(),
 	)
 
 	return cexQueryCmd
@@ -54,10 +54,36 @@ func GetCmdQueryModeratorAddress() *cobra.Command {
 	return cmd
 }
 
-func GetCmdQueryReserveAccount() *cobra.Command {
+func GetCmdQueryAttributes() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "reserve_account",
-		Short: "Query the current reserve account address",
+		Use:   "attributes [id] [key]",
+		Short: "Query the exchange attrbite",
+		Args:  cobra.ExactArgs(2),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientQueryContext(cmd)
+			if err != nil {
+				return err
+			}
+			queryClient := types.NewQueryClient(clientCtx)
+
+			req := &types.QueryAttributesRequest{Id: args[0], Key: args[1]}
+			res, err := queryClient.Attributes(cmd.Context(), req)
+			if err != nil {
+				return err
+			}
+
+			return clientCtx.PrintProto(res)
+		},
+	}
+
+	flags.AddQueryFlagsToCmd(cmd)
+	return cmd
+}
+
+func GetCmdQueryExchanges() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "exchanges",
+		Short: "Query the list of all exchanges",
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientQueryContext(cmd)
@@ -66,8 +92,9 @@ func GetCmdQueryReserveAccount() *cobra.Command {
 			}
 			queryClient := types.NewQueryClient(clientCtx)
 
-			req := &types.QueryReserveAccountRequest{}
-			res, err := queryClient.ReserveAccount(cmd.Context(), req)
+			req := &types.QueryExchangesRequest{}
+
+			res, err := queryClient.Exchanges(cmd.Context(), req)
 			if err != nil {
 				return err
 			}
@@ -80,11 +107,11 @@ func GetCmdQueryReserveAccount() *cobra.Command {
 	return cmd
 }
 
-func GetCmdQueryReserve() *cobra.Command {
+func GetCmdQueryAdmins() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "reserve [PAIR_DENOM]",
-		Short: "Query the current reserve for one coin pair or all",
-		Args:  cobra.MaximumNArgs(1),
+		Use:   "admins",
+		Short: "Query the list of all admins",
+		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientQueryContext(cmd)
 			if err != nil {
@@ -92,11 +119,9 @@ func GetCmdQueryReserve() *cobra.Command {
 			}
 			queryClient := types.NewQueryClient(clientCtx)
 
-			req := &types.QueryReserveRequest{}
-			if len(args) == 1 {
-				req.Denom = args[0]
-			}
-			res, err := queryClient.Reserve(cmd.Context(), req)
+			req := &types.QueryAdminsRequest{}
+
+			res, err := queryClient.Admins(cmd.Context(), req)
 			if err != nil {
 				return err
 			}
@@ -109,11 +134,11 @@ func GetCmdQueryReserve() *cobra.Command {
 	return cmd
 }
 
-func GetCmdQueryRate() *cobra.Command {
+func GetCmdQueryNextExchangeId() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "rate [PAIR_DENOM]",
-		Short: "Query the rate by the pair denom",
-		Args:  cobra.ExactArgs(1),
+		Use:   "next_exchange_id",
+		Short: "Query the exchange id for registering new exchange",
+		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientQueryContext(cmd)
 			if err != nil {
@@ -121,34 +146,8 @@ func GetCmdQueryRate() *cobra.Command {
 			}
 			queryClient := types.NewQueryClient(clientCtx)
 
-			req := &types.QueryRateRequest{PairDenom: args[0]}
-			res, err := queryClient.Rate(cmd.Context(), req)
-			if err != nil {
-				return err
-			}
-
-			return clientCtx.PrintProto(res)
-		},
-	}
-
-	flags.AddQueryFlagsToCmd(cmd)
-	return cmd
-}
-
-func GetCmdQueryAdmin() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "admin [PAIR_DENOM]",
-		Short: "Query the admin address by the pair denom",
-		Args:  cobra.ExactArgs(1),
-		RunE: func(cmd *cobra.Command, args []string) error {
-			clientCtx, err := client.GetClientQueryContext(cmd)
-			if err != nil {
-				return err
-			}
-			queryClient := types.NewQueryClient(clientCtx)
-
-			req := &types.QueryAdminRequest{PairDenom: args[0]}
-			res, err := queryClient.Admin(cmd.Context(), req)
+			req := &types.QueryNextExchangeIdRequest{}
+			res, err := queryClient.NextExchangeId(cmd.Context(), req)
 			if err != nil {
 				return err
 			}

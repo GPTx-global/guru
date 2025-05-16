@@ -42,11 +42,12 @@ var (
 
 const (
 	// Amino names
-	swapName                   = "guru/MsgSwap"
-	registerReserveAccountName = "guru/MsgRegisterReserveAccount"
-	registerAdminName          = "guru/MsgRegisterAdmin"
-	updateRateName             = "guru/MsgUpdateRate"
-	changeModeratorName        = "guru/MsgChangeModerator"
+	swapName             = "guru/MsgSwap"
+	registerAdminName    = "guru/MsgRegisterAdmin"
+	removeAdminName      = "guru/MsgRemoveAdmin"
+	registerExchangeName = "guru/MsgRegisterExchange"
+	updateExchangeName   = "guru/MsgUpdateExchange"
+	changeModeratorName  = "guru/MsgChangeModerator"
 )
 
 // NOTE: This is required for the GetSignBytes function
@@ -59,9 +60,10 @@ func init() {
 func RegisterInterfaces(registry codectypes.InterfaceRegistry) {
 	registry.RegisterImplementations((*sdk.Msg)(nil),
 		&MsgSwap{},
-		&MsgRegisterReserveAccount{},
 		&MsgRegisterAdmin{},
-		&MsgUpdateRate{},
+		&MsgRemoveAdmin{},
+		&MsgRegisterExchange{},
+		&MsgUpdateExchange{},
 		&MsgChangeModerator{},
 	)
 
@@ -72,8 +74,9 @@ func RegisterInterfaces(registry codectypes.InterfaceRegistry) {
 // on the provided LegacyAmino codec. These types are used for Amino JSON serialization.
 func RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {
 	cdc.RegisterConcrete(&MsgSwap{}, swapName, nil)
-	cdc.RegisterConcrete(&MsgRegisterReserveAccount{}, registerReserveAccountName, nil)
 	cdc.RegisterConcrete(&MsgRegisterAdmin{}, registerAdminName, nil)
-	cdc.RegisterConcrete(&MsgUpdateRate{}, updateRateName, nil)
+	cdc.RegisterConcrete(&MsgRemoveAdmin{}, removeAdminName, nil)
+	cdc.RegisterConcrete(&MsgRegisterExchange{}, registerExchangeName, nil)
+	cdc.RegisterConcrete(&MsgUpdateExchange{}, updateExchangeName, nil)
 	cdc.RegisterConcrete(&MsgChangeModerator{}, changeModeratorName, nil)
 }

@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"context"
+	"fmt"
 
 	errorsmod "cosmossdk.io/errors"
 	"github.com/GPTx-global/guru/x/cex/types"
@@ -21,14 +22,17 @@ func (k Keeper) Swap(goCtx context.Context, msg *types.MsgSwap) (*types.MsgSwapR
 		return nil, err
 	}
 
-	k.SwapCoins(ctx, fromAddr, msg.FromDenom, msg.FromChannel, msg.ToDenom, msg.ToChannel, msg.Amount.Amount)
+	err = k.SwapCoins(ctx, fromAddr, msg.ExchangeId, msg.FromDenom, msg.ToDenom, msg.Amount.Amount)
+	if err != nil {
+		return nil, err
+	}
 
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
 			types.EventTypeSwap,
 			sdk.NewAttribute(types.AttributeKeyAddress, msg.FromAddress),
 			sdk.NewAttribute(types.AttributeKeyAmount, msg.Amount.String()),
-			sdk.NewAttribute(types.AttributeKeyRate, k.GetRate(ctx, k.GetPairDenom(msg.FromDenom, msg.ToDenom)).String()),
+			// sdk.NewAttribute(types.AttributeKeyRate, rate.String()),
 		),
 	)
 
@@ -36,32 +40,6 @@ func (k Keeper) Swap(goCtx context.Context, msg *types.MsgSwap) (*types.MsgSwapR
 }
 
 // RegisterReserveAccount implements types.MsgServer.
-func (k Keeper) RegisterReserveAccount(goCtx context.Context, msg *types.MsgRegisterReserveAccount) (*types.MsgRegisterReserveAccountResponse, error) {
-	ctx := sdk.UnwrapSDKContext(goCtx)
-	moderator_address := k.GetModeratorAddress(ctx)
-	if moderator_address != msg.ModeratorAddress {
-		return nil, errorsmod.Wrapf(types.ErrWrongModerator, ", expected: %s, got: %s", moderator_address, msg.ModeratorAddress)
-	}
-
-	_, err := sdk.AccAddressFromBech32(msg.NewReserveAddress)
-	if err != nil {
-		return nil, err
-	}
-
-	k.SetReserveAccount(ctx, msg.NewReserveAddress)
-
-	ctx.EventManager().EmitEvent(
-		sdk.NewEvent(
-			types.EventTypeRegisterReserveAccount,
-			sdk.NewAttribute(types.AttributeKeyModerator, moderator_address),
-			sdk.NewAttribute(types.AttributeKeyAddress, msg.NewReserveAddress),
-		),
-	)
-
-	return &types.MsgRegisterReserveAccountResponse{}, nil
-}
-
-// RegisterAdmin implements types.MsgServer.
 func (k Keeper) RegisterAdmin(goCtx context.Context, msg *types.MsgRegisterAdmin) (*types.MsgRegisterAdminResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	moderator_address := k.GetModeratorAddress(ctx)
@@ -69,45 +47,107 @@ func (k Keeper) RegisterAdmin(goCtx context.Context, msg *types.MsgRegisterAdmin
 		return nil, errorsmod.Wrapf(types.ErrWrongModerator, ", expected: %s, got: %s", moderator_address, msg.ModeratorAddress)
 	}
 
-	_, err := sdk.AccAddressFromBech32(msg.NewAdminAddress)
+	_, err := sdk.AccAddressFromBech32(msg.AdminAddress)
 	if err != nil {
 		return nil, err
 	}
 
-	k.SetAdmin(ctx, msg.PairDenom, msg.NewAdminAddress)
+	if msg.ExchangeId.IsZero() {
+		k.AddNewAdmin(ctx, types.Admin{Address: msg.AdminAddress, Exchanges: types.AdminExchanges{}})
+	} else {
+		k.SetAdmin(ctx, msg.AdminAddress, msg.ExchangeId)
+	}
 
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
 			types.EventTypeRegisterAdmin,
 			sdk.NewAttribute(types.AttributeKeyModerator, moderator_address),
-			sdk.NewAttribute(types.AttributeKeyAddress, msg.NewAdminAddress),
-			sdk.NewAttribute(types.AttributeKeyPairDenom, msg.PairDenom),
+			sdk.NewAttribute(types.AttributeKeyAddress, msg.AdminAddress),
 		),
 	)
 
 	return &types.MsgRegisterAdminResponse{}, nil
 }
 
-// UpdateRate implements types.MsgServer.
-func (k Keeper) UpdateRate(goCtx context.Context, msg *types.MsgUpdateRate) (*types.MsgUpdateRateResponse, error) {
+// RegisterReserveAccount implements types.MsgServer.
+func (k Keeper) RemoveAdmin(goCtx context.Context, msg *types.MsgRemoveAdmin) (*types.MsgRemoveAdminResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	admin := k.GetAdmin(ctx, msg.PairDenom)
-	if admin != msg.AdminAddress {
-		return nil, errorsmod.Wrapf(types.ErrWrongAdmin, ", expected: %s, got: %s", admin, msg.AdminAddress)
+	moderator_address := k.GetModeratorAddress(ctx)
+	if moderator_address != msg.ModeratorAddress {
+		return nil, errorsmod.Wrapf(types.ErrWrongModerator, ", expected: %s, got: %s", moderator_address, msg.ModeratorAddress)
 	}
 
-	k.SetRate(ctx, msg.PairDenom, sdk.MustNewDecFromStr(msg.NewRate))
+	_, err := sdk.AccAddressFromBech32(msg.AdminAddress)
+	if err != nil {
+		return nil, err
+	}
+
+	k.DeleteAdmin(ctx, msg.AdminAddress)
 
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
-			types.EventTypeUpdateRate,
-			sdk.NewAttribute(types.AttributeKeyAdmin, msg.AdminAddress),
-			sdk.NewAttribute(types.AttributeKeyPairDenom, msg.PairDenom),
-			sdk.NewAttribute(types.AttributeKeyRate, msg.NewRate),
+			types.EventTypeRemoveAdmin,
+			sdk.NewAttribute(types.AttributeKeyModerator, moderator_address),
+			sdk.NewAttribute(types.AttributeKeyAddress, msg.AdminAddress),
 		),
 	)
 
-	return &types.MsgUpdateRateResponse{}, nil
+	return &types.MsgRemoveAdminResponse{}, nil
+}
+
+// RegisterAdmin implements types.MsgServer.
+func (k Keeper) RegisterExchange(goCtx context.Context, msg *types.MsgRegisterExchange) (*types.MsgRegisterExchangeResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	// validate the ID
+	nextExchangeId := k.GetNextExchangeId(ctx)
+	if !msg.Exchange.Id.Equal(nextExchangeId) {
+		return nil, errorsmod.Wrapf(types.ErrInvalidExchangeId, "expected: %s, got: %s", nextExchangeId, msg.Exchange.Id)
+	}
+
+	if !k.IsAdmin(ctx, msg.AdminAddress) {
+		return nil, errorsmod.Wrapf(types.ErrWrongAdmin, "%s is not an admin", msg.AdminAddress)
+	}
+
+	_, err := sdk.AccAddressFromBech32(msg.AdminAddress)
+	if err != nil {
+		return nil, err
+	}
+
+	k.AddNewExchange(ctx, msg.Exchange)
+	k.SetAdmin(ctx, msg.AdminAddress, msg.Exchange.Id)
+
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			types.EventTypeRegisterExchange,
+			sdk.NewAttribute(types.AttributeKeyAdmin, msg.AdminAddress),
+			sdk.NewAttribute(types.AttributeKeyExchangeId, msg.Exchange.Id.String()),
+		),
+	)
+
+	return &types.MsgRegisterExchangeResponse{}, nil
+}
+
+// UpdateRate implements types.MsgServer.
+func (k Keeper) UpdateExchange(goCtx context.Context, msg *types.MsgUpdateExchange) (*types.MsgUpdateExchangeResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	if !k.IsAdminOf(ctx, msg.AdminAddress, msg.Id) {
+		return nil, errorsmod.Wrapf(types.ErrWrongAdmin, "%s is not admin of exchange %d", msg.AdminAddress, msg.Id)
+	}
+
+	k.SetExchangeAttribute(ctx, msg.Id, types.Attribute{Key: msg.Key, Value: msg.Value})
+
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			types.EventTypeUpdateExchange,
+			sdk.NewAttribute(types.AttributeKeyAdmin, msg.AdminAddress),
+			sdk.NewAttribute(types.AttributeKeyExchangeId, msg.Id.String()),
+			sdk.NewAttribute(types.AttributeKeyAttributes, fmt.Sprintf(`{"key": "%s", "value": "%s"}`, msg.Key, msg.Value)),
+		),
+	)
+
+	return &types.MsgUpdateExchangeResponse{}, nil
 }
 
 // ChangeModerator implements types.MsgServer.

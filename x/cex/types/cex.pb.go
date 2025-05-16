@@ -26,26 +26,25 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
-// CurrencyRate defines the action, current rate for exchange.
-type CoinPair struct {
-	// admin can set the currency ratio for the pair
-	AdminAddress string `protobuf:"bytes,1,opt,name=admin_address,json=adminAddress,proto3" json:"admin_address,omitempty"`
-	// currency rate
-	Rate github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,2,opt,name=rate,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"rate"`
+type Attribute struct {
+	// key for the attribute
+	Key string `protobuf:"bytes,1,opt,name=key,proto3" json:"key,omitempty"`
+	// value
+	Value string `protobuf:"bytes,2,opt,name=value,proto3" json:"value,omitempty"`
 }
 
-func (m *CoinPair) Reset()         { *m = CoinPair{} }
-func (m *CoinPair) String() string { return proto.CompactTextString(m) }
-func (*CoinPair) ProtoMessage()    {}
-func (*CoinPair) Descriptor() ([]byte, []int) {
+func (m *Attribute) Reset()         { *m = Attribute{} }
+func (m *Attribute) String() string { return proto.CompactTextString(m) }
+func (*Attribute) ProtoMessage()    {}
+func (*Attribute) Descriptor() ([]byte, []int) {
 	return fileDescriptor_505eece0baf22ffc, []int{0}
 }
-func (m *CoinPair) XXX_Unmarshal(b []byte) error {
+func (m *Attribute) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *CoinPair) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *Attribute) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_CoinPair.Marshal(b, m, deterministic)
+		return xxx_messageInfo_Attribute.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -55,53 +54,207 @@ func (m *CoinPair) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 		return b[:n], nil
 	}
 }
-func (m *CoinPair) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_CoinPair.Merge(m, src)
+func (m *Attribute) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Attribute.Merge(m, src)
 }
-func (m *CoinPair) XXX_Size() int {
+func (m *Attribute) XXX_Size() int {
 	return m.Size()
 }
-func (m *CoinPair) XXX_DiscardUnknown() {
-	xxx_messageInfo_CoinPair.DiscardUnknown(m)
+func (m *Attribute) XXX_DiscardUnknown() {
+	xxx_messageInfo_Attribute.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_CoinPair proto.InternalMessageInfo
+var xxx_messageInfo_Attribute proto.InternalMessageInfo
 
-func (m *CoinPair) GetAdminAddress() string {
+func (m *Attribute) GetKey() string {
 	if m != nil {
-		return m.AdminAddress
+		return m.Key
 	}
 	return ""
 }
 
+func (m *Attribute) GetValue() string {
+	if m != nil {
+		return m.Value
+	}
+	return ""
+}
+
+// CurrencyRate defines the action, current rate for exchange.
+type Exchange struct {
+	// admin can set the currency ratio for the pair
+	Id github_com_cosmos_cosmos_sdk_types.Int `protobuf:"bytes,1,opt,name=id,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"id"`
+	// additional attributes
+	Attributes []Attribute `protobuf:"bytes,2,rep,name=attributes,proto3" json:"attributes"`
+}
+
+func (m *Exchange) Reset()         { *m = Exchange{} }
+func (m *Exchange) String() string { return proto.CompactTextString(m) }
+func (*Exchange) ProtoMessage()    {}
+func (*Exchange) Descriptor() ([]byte, []int) {
+	return fileDescriptor_505eece0baf22ffc, []int{1}
+}
+func (m *Exchange) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *Exchange) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_Exchange.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *Exchange) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Exchange.Merge(m, src)
+}
+func (m *Exchange) XXX_Size() int {
+	return m.Size()
+}
+func (m *Exchange) XXX_DiscardUnknown() {
+	xxx_messageInfo_Exchange.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_Exchange proto.InternalMessageInfo
+
+func (m *Exchange) GetAttributes() []Attribute {
+	if m != nil {
+		return m.Attributes
+	}
+	return nil
+}
+
+type AdminExchanges struct {
+	Ids []github_com_cosmos_cosmos_sdk_types.Int `protobuf:"bytes,1,rep,name=ids,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"ids"`
+}
+
+func (m *AdminExchanges) Reset()         { *m = AdminExchanges{} }
+func (m *AdminExchanges) String() string { return proto.CompactTextString(m) }
+func (*AdminExchanges) ProtoMessage()    {}
+func (*AdminExchanges) Descriptor() ([]byte, []int) {
+	return fileDescriptor_505eece0baf22ffc, []int{2}
+}
+func (m *AdminExchanges) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *AdminExchanges) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_AdminExchanges.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *AdminExchanges) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_AdminExchanges.Merge(m, src)
+}
+func (m *AdminExchanges) XXX_Size() int {
+	return m.Size()
+}
+func (m *AdminExchanges) XXX_DiscardUnknown() {
+	xxx_messageInfo_AdminExchanges.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_AdminExchanges proto.InternalMessageInfo
+
+type Admin struct {
+	Address   string         `protobuf:"bytes,1,opt,name=address,proto3" json:"address,omitempty"`
+	Exchanges AdminExchanges `protobuf:"bytes,2,opt,name=exchanges,proto3" json:"exchanges"`
+}
+
+func (m *Admin) Reset()         { *m = Admin{} }
+func (m *Admin) String() string { return proto.CompactTextString(m) }
+func (*Admin) ProtoMessage()    {}
+func (*Admin) Descriptor() ([]byte, []int) {
+	return fileDescriptor_505eece0baf22ffc, []int{3}
+}
+func (m *Admin) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *Admin) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_Admin.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *Admin) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Admin.Merge(m, src)
+}
+func (m *Admin) XXX_Size() int {
+	return m.Size()
+}
+func (m *Admin) XXX_DiscardUnknown() {
+	xxx_messageInfo_Admin.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_Admin proto.InternalMessageInfo
+
+func (m *Admin) GetAddress() string {
+	if m != nil {
+		return m.Address
+	}
+	return ""
+}
+
+func (m *Admin) GetExchanges() AdminExchanges {
+	if m != nil {
+		return m.Exchanges
+	}
+	return AdminExchanges{}
+}
+
 func init() {
-	proto.RegisterType((*CoinPair)(nil), "guru.cex.v1.CoinPair")
+	proto.RegisterType((*Attribute)(nil), "guru.cex.v1.Attribute")
+	proto.RegisterType((*Exchange)(nil), "guru.cex.v1.Exchange")
+	proto.RegisterType((*AdminExchanges)(nil), "guru.cex.v1.AdminExchanges")
+	proto.RegisterType((*Admin)(nil), "guru.cex.v1.Admin")
 }
 
 func init() { proto.RegisterFile("guru/cex/v1/cex.proto", fileDescriptor_505eece0baf22ffc) }
 
 var fileDescriptor_505eece0baf22ffc = []byte{
-	// 266 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0x12, 0x4d, 0x2f, 0x2d, 0x2a,
-	0xd5, 0x4f, 0x4e, 0xad, 0xd0, 0x2f, 0x33, 0x04, 0x51, 0x7a, 0x05, 0x45, 0xf9, 0x25, 0xf9, 0x42,
-	0xdc, 0x20, 0x61, 0x3d, 0x10, 0xbf, 0xcc, 0x50, 0x4a, 0x24, 0x3d, 0x3f, 0x3d, 0x1f, 0x2c, 0xae,
-	0x0f, 0x62, 0x41, 0x94, 0x48, 0xc9, 0x25, 0xe7, 0x17, 0xe7, 0xe6, 0x17, 0xeb, 0x27, 0x25, 0x16,
-	0xa7, 0xea, 0x97, 0x19, 0x26, 0xa5, 0x96, 0x24, 0x1a, 0xea, 0x27, 0xe7, 0x67, 0xe6, 0x41, 0xe5,
-	0x25, 0x21, 0xf2, 0xf1, 0x10, 0x8d, 0x10, 0x0e, 0x44, 0x4a, 0xa9, 0x91, 0x91, 0x8b, 0xc3, 0x39,
-	0x3f, 0x33, 0x2f, 0x20, 0x31, 0xb3, 0x48, 0x48, 0x99, 0x8b, 0x37, 0x31, 0x25, 0x37, 0x33, 0x2f,
-	0x3e, 0x31, 0x25, 0xa5, 0x28, 0xb5, 0xb8, 0x58, 0x82, 0x51, 0x81, 0x51, 0x83, 0x33, 0x88, 0x07,
-	0x2c, 0xe8, 0x08, 0x11, 0x13, 0x0a, 0xe0, 0x62, 0x29, 0x4a, 0x2c, 0x49, 0x95, 0x60, 0x02, 0xc9,
-	0x39, 0xd9, 0x9c, 0xb8, 0x27, 0xcf, 0x70, 0xeb, 0x9e, 0xbc, 0x5a, 0x7a, 0x66, 0x49, 0x46, 0x69,
-	0x92, 0x5e, 0x72, 0x7e, 0x2e, 0xd4, 0x02, 0x28, 0xa5, 0x5b, 0x9c, 0x92, 0xad, 0x5f, 0x52, 0x59,
-	0x90, 0x5a, 0xac, 0xe7, 0x92, 0x9a, 0x7c, 0x69, 0x8b, 0x2e, 0x17, 0xd4, 0x7e, 0x97, 0xd4, 0xe4,
-	0x20, 0xb0, 0x49, 0x4e, 0x8e, 0x27, 0x1e, 0xc9, 0x31, 0x5e, 0x78, 0x24, 0xc7, 0xf8, 0xe0, 0x91,
-	0x1c, 0xe3, 0x84, 0xc7, 0x72, 0x0c, 0x17, 0x1e, 0xcb, 0x31, 0xdc, 0x78, 0x2c, 0xc7, 0x10, 0xa5,
-	0x8e, 0x64, 0xaa, 0x7b, 0x40, 0x48, 0x85, 0x6e, 0x7a, 0x4e, 0x7e, 0x52, 0x62, 0x8e, 0x3e, 0x38,
-	0xa4, 0x2a, 0xc0, 0x61, 0x05, 0x36, 0x3a, 0x89, 0x0d, 0xec, 0x1b, 0x63, 0x40, 0x00, 0x00, 0x00,
-	0xff, 0xff, 0x08, 0x72, 0xbb, 0xd3, 0x44, 0x01, 0x00, 0x00,
+	// 377 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xa4, 0x92, 0xcd, 0x6a, 0xea, 0x40,
+	0x14, 0xc7, 0xf3, 0x71, 0xbd, 0xf7, 0x7a, 0x84, 0xcb, 0x65, 0xb0, 0x25, 0xb5, 0x10, 0x25, 0x8b,
+	0xd6, 0x8d, 0x19, 0xa2, 0x5b, 0xa1, 0x28, 0x94, 0x22, 0x94, 0x52, 0xa4, 0xab, 0x6e, 0xda, 0x7c,
+	0x0c, 0x31, 0xa8, 0x19, 0xc9, 0x4c, 0x42, 0x7c, 0x8b, 0xae, 0xfa, 0x24, 0x7d, 0x08, 0x97, 0xd2,
+	0x55, 0xe9, 0x42, 0x8a, 0xbe, 0x48, 0xc9, 0x24, 0x69, 0x75, 0xdd, 0xd5, 0xcc, 0xff, 0x9c, 0x39,
+	0xf9, 0xff, 0xce, 0xc9, 0x81, 0x23, 0x3f, 0x8e, 0x62, 0xec, 0x92, 0x14, 0x27, 0x56, 0x76, 0x98,
+	0x8b, 0x88, 0x72, 0x8a, 0x6a, 0x59, 0xd8, 0xcc, 0x74, 0x62, 0x35, 0xea, 0x3e, 0xf5, 0xa9, 0x88,
+	0xe3, 0xec, 0x96, 0x3f, 0x69, 0xe8, 0x2e, 0x65, 0x73, 0xca, 0xb0, 0x63, 0x33, 0x82, 0x13, 0xcb,
+	0x21, 0xdc, 0xb6, 0xb0, 0x4b, 0x83, 0xb0, 0xc8, 0x9f, 0xe4, 0xf9, 0x87, 0xbc, 0x30, 0x17, 0x79,
+	0xca, 0xe8, 0x41, 0x75, 0xc0, 0x79, 0x14, 0x38, 0x31, 0x27, 0xe8, 0x3f, 0xa8, 0x53, 0xb2, 0xd4,
+	0xe4, 0x96, 0xdc, 0xae, 0x8e, 0xb3, 0x2b, 0xaa, 0x43, 0x25, 0xb1, 0x67, 0x31, 0xd1, 0x14, 0x11,
+	0xcb, 0x85, 0xf1, 0x2c, 0xc3, 0xdf, 0xcb, 0xd4, 0x9d, 0xd8, 0xa1, 0x4f, 0xd0, 0x35, 0x28, 0x81,
+	0x97, 0xd7, 0x0c, 0xfb, 0xab, 0x4d, 0x53, 0x7a, 0xdf, 0x34, 0xcf, 0xfc, 0x80, 0x4f, 0x62, 0xc7,
+	0x74, 0xe9, 0xbc, 0xb0, 0x2b, 0x8e, 0x0e, 0xf3, 0xa6, 0x98, 0x2f, 0x17, 0x84, 0x99, 0xa3, 0x90,
+	0xbf, 0xbe, 0x74, 0xa0, 0xa0, 0x19, 0x85, 0x7c, 0xac, 0x04, 0x1e, 0xea, 0x03, 0xd8, 0x25, 0x0f,
+	0xd3, 0x94, 0x96, 0xda, 0xae, 0x75, 0x8f, 0xcd, 0xbd, 0x11, 0x98, 0x5f, 0xb8, 0xc3, 0x5f, 0x99,
+	0xdb, 0x78, 0xef, 0xbd, 0xf1, 0x08, 0xff, 0x06, 0xde, 0x3c, 0x08, 0x4b, 0x38, 0x86, 0x6e, 0x40,
+	0x0d, 0x3c, 0xa6, 0xc9, 0x2d, 0xf5, 0xc7, 0x78, 0xd9, 0x87, 0x0c, 0x07, 0x2a, 0xc2, 0x01, 0x69,
+	0xf0, 0xc7, 0xf6, 0xbc, 0x88, 0x30, 0x56, 0xcc, 0xab, 0x94, 0xe8, 0x02, 0xaa, 0xa4, 0xf4, 0x17,
+	0x73, 0xab, 0x75, 0x4f, 0x0f, 0x3b, 0x38, 0x40, 0x2c, 0xda, 0xf8, 0xae, 0x19, 0x0e, 0x56, 0x5b,
+	0x5d, 0x5e, 0x6f, 0x75, 0xf9, 0x63, 0xab, 0xcb, 0x4f, 0x3b, 0x5d, 0x5a, 0xef, 0x74, 0xe9, 0x6d,
+	0xa7, 0x4b, 0xf7, 0xe7, 0x7b, 0xe0, 0x57, 0xb7, 0x77, 0x69, 0xc7, 0x9f, 0x51, 0xc7, 0x9e, 0x61,
+	0xb1, 0x39, 0xa9, 0xd8, 0x1d, 0x41, 0xef, 0xfc, 0x16, 0x7f, 0xb7, 0xf7, 0x19, 0x00, 0x00, 0xff,
+	0xff, 0x60, 0xd6, 0x7f, 0xfa, 0x54, 0x02, 0x00, 0x00,
 }
 
-func (m *CoinPair) Marshal() (dAtA []byte, err error) {
+func (m *Attribute) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -111,30 +264,151 @@ func (m *CoinPair) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *CoinPair) MarshalTo(dAtA []byte) (int, error) {
+func (m *Attribute) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *CoinPair) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *Attribute) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
+	if len(m.Value) > 0 {
+		i -= len(m.Value)
+		copy(dAtA[i:], m.Value)
+		i = encodeVarintCex(dAtA, i, uint64(len(m.Value)))
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.Key) > 0 {
+		i -= len(m.Key)
+		copy(dAtA[i:], m.Key)
+		i = encodeVarintCex(dAtA, i, uint64(len(m.Key)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *Exchange) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *Exchange) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *Exchange) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.Attributes) > 0 {
+		for iNdEx := len(m.Attributes) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.Attributes[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintCex(dAtA, i, uint64(size))
+			}
+			i--
+			dAtA[i] = 0x12
+		}
+	}
 	{
-		size := m.Rate.Size()
+		size := m.Id.Size()
 		i -= size
-		if _, err := m.Rate.MarshalTo(dAtA[i:]); err != nil {
+		if _, err := m.Id.MarshalTo(dAtA[i:]); err != nil {
 			return 0, err
 		}
 		i = encodeVarintCex(dAtA, i, uint64(size))
 	}
 	i--
+	dAtA[i] = 0xa
+	return len(dAtA) - i, nil
+}
+
+func (m *AdminExchanges) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *AdminExchanges) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *AdminExchanges) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.Ids) > 0 {
+		for iNdEx := len(m.Ids) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size := m.Ids[iNdEx].Size()
+				i -= size
+				if _, err := m.Ids[iNdEx].MarshalTo(dAtA[i:]); err != nil {
+					return 0, err
+				}
+				i = encodeVarintCex(dAtA, i, uint64(size))
+			}
+			i--
+			dAtA[i] = 0xa
+		}
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *Admin) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *Admin) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *Admin) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	{
+		size, err := m.Exchanges.MarshalToSizedBuffer(dAtA[:i])
+		if err != nil {
+			return 0, err
+		}
+		i -= size
+		i = encodeVarintCex(dAtA, i, uint64(size))
+	}
+	i--
 	dAtA[i] = 0x12
-	if len(m.AdminAddress) > 0 {
-		i -= len(m.AdminAddress)
-		copy(dAtA[i:], m.AdminAddress)
-		i = encodeVarintCex(dAtA, i, uint64(len(m.AdminAddress)))
+	if len(m.Address) > 0 {
+		i -= len(m.Address)
+		copy(dAtA[i:], m.Address)
+		i = encodeVarintCex(dAtA, i, uint64(len(m.Address)))
 		i--
 		dAtA[i] = 0xa
 	}
@@ -152,17 +426,66 @@ func encodeVarintCex(dAtA []byte, offset int, v uint64) int {
 	dAtA[offset] = uint8(v)
 	return base
 }
-func (m *CoinPair) Size() (n int) {
+func (m *Attribute) Size() (n int) {
 	if m == nil {
 		return 0
 	}
 	var l int
 	_ = l
-	l = len(m.AdminAddress)
+	l = len(m.Key)
 	if l > 0 {
 		n += 1 + l + sovCex(uint64(l))
 	}
-	l = m.Rate.Size()
+	l = len(m.Value)
+	if l > 0 {
+		n += 1 + l + sovCex(uint64(l))
+	}
+	return n
+}
+
+func (m *Exchange) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = m.Id.Size()
+	n += 1 + l + sovCex(uint64(l))
+	if len(m.Attributes) > 0 {
+		for _, e := range m.Attributes {
+			l = e.Size()
+			n += 1 + l + sovCex(uint64(l))
+		}
+	}
+	return n
+}
+
+func (m *AdminExchanges) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if len(m.Ids) > 0 {
+		for _, e := range m.Ids {
+			l = e.Size()
+			n += 1 + l + sovCex(uint64(l))
+		}
+	}
+	return n
+}
+
+func (m *Admin) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.Address)
+	if l > 0 {
+		n += 1 + l + sovCex(uint64(l))
+	}
+	l = m.Exchanges.Size()
 	n += 1 + l + sovCex(uint64(l))
 	return n
 }
@@ -173,7 +496,7 @@ func sovCex(x uint64) (n int) {
 func sozCex(x uint64) (n int) {
 	return sovCex(uint64((x << 1) ^ uint64((int64(x) >> 63))))
 }
-func (m *CoinPair) Unmarshal(dAtA []byte) error {
+func (m *Attribute) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -196,15 +519,15 @@ func (m *CoinPair) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: CoinPair: wiretype end group for non-group")
+			return fmt.Errorf("proto: Attribute: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: CoinPair: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: Attribute: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field AdminAddress", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Key", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -232,11 +555,11 @@ func (m *CoinPair) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.AdminAddress = string(dAtA[iNdEx:postIndex])
+			m.Key = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		case 2:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Rate", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Value", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -264,7 +587,324 @@ func (m *CoinPair) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if err := m.Rate.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+			m.Value = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipCex(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthCex
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *Exchange) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowCex
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: Exchange: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: Exchange: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Id", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowCex
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthCex
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthCex
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := m.Id.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Attributes", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowCex
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthCex
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthCex
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Attributes = append(m.Attributes, Attribute{})
+			if err := m.Attributes[len(m.Attributes)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipCex(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthCex
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *AdminExchanges) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowCex
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: AdminExchanges: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: AdminExchanges: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Ids", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowCex
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthCex
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthCex
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			var v github_com_cosmos_cosmos_sdk_types.Int
+			m.Ids = append(m.Ids, v)
+			if err := m.Ids[len(m.Ids)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipCex(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthCex
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *Admin) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowCex
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: Admin: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: Admin: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Address", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowCex
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthCex
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthCex
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Address = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Exchanges", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowCex
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthCex
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthCex
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := m.Exchanges.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex

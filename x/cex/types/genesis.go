@@ -7,10 +7,11 @@ import (
 )
 
 // NewGenesisState creates a new GenesisState object
-func NewGenesisState(moderator_address string, coin_pairs []CoinPair) GenesisState {
+func NewGenesisState(moderator_address string, exchanges []Exchange, admins []Admin) GenesisState {
 	return GenesisState{
 		ModeratorAddress: moderator_address,
-		CoinPairs:        coin_pairs,
+		Exchanges:        exchanges,
+		Admins:           admins,
 	}
 }
 
@@ -18,7 +19,8 @@ func NewGenesisState(moderator_address string, coin_pairs []CoinPair) GenesisSta
 func DefaultGenesisState() *GenesisState {
 	return &GenesisState{
 		ModeratorAddress: "",
-		CoinPairs:        []CoinPair{},
+		Exchanges:        []Exchange{},
+		Admins:           []Admin{},
 	}
 }
 
@@ -28,6 +30,13 @@ func (gs GenesisState) Validate() error {
 	if err := validateAddress(gs.ModeratorAddress); err != nil {
 		return err
 	}
+
+	for _, exchange := range gs.Exchanges {
+		if err := ValidateExchange(&exchange); err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 

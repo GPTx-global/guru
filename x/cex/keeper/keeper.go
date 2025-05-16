@@ -2,7 +2,6 @@ package keeper
 
 import (
 	"fmt"
-	"strings"
 
 	errorsmod "cosmossdk.io/errors"
 	"cosmossdk.io/math"
@@ -12,7 +11,6 @@ import (
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
-	transfertypes "github.com/cosmos/ibc-go/v6/modules/apps/transfer/types"
 	"github.com/tendermint/tendermint/libs/log"
 )
 
@@ -56,30 +54,65 @@ func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 	return ctx.Logger().With("module", "x/"+types.ModuleName)
 }
 
-func (k Keeper) SwapCoins(ctx sdk.Context, senderAcc sdk.AccAddress, fromDenom, fromChannel, toDenom, toChannel string, fromAmount math.Int) error {
-	reserveAddr := k.GetReserveAccount(ctx)
-	reserveAcc := sdk.MustAccAddressFromBech32(reserveAddr)
-	fromIBCDenom := k.GetIBCDenom(fromDenom, fromChannel)
-	toIBCDenom := k.GetIBCDenom(toDenom, toChannel)
-	rate := k.GetRate(ctx, k.GetPairDenom(fromDenom, toDenom))
-	toAmount := rate.MulInt(fromAmount).TruncateInt()
+func (k Keeper) SwapCoins(ctx sdk.Context, senderAcc sdk.AccAddress, exchangeId math.Int, fromDenom, toDenom string, fromAmount math.Int) error {
+	exchange, err := k.GetExchange(ctx, exchangeId)
+	if err != nil {
+		return errorsmod.Wrapf(types.ErrInvalidExchangeId, "%v", err)
+	}
+	if err := types.ValidateExchangeRequiredKeys(exchange); err != nil {
+		return err
+	}
 
-	senderBalance := k.bankKeeper.GetBalance(ctx, senderAcc, k.GetIBCDenom(fromDenom, fromChannel))
+	exReserve, _ := k.GetExchangeAttribute(ctx, exchangeId, types.KeyExchangeReserveAddress)
+	exRate, _ := k.GetExchangeAttribute(ctx, exchangeId, types.KeyExchangeRate)
+	exFee, _ := k.GetExchangeAttribute(ctx, exchangeId, types.KeyExchangeFee)
+	exBaseIbc, _ := k.GetExchangeAttribute(ctx, exchangeId, types.KeyExchangeBaseIBC)
+	exBaseShort, _ := k.GetExchangeAttribute(ctx, exchangeId, types.KeyExchangeBaseShort)
+	exQuoteIbc, _ := k.GetExchangeAttribute(ctx, exchangeId, types.KeyExchangeQuoteIBC)
+	exQuoteShort, _ := k.GetExchangeAttribute(ctx, exchangeId, types.KeyExchangeQuoteShort)
+	rate := sdk.MustNewDecFromStr(exRate.Value)
+	fee := sdk.MustNewDecFromStr(exFee.Value)
+	reserveAcc := sdk.MustAccAddressFromBech32(exReserve.Value)
+
+	var mul bool
+	var fromIbcDenom, toIbcDenom string
+	var toAmount math.Int
+	if (fromDenom == exBaseShort.Value || fromDenom == exBaseIbc.Value) && (toDenom == exQuoteShort.Value || toDenom == exQuoteIbc.Value) {
+		mul = true
+		fromIbcDenom = exBaseIbc.Value
+		toIbcDenom = exQuoteIbc.Value
+	} else if (fromDenom == exQuoteShort.Value || fromDenom == exQuoteIbc.Value) && (toDenom == exBaseShort.Value || toDenom == exBaseIbc.Value) {
+		mul = false
+		fromIbcDenom = exQuoteIbc.Value
+		toIbcDenom = exBaseIbc.Value
+	} else {
+		return errorsmod.Wrapf(types.ErrInvalidExchangeCoins, "%s and %s", fromDenom, toDenom)
+	}
+
+	if mul {
+		conv := rate.MulInt(fromAmount)
+		toAmount = conv.Sub(conv.Mul(fee)).TruncateInt()
+	} else {
+		conv := sdk.NewDecFromInt(fromAmount).Quo(rate)
+		toAmount = conv.Sub(conv.Mul(fee)).TruncateInt()
+	}
+
+	senderBalance := k.bankKeeper.GetBalance(ctx, senderAcc, fromIbcDenom)
 
 	if senderBalance.Amount.LT(fromAmount) {
-		return errorsmod.Wrapf(types.ErrInsufficientBalance, ", %s is less than %s", senderBalance.String(), fromAmount.String()+fromDenom)
+		return errorsmod.Wrapf(types.ErrInsufficientBalance, "sender balance: %s is less than %s", senderBalance.String(), fromAmount.String()+fromDenom)
 	}
 
-	reserveBalance := k.bankKeeper.GetBalance(ctx, reserveAcc, k.GetIBCDenom(toDenom, toChannel))
+	reserveBalance := k.bankKeeper.GetBalance(ctx, reserveAcc, toIbcDenom)
 	if reserveBalance.Amount.LT(toAmount) {
-		return errorsmod.Wrapf(types.ErrInsufficientReserve, ", %s is less than %s", senderBalance.String(), fromAmount.String()+fromDenom)
+		return errorsmod.Wrapf(types.ErrInsufficientReserve, "reserve balance: %s is less than %s", senderBalance.String(), fromAmount.String()+fromDenom)
 	}
 
-	err := k.bankKeeper.SendCoins(ctx, senderAcc, reserveAcc, sdk.NewCoins(sdk.NewCoin(fromIBCDenom, fromAmount)))
+	err = k.bankKeeper.SendCoins(ctx, senderAcc, reserveAcc, sdk.NewCoins(sdk.NewCoin(fromIbcDenom, fromAmount)))
 	if err != nil {
 		return err
 	}
-	err = k.bankKeeper.SendCoins(ctx, reserveAcc, senderAcc, sdk.NewCoins(sdk.NewCoin(toIBCDenom, toAmount)))
+	err = k.bankKeeper.SendCoins(ctx, reserveAcc, senderAcc, sdk.NewCoins(sdk.NewCoin(toIbcDenom, toAmount)))
 	if err != nil {
 		return err
 	}
@@ -90,7 +123,7 @@ func (k Keeper) SwapCoins(ctx sdk.Context, senderAcc sdk.AccAddress, fromDenom, 
 func (k Keeper) GetModeratorAddress(ctx sdk.Context) string {
 	store := ctx.KVStore(k.storeKey)
 	bz := store.Get(types.KeyModeratorAddress)
-	if len(bz) == 0 {
+	if bz == nil {
 		return ""
 	}
 	return string(bz)
@@ -102,92 +135,152 @@ func (k Keeper) SetModeratorAddress(ctx sdk.Context, moderator_address string) {
 	store.Set(types.KeyModeratorAddress, []byte(moderator_address))
 }
 
-// GetReserveAccount returns the current reserve address.
-func (k Keeper) GetReserveAccount(ctx sdk.Context) string {
+func (k Keeper) GetExchange(ctx sdk.Context, id math.Int) (*types.Exchange, error) {
 	store := ctx.KVStore(k.storeKey)
-	bz := store.Get(types.KeyReserveAccount)
-	if len(bz) == 0 {
-		return ""
-	}
-	return string(bz)
-}
+	exchangeStore := prefix.NewStore(store, types.KeyExchanges)
 
-// SetReserveAccount adds/updates the reserve address.
-func (k Keeper) SetReserveAccount(ctx sdk.Context, reserve_address string) {
-	store := ctx.KVStore(k.storeKey)
-	store.Set(types.KeyReserveAccount, []byte(reserve_address))
-}
-
-func (k Keeper) GetReserve(ctx sdk.Context, denom string) sdk.Coin {
-	reserveAddr := k.GetReserveAccount(ctx)
-
-	return k.bankKeeper.GetBalance(ctx, sdk.MustAccAddressFromBech32(reserveAddr), denom)
-}
-
-func (k Keeper) SetRate(ctx sdk.Context, pairDenom string, rate sdk.Dec) {
-	decBytes, err := rate.Marshal()
+	idBytes, err := id.Marshal()
 	if err != nil {
-		panic(fmt.Errorf("unable to marshal rate value %v", err))
+		panic(fmt.Errorf("unable to marshal exchange id %v", err))
 	}
 
-	store := ctx.KVStore(k.storeKey)
-	rateStore := prefix.NewStore(store, types.KeyRate)
+	bz := exchangeStore.Get(idBytes)
+	if bz == nil {
+		return nil, nil
+	}
 
-	rateStore.Set([]byte(pairDenom), decBytes)
+	var exchange types.Exchange
+	k.cdc.MustUnmarshal(bz, &exchange)
+
+	return &exchange, nil
 }
 
-func (k Keeper) GetRate(ctx sdk.Context, pairDenom string) sdk.Dec {
+func (k Keeper) GetPaginatedExchanges(ctx sdk.Context, pagination *query.PageRequest) ([]types.Exchange, *query.PageResponse, error) {
 	store := ctx.KVStore(k.storeKey)
-	rateStore := prefix.NewStore(store, types.KeyRate)
+	exchangeStore := prefix.NewStore(store, types.KeyExchanges)
 
-	bz := rateStore.Get([]byte(pairDenom))
-	if bz == nil {
-		return sdk.NewDec(0)
-	}
+	exchanges := []types.Exchange{}
 
-	var rate sdk.Dec
-	err := rate.Unmarshal(bz)
+	pageRes, err := query.Paginate(exchangeStore, pagination, func(key, value []byte) error {
+		var exchange types.Exchange
+		k.cdc.MustUnmarshal(value, &exchange)
+
+		// add the exchange to the list
+		exchanges = append(exchanges, exchange)
+		return nil
+	})
 	if err != nil {
-		panic(fmt.Errorf("unable to unmarshal rate value %v", err))
+		return nil, nil, err
 	}
-	return rate
+	return exchanges, pageRes, nil
 }
 
-func (k Keeper) SetAdmin(ctx sdk.Context, pairDenom, newAdminAddr string) {
+func (k Keeper) AddNewExchange(ctx sdk.Context, exchange *types.Exchange) error {
 	store := ctx.KVStore(k.storeKey)
-	adminStore := prefix.NewStore(store, types.KeyAdmin)
+	exchangeStore := prefix.NewStore(store, types.KeyExchanges)
 
-	adminStore.Set([]byte(pairDenom), []byte(newAdminAddr))
+	idBytes, err := exchange.Id.Marshal()
+	if err != nil {
+		panic(fmt.Errorf("unable to marshal exchange id %v", err))
+	}
+
+	bz := exchangeStore.Get(idBytes)
+	if bz != nil {
+		return errorsmod.Wrapf(types.ErrInvalidExchangeId, "exchange already exists with id %s", exchange.Id)
+	}
+
+	exchangeBytes := k.cdc.MustMarshal(exchange)
+	exchangeStore.Set(idBytes, exchangeBytes)
+
+	// update the next exchange id
+	nextId := k.GetNextExchangeId(ctx)
+	if nextId.LTE(exchange.Id) {
+		k.setNextExchangeId(ctx, exchange.Id.Add(math.NewInt(1)))
+	}
+
+	return nil
 }
 
-func (k Keeper) GetAdmin(ctx sdk.Context, pairDenom string) string {
+func (k Keeper) SetExchange(ctx sdk.Context, exchange *types.Exchange) error {
 	store := ctx.KVStore(k.storeKey)
-	adminStore := prefix.NewStore(store, types.KeyAdmin)
+	exchangeStore := prefix.NewStore(store, types.KeyExchanges)
 
-	bz := adminStore.Get([]byte(pairDenom))
+	idBytes, err := exchange.Id.Marshal()
+	if err != nil {
+		panic(fmt.Errorf("unable to marshal exchange id %v", err))
+	}
+
+	bz := exchangeStore.Get(idBytes)
+	if bz != nil {
+		return errorsmod.Wrapf(types.ErrInvalidExchangeId, "exchange not found with id %s", exchange.Id)
+	}
+
+	exchangeBytes := k.cdc.MustMarshal(exchange)
+	exchangeStore.Set(idBytes, exchangeBytes)
+	return nil
+}
+
+func (k Keeper) GetExchangeAttribute(ctx sdk.Context, id math.Int, key string) (types.Attribute, error) {
+	exchange, err := k.GetExchange(ctx, id)
+	if err != nil {
+		return types.Attribute{}, errorsmod.Wrapf(types.ErrInvalidExchangeId, "exchange not found with id %s", id)
+	}
+
+	for _, attr := range exchange.Attributes {
+		if attr.Key == key {
+			return types.Attribute{Key: key, Value: attr.Value}, nil
+		}
+	}
+
+	return types.Attribute{}, errorsmod.Wrapf(types.ErrKeyNotFound, "key: %s", key)
+}
+
+func (k Keeper) SetExchangeAttribute(ctx sdk.Context, id math.Int, attribute types.Attribute) error {
+	exchange, err := k.GetExchange(ctx, id)
+	if err != nil {
+		return errorsmod.Wrapf(types.ErrInvalidExchangeId, "exchange not found with id %s", id)
+	}
+
+	if attribute.Key == types.KeyExchangeId || attribute.Key == types.KeyExchangeBaseIBC || attribute.Key == types.KeyExchangeQuoteIBC {
+		return errorsmod.Wrapf(types.ErrConstantKey, "key: %s", attribute.Key)
+	}
+
+	ok := false
+	for idx, attr := range exchange.Attributes {
+		if attr.Key == attribute.Key {
+			exchange.Attributes[idx].Value = attribute.Value
+			ok = true
+			break
+		}
+	}
+	if !ok {
+		exchange.Attributes = append(exchange.Attributes, attribute)
+	}
+
+	return k.SetExchange(ctx, exchange)
+}
+
+func (k Keeper) GetNextExchangeId(ctx sdk.Context) math.Int {
+	store := ctx.KVStore(k.storeKey)
+	bz := store.Get(types.KeyNextExchangeId)
 	if bz == nil {
-		return ""
+		return math.NewInt(1)
 	}
-	return string(bz)
-}
 
-func (k Keeper) GetPaginatedCoinPairs(ctx sdk.Context, pagination *query.PageRequest) ([]types.CoinPair, *query.PageResponse, error) {
-	return []types.CoinPair{}, nil, nil
-}
-
-func (k Keeper) SetCoinPairs(ctx sdk.Context, pairs []types.CoinPair) {
-
-}
-
-func (k Keeper) GetIBCDenom(denom, channel string) string {
-	trace := transfertypes.DenomTrace{
-		Path:      "transfer/" + channel,
-		BaseDenom: denom,
+	var id math.Int
+	err := id.Unmarshal(bz)
+	if err != nil {
+		panic(fmt.Errorf("unable to unmarshal into exchange id %v", err))
 	}
-	ibcDenom := trace.IBCDenom()
-	return ibcDenom
+
+	return id
 }
 
-func (k Keeper) GetPairDenom(fromDenom, toDenom string) string {
-	return strings.ToUpper(fromDenom + toDenom)
+func (k Keeper) setNextExchangeId(ctx sdk.Context, id math.Int) {
+	store := ctx.KVStore(k.storeKey)
+	idBytes, err := id.Marshal()
+	if err != nil {
+		panic(fmt.Errorf("unable to marshal exchange id %v", err))
+	}
+	store.Set(types.KeyNextExchangeId, []byte(idBytes))
 }

@@ -7,6 +7,7 @@ import (
 	context "context"
 	fmt "fmt"
 	_ "github.com/cosmos/cosmos-proto"
+	github_com_cosmos_cosmos_sdk_types "github.com/cosmos/cosmos-sdk/types"
 	types "github.com/cosmos/cosmos-sdk/types"
 	_ "github.com/cosmos/cosmos-sdk/types/msgservice"
 	_ "github.com/cosmos/gogoproto/gogoproto"
@@ -33,12 +34,11 @@ const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
 // msg declaration for swapping coins.
 type MsgSwap struct {
-	FromAddress string     `protobuf:"bytes,1,opt,name=from_address,json=fromAddress,proto3" json:"from_address,omitempty"`
-	FromDenom   string     `protobuf:"bytes,2,opt,name=from_denom,json=fromDenom,proto3" json:"from_denom,omitempty"`
-	FromChannel string     `protobuf:"bytes,3,opt,name=from_channel,json=fromChannel,proto3" json:"from_channel,omitempty"`
-	ToDenom     string     `protobuf:"bytes,4,opt,name=to_denom,json=toDenom,proto3" json:"to_denom,omitempty"`
-	ToChannel   string     `protobuf:"bytes,5,opt,name=to_channel,json=toChannel,proto3" json:"to_channel,omitempty"`
-	Amount      types.Coin `protobuf:"bytes,6,opt,name=amount,proto3,castrepeated=github.com/cosmos/cosmos-sdk/types.Coin" json:"amount"`
+	FromAddress string                                 `protobuf:"bytes,1,opt,name=from_address,json=fromAddress,proto3" json:"from_address,omitempty"`
+	ExchangeId  github_com_cosmos_cosmos_sdk_types.Int `protobuf:"bytes,2,opt,name=exchange_id,json=exchangeId,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"exchange_id"`
+	FromDenom   string                                 `protobuf:"bytes,3,opt,name=from_denom,json=fromDenom,proto3" json:"from_denom,omitempty"`
+	ToDenom     string                                 `protobuf:"bytes,4,opt,name=to_denom,json=toDenom,proto3" json:"to_denom,omitempty"`
+	Amount      types.Coin                             `protobuf:"bytes,5,opt,name=amount,proto3,castrepeated=github.com/cosmos/cosmos-sdk/types.Coin" json:"amount"`
 }
 
 func (m *MsgSwap) Reset()         { *m = MsgSwap{} }
@@ -111,24 +111,25 @@ func (m *MsgSwapResponse) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_MsgSwapResponse proto.InternalMessageInfo
 
-// msg declaration for registering the reserve address.
-type MsgRegisterReserveAccount struct {
-	ModeratorAddress  string `protobuf:"bytes,1,opt,name=moderator_address,json=moderatorAddress,proto3" json:"moderator_address,omitempty"`
-	NewReserveAddress string `protobuf:"bytes,2,opt,name=new_reserve_address,json=newReserveAddress,proto3" json:"new_reserve_address,omitempty"`
+// msg declaration for registering admin.
+type MsgRemoveAdmin struct {
+	ModeratorAddress string `protobuf:"bytes,1,opt,name=moderator_address,json=moderatorAddress,proto3" json:"moderator_address,omitempty"`
+	// admin address to remove
+	AdminAddress string `protobuf:"bytes,2,opt,name=admin_address,json=adminAddress,proto3" json:"admin_address,omitempty"`
 }
 
-func (m *MsgRegisterReserveAccount) Reset()         { *m = MsgRegisterReserveAccount{} }
-func (m *MsgRegisterReserveAccount) String() string { return proto.CompactTextString(m) }
-func (*MsgRegisterReserveAccount) ProtoMessage()    {}
-func (*MsgRegisterReserveAccount) Descriptor() ([]byte, []int) {
+func (m *MsgRemoveAdmin) Reset()         { *m = MsgRemoveAdmin{} }
+func (m *MsgRemoveAdmin) String() string { return proto.CompactTextString(m) }
+func (*MsgRemoveAdmin) ProtoMessage()    {}
+func (*MsgRemoveAdmin) Descriptor() ([]byte, []int) {
 	return fileDescriptor_a121e5cb1bd60dc8, []int{2}
 }
-func (m *MsgRegisterReserveAccount) XXX_Unmarshal(b []byte) error {
+func (m *MsgRemoveAdmin) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *MsgRegisterReserveAccount) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *MsgRemoveAdmin) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_MsgRegisterReserveAccount.Marshal(b, m, deterministic)
+		return xxx_messageInfo_MsgRemoveAdmin.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -138,34 +139,34 @@ func (m *MsgRegisterReserveAccount) XXX_Marshal(b []byte, deterministic bool) ([
 		return b[:n], nil
 	}
 }
-func (m *MsgRegisterReserveAccount) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_MsgRegisterReserveAccount.Merge(m, src)
+func (m *MsgRemoveAdmin) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgRemoveAdmin.Merge(m, src)
 }
-func (m *MsgRegisterReserveAccount) XXX_Size() int {
+func (m *MsgRemoveAdmin) XXX_Size() int {
 	return m.Size()
 }
-func (m *MsgRegisterReserveAccount) XXX_DiscardUnknown() {
-	xxx_messageInfo_MsgRegisterReserveAccount.DiscardUnknown(m)
+func (m *MsgRemoveAdmin) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgRemoveAdmin.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_MsgRegisterReserveAccount proto.InternalMessageInfo
+var xxx_messageInfo_MsgRemoveAdmin proto.InternalMessageInfo
 
-// Response type for the Msg/ChangeReserveAddress.
-type MsgRegisterReserveAccountResponse struct {
+// Response type for the Msg/RegisterAdmin.
+type MsgRemoveAdminResponse struct {
 }
 
-func (m *MsgRegisterReserveAccountResponse) Reset()         { *m = MsgRegisterReserveAccountResponse{} }
-func (m *MsgRegisterReserveAccountResponse) String() string { return proto.CompactTextString(m) }
-func (*MsgRegisterReserveAccountResponse) ProtoMessage()    {}
-func (*MsgRegisterReserveAccountResponse) Descriptor() ([]byte, []int) {
+func (m *MsgRemoveAdminResponse) Reset()         { *m = MsgRemoveAdminResponse{} }
+func (m *MsgRemoveAdminResponse) String() string { return proto.CompactTextString(m) }
+func (*MsgRemoveAdminResponse) ProtoMessage()    {}
+func (*MsgRemoveAdminResponse) Descriptor() ([]byte, []int) {
 	return fileDescriptor_a121e5cb1bd60dc8, []int{3}
 }
-func (m *MsgRegisterReserveAccountResponse) XXX_Unmarshal(b []byte) error {
+func (m *MsgRemoveAdminResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *MsgRegisterReserveAccountResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *MsgRemoveAdminResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_MsgRegisterReserveAccountResponse.Marshal(b, m, deterministic)
+		return xxx_messageInfo_MsgRemoveAdminResponse.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -175,23 +176,24 @@ func (m *MsgRegisterReserveAccountResponse) XXX_Marshal(b []byte, deterministic 
 		return b[:n], nil
 	}
 }
-func (m *MsgRegisterReserveAccountResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_MsgRegisterReserveAccountResponse.Merge(m, src)
+func (m *MsgRemoveAdminResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgRemoveAdminResponse.Merge(m, src)
 }
-func (m *MsgRegisterReserveAccountResponse) XXX_Size() int {
+func (m *MsgRemoveAdminResponse) XXX_Size() int {
 	return m.Size()
 }
-func (m *MsgRegisterReserveAccountResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_MsgRegisterReserveAccountResponse.DiscardUnknown(m)
+func (m *MsgRemoveAdminResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgRemoveAdminResponse.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_MsgRegisterReserveAccountResponse proto.InternalMessageInfo
+var xxx_messageInfo_MsgRemoveAdminResponse proto.InternalMessageInfo
 
 // msg declaration for registering admin.
 type MsgRegisterAdmin struct {
 	ModeratorAddress string `protobuf:"bytes,1,opt,name=moderator_address,json=moderatorAddress,proto3" json:"moderator_address,omitempty"`
-	NewAdminAddress  string `protobuf:"bytes,2,opt,name=new_admin_address,json=newAdminAddress,proto3" json:"new_admin_address,omitempty"`
-	PairDenom        string `protobuf:"bytes,3,opt,name=pair_denom,json=pairDenom,proto3" json:"pair_denom,omitempty"`
+	// new admin address
+	AdminAddress string                                 `protobuf:"bytes,2,opt,name=admin_address,json=adminAddress,proto3" json:"admin_address,omitempty"`
+	ExchangeId   github_com_cosmos_cosmos_sdk_types.Int `protobuf:"bytes,3,opt,name=exchange_id,json=exchangeId,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"exchange_id"`
 }
 
 func (m *MsgRegisterAdmin) Reset()         { *m = MsgRegisterAdmin{} }
@@ -264,25 +266,25 @@ func (m *MsgRegisterAdminResponse) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_MsgRegisterAdminResponse proto.InternalMessageInfo
 
-// msg declaration for updating the rate.
-type MsgUpdateRate struct {
+// msg declaration for registering admin.
+type MsgRegisterExchange struct {
 	AdminAddress string `protobuf:"bytes,1,opt,name=admin_address,json=adminAddress,proto3" json:"admin_address,omitempty"`
-	PairDenom    string `protobuf:"bytes,2,opt,name=pair_denom,json=pairDenom,proto3" json:"pair_denom,omitempty"`
-	NewRate      string `protobuf:"bytes,3,opt,name=new_rate,json=newRate,proto3" json:"new_rate,omitempty"`
+	// exchange
+	Exchange *Exchange `protobuf:"bytes,3,opt,name=exchange,proto3" json:"exchange,omitempty"`
 }
 
-func (m *MsgUpdateRate) Reset()         { *m = MsgUpdateRate{} }
-func (m *MsgUpdateRate) String() string { return proto.CompactTextString(m) }
-func (*MsgUpdateRate) ProtoMessage()    {}
-func (*MsgUpdateRate) Descriptor() ([]byte, []int) {
+func (m *MsgRegisterExchange) Reset()         { *m = MsgRegisterExchange{} }
+func (m *MsgRegisterExchange) String() string { return proto.CompactTextString(m) }
+func (*MsgRegisterExchange) ProtoMessage()    {}
+func (*MsgRegisterExchange) Descriptor() ([]byte, []int) {
 	return fileDescriptor_a121e5cb1bd60dc8, []int{6}
 }
-func (m *MsgUpdateRate) XXX_Unmarshal(b []byte) error {
+func (m *MsgRegisterExchange) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *MsgUpdateRate) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *MsgRegisterExchange) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_MsgUpdateRate.Marshal(b, m, deterministic)
+		return xxx_messageInfo_MsgRegisterExchange.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -292,34 +294,34 @@ func (m *MsgUpdateRate) XXX_Marshal(b []byte, deterministic bool) ([]byte, error
 		return b[:n], nil
 	}
 }
-func (m *MsgUpdateRate) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_MsgUpdateRate.Merge(m, src)
+func (m *MsgRegisterExchange) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgRegisterExchange.Merge(m, src)
 }
-func (m *MsgUpdateRate) XXX_Size() int {
+func (m *MsgRegisterExchange) XXX_Size() int {
 	return m.Size()
 }
-func (m *MsgUpdateRate) XXX_DiscardUnknown() {
-	xxx_messageInfo_MsgUpdateRate.DiscardUnknown(m)
+func (m *MsgRegisterExchange) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgRegisterExchange.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_MsgUpdateRate proto.InternalMessageInfo
+var xxx_messageInfo_MsgRegisterExchange proto.InternalMessageInfo
 
-// Response type for the Msg/UpdateRate.
-type MsgUpdateRateResponse struct {
+// Response type for the Msg/RegisterAdmin.
+type MsgRegisterExchangeResponse struct {
 }
 
-func (m *MsgUpdateRateResponse) Reset()         { *m = MsgUpdateRateResponse{} }
-func (m *MsgUpdateRateResponse) String() string { return proto.CompactTextString(m) }
-func (*MsgUpdateRateResponse) ProtoMessage()    {}
-func (*MsgUpdateRateResponse) Descriptor() ([]byte, []int) {
+func (m *MsgRegisterExchangeResponse) Reset()         { *m = MsgRegisterExchangeResponse{} }
+func (m *MsgRegisterExchangeResponse) String() string { return proto.CompactTextString(m) }
+func (*MsgRegisterExchangeResponse) ProtoMessage()    {}
+func (*MsgRegisterExchangeResponse) Descriptor() ([]byte, []int) {
 	return fileDescriptor_a121e5cb1bd60dc8, []int{7}
 }
-func (m *MsgUpdateRateResponse) XXX_Unmarshal(b []byte) error {
+func (m *MsgRegisterExchangeResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *MsgUpdateRateResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *MsgRegisterExchangeResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_MsgUpdateRateResponse.Marshal(b, m, deterministic)
+		return xxx_messageInfo_MsgRegisterExchangeResponse.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -329,17 +331,96 @@ func (m *MsgUpdateRateResponse) XXX_Marshal(b []byte, deterministic bool) ([]byt
 		return b[:n], nil
 	}
 }
-func (m *MsgUpdateRateResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_MsgUpdateRateResponse.Merge(m, src)
+func (m *MsgRegisterExchangeResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgRegisterExchangeResponse.Merge(m, src)
 }
-func (m *MsgUpdateRateResponse) XXX_Size() int {
+func (m *MsgRegisterExchangeResponse) XXX_Size() int {
 	return m.Size()
 }
-func (m *MsgUpdateRateResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_MsgUpdateRateResponse.DiscardUnknown(m)
+func (m *MsgRegisterExchangeResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgRegisterExchangeResponse.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_MsgUpdateRateResponse proto.InternalMessageInfo
+var xxx_messageInfo_MsgRegisterExchangeResponse proto.InternalMessageInfo
+
+// msg declaration for updating the rate.
+type MsgUpdateExchange struct {
+	AdminAddress string `protobuf:"bytes,1,opt,name=admin_address,json=adminAddress,proto3" json:"admin_address,omitempty"`
+	// ID for the existing coin pair
+	Id    github_com_cosmos_cosmos_sdk_types.Int `protobuf:"bytes,2,opt,name=id,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"id"`
+	Key   string                                 `protobuf:"bytes,3,opt,name=key,proto3" json:"key,omitempty"`
+	Value string                                 `protobuf:"bytes,4,opt,name=value,proto3" json:"value,omitempty"`
+}
+
+func (m *MsgUpdateExchange) Reset()         { *m = MsgUpdateExchange{} }
+func (m *MsgUpdateExchange) String() string { return proto.CompactTextString(m) }
+func (*MsgUpdateExchange) ProtoMessage()    {}
+func (*MsgUpdateExchange) Descriptor() ([]byte, []int) {
+	return fileDescriptor_a121e5cb1bd60dc8, []int{8}
+}
+func (m *MsgUpdateExchange) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgUpdateExchange) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgUpdateExchange.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgUpdateExchange) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgUpdateExchange.Merge(m, src)
+}
+func (m *MsgUpdateExchange) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgUpdateExchange) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgUpdateExchange.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgUpdateExchange proto.InternalMessageInfo
+
+// Response type for the Msg/UpdateRate.
+type MsgUpdateExchangeResponse struct {
+}
+
+func (m *MsgUpdateExchangeResponse) Reset()         { *m = MsgUpdateExchangeResponse{} }
+func (m *MsgUpdateExchangeResponse) String() string { return proto.CompactTextString(m) }
+func (*MsgUpdateExchangeResponse) ProtoMessage()    {}
+func (*MsgUpdateExchangeResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_a121e5cb1bd60dc8, []int{9}
+}
+func (m *MsgUpdateExchangeResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgUpdateExchangeResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgUpdateExchangeResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgUpdateExchangeResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgUpdateExchangeResponse.Merge(m, src)
+}
+func (m *MsgUpdateExchangeResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgUpdateExchangeResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgUpdateExchangeResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgUpdateExchangeResponse proto.InternalMessageInfo
 
 // msg declaration for changing the moderator.
 type MsgChangeModerator struct {
@@ -351,7 +432,7 @@ func (m *MsgChangeModerator) Reset()         { *m = MsgChangeModerator{} }
 func (m *MsgChangeModerator) String() string { return proto.CompactTextString(m) }
 func (*MsgChangeModerator) ProtoMessage()    {}
 func (*MsgChangeModerator) Descriptor() ([]byte, []int) {
-	return fileDescriptor_a121e5cb1bd60dc8, []int{8}
+	return fileDescriptor_a121e5cb1bd60dc8, []int{10}
 }
 func (m *MsgChangeModerator) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -388,7 +469,7 @@ func (m *MsgChangeModeratorResponse) Reset()         { *m = MsgChangeModeratorRe
 func (m *MsgChangeModeratorResponse) String() string { return proto.CompactTextString(m) }
 func (*MsgChangeModeratorResponse) ProtoMessage()    {}
 func (*MsgChangeModeratorResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_a121e5cb1bd60dc8, []int{9}
+	return fileDescriptor_a121e5cb1bd60dc8, []int{11}
 }
 func (m *MsgChangeModeratorResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -420,12 +501,14 @@ var xxx_messageInfo_MsgChangeModeratorResponse proto.InternalMessageInfo
 func init() {
 	proto.RegisterType((*MsgSwap)(nil), "guru.cex.v1.MsgSwap")
 	proto.RegisterType((*MsgSwapResponse)(nil), "guru.cex.v1.MsgSwapResponse")
-	proto.RegisterType((*MsgRegisterReserveAccount)(nil), "guru.cex.v1.MsgRegisterReserveAccount")
-	proto.RegisterType((*MsgRegisterReserveAccountResponse)(nil), "guru.cex.v1.MsgRegisterReserveAccountResponse")
+	proto.RegisterType((*MsgRemoveAdmin)(nil), "guru.cex.v1.MsgRemoveAdmin")
+	proto.RegisterType((*MsgRemoveAdminResponse)(nil), "guru.cex.v1.MsgRemoveAdminResponse")
 	proto.RegisterType((*MsgRegisterAdmin)(nil), "guru.cex.v1.MsgRegisterAdmin")
 	proto.RegisterType((*MsgRegisterAdminResponse)(nil), "guru.cex.v1.MsgRegisterAdminResponse")
-	proto.RegisterType((*MsgUpdateRate)(nil), "guru.cex.v1.MsgUpdateRate")
-	proto.RegisterType((*MsgUpdateRateResponse)(nil), "guru.cex.v1.MsgUpdateRateResponse")
+	proto.RegisterType((*MsgRegisterExchange)(nil), "guru.cex.v1.MsgRegisterExchange")
+	proto.RegisterType((*MsgRegisterExchangeResponse)(nil), "guru.cex.v1.MsgRegisterExchangeResponse")
+	proto.RegisterType((*MsgUpdateExchange)(nil), "guru.cex.v1.MsgUpdateExchange")
+	proto.RegisterType((*MsgUpdateExchangeResponse)(nil), "guru.cex.v1.MsgUpdateExchangeResponse")
 	proto.RegisterType((*MsgChangeModerator)(nil), "guru.cex.v1.MsgChangeModerator")
 	proto.RegisterType((*MsgChangeModeratorResponse)(nil), "guru.cex.v1.MsgChangeModeratorResponse")
 }
@@ -433,54 +516,56 @@ func init() {
 func init() { proto.RegisterFile("guru/cex/v1/tx.proto", fileDescriptor_a121e5cb1bd60dc8) }
 
 var fileDescriptor_a121e5cb1bd60dc8 = []byte{
-	// 739 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xac, 0x55, 0x3d, 0x4f, 0x1b, 0x4b,
-	0x14, 0xf5, 0x1a, 0x1e, 0x3c, 0x2e, 0x20, 0x60, 0x9f, 0x79, 0xd8, 0x2b, 0x58, 0x83, 0xa3, 0x04,
-	0x14, 0x89, 0x5d, 0x99, 0x74, 0x8e, 0x52, 0x18, 0x88, 0x92, 0x02, 0x4b, 0x91, 0x09, 0x4d, 0x52,
-	0x58, 0xe3, 0xf5, 0x64, 0x58, 0x85, 0xdd, 0xb1, 0x76, 0xc6, 0x1f, 0xb4, 0xa9, 0x52, 0xe6, 0x27,
-	0x50, 0xa4, 0x4a, 0x95, 0x22, 0xf9, 0x01, 0xe9, 0x28, 0x52, 0x20, 0xaa, 0x54, 0x24, 0x82, 0x22,
-	0xf9, 0x19, 0xd1, 0xcc, 0x8e, 0x37, 0xeb, 0x35, 0x8e, 0x29, 0xa8, 0x60, 0xef, 0xbd, 0xe7, 0xf8,
-	0x9c, 0x3b, 0xf7, 0xce, 0x40, 0x86, 0xb4, 0x82, 0x96, 0xed, 0xe0, 0xae, 0xdd, 0x2e, 0xda, 0xbc,
-	0x6b, 0x35, 0x03, 0xca, 0xa9, 0x3e, 0x2d, 0xa2, 0x96, 0x83, 0xbb, 0x56, 0xbb, 0x68, 0x98, 0x0e,
-	0x65, 0x1e, 0x65, 0x76, 0x1d, 0x31, 0x6c, 0xb7, 0x8b, 0x75, 0xcc, 0x51, 0xd1, 0x76, 0xa8, 0xeb,
-	0x87, 0xc5, 0xc6, 0x92, 0xca, 0x7b, 0x8c, 0x08, 0x12, 0x8f, 0x11, 0x95, 0xc8, 0x85, 0x89, 0x9a,
-	0xfc, 0xb2, 0xc3, 0x0f, 0x95, 0xca, 0x10, 0x4a, 0x68, 0x18, 0x17, 0xff, 0x85, 0xd1, 0xc2, 0x97,
-	0x34, 0x4c, 0x56, 0x18, 0xd9, 0xef, 0xa0, 0xa6, 0xfe, 0x10, 0x66, 0x5e, 0x05, 0xd4, 0xab, 0xa1,
-	0x46, 0x23, 0xc0, 0x8c, 0x65, 0xb5, 0x55, 0x6d, 0x63, 0x6a, 0x3b, 0x7b, 0xfe, 0x69, 0x33, 0xa3,
-	0x98, 0xca, 0x61, 0x66, 0x9f, 0x07, 0xae, 0x4f, 0xaa, 0xd3, 0xa2, 0x5a, 0x85, 0xf4, 0x15, 0x00,
-	0x09, 0x6e, 0x60, 0x9f, 0x7a, 0xd9, 0xb4, 0x80, 0x56, 0xa7, 0x44, 0x64, 0x57, 0x04, 0xf4, 0x35,
-	0xc5, 0xed, 0x1c, 0x22, 0xdf, 0xc7, 0x47, 0xd9, 0x31, 0x59, 0x20, 0x19, 0x76, 0xc2, 0x90, 0x9e,
-	0x83, 0x7f, 0x39, 0x55, 0xf8, 0x71, 0x99, 0x9e, 0xe4, 0x34, 0x44, 0xaf, 0x00, 0x70, 0x1a, 0x61,
-	0xff, 0x09, 0xc9, 0x39, 0xed, 0x21, 0xeb, 0x30, 0x81, 0x3c, 0xda, 0xf2, 0x79, 0x76, 0x62, 0x55,
-	0xdb, 0x98, 0xde, 0xca, 0x59, 0x4a, 0xaf, 0xe8, 0x9f, 0xa5, 0xfa, 0x67, 0xed, 0x50, 0xd7, 0xdf,
-	0xb6, 0x4f, 0x2f, 0xf2, 0xa9, 0x0f, 0xdf, 0xf3, 0xeb, 0xc4, 0xe5, 0x87, 0xad, 0xba, 0xe5, 0x50,
-	0x4f, 0xb5, 0x49, 0xfd, 0xd9, 0x64, 0x8d, 0xd7, 0x36, 0x3f, 0x6e, 0x62, 0x26, 0x01, 0x55, 0xc5,
-	0x5c, 0xca, 0xbd, 0x3d, 0xc9, 0xa7, 0x7e, 0x9d, 0xe4, 0x53, 0x6f, 0x7e, 0x7e, 0xbc, 0xdf, 0xd7,
-	0xa7, 0xc2, 0x02, 0xcc, 0xa9, 0x16, 0x56, 0x31, 0x6b, 0x52, 0x9f, 0xe1, 0xc2, 0x57, 0x0d, 0x72,
-	0x15, 0x46, 0xaa, 0x98, 0xb8, 0x8c, 0xe3, 0xa0, 0x8a, 0x19, 0x0e, 0xda, 0xb8, 0xec, 0x38, 0x82,
-	0x4b, 0x7f, 0x0c, 0x0b, 0x1e, 0x6d, 0xe0, 0x00, 0x71, 0x1a, 0xdc, 0xb8, 0xdb, 0xf3, 0x11, 0xa4,
-	0xd7, 0xf2, 0xa7, 0xf0, 0x9f, 0x8f, 0x3b, 0xb5, 0x20, 0x24, 0x8f, 0x88, 0xd2, 0x23, 0x88, 0x16,
-	0x7c, 0xdc, 0xe9, 0x09, 0x0a, 0x13, 0x25, 0x33, 0x6e, 0x6e, 0x50, 0x5b, 0xe1, 0x0e, 0xac, 0x0d,
-	0x75, 0x13, 0x79, 0xbe, 0xd0, 0x60, 0x3e, 0x56, 0x55, 0x6e, 0x78, 0xae, 0x7f, 0x5b, 0x56, 0x77,
-	0x41, 0xa8, 0xae, 0x21, 0xc1, 0x79, 0x63, 0xa3, 0x73, 0x3e, 0xee, 0x48, 0x15, 0xb1, 0x19, 0x6d,
-	0x22, 0x37, 0x50, 0x33, 0x16, 0x8e, 0xe0, 0x94, 0x88, 0xc8, 0x29, 0x1b, 0xd9, 0x05, 0x03, 0xb2,
-	0x49, 0x7f, 0x91, 0xf9, 0xf7, 0x1a, 0xcc, 0x56, 0x18, 0x39, 0x68, 0x36, 0x10, 0xc7, 0x55, 0xc4,
-	0xb1, 0xfe, 0x08, 0x66, 0xfb, 0xe5, 0x8e, 0x72, 0x3d, 0x83, 0x86, 0x6b, 0x4d, 0x27, 0xb4, 0x8a,
-	0x65, 0x91, 0x67, 0x8f, 0x38, 0x56, 0x46, 0x26, 0xc5, 0xb1, 0x22, 0x8e, 0x4b, 0x46, 0xdc, 0x46,
-	0xbf, 0x86, 0xc2, 0x12, 0x2c, 0xf6, 0xa9, 0x8c, 0xf4, 0x9f, 0x6b, 0xa0, 0x57, 0x18, 0x11, 0x1b,
-	0x45, 0x70, 0xa5, 0x67, 0xfd, 0xb6, 0x8e, 0x6f, 0x0f, 0x16, 0x85, 0xda, 0x41, 0xaa, 0x51, 0x47,
-	0x28, 0x06, 0xbc, 0x92, 0x60, 0x2b, 0xad, 0xc7, 0x0d, 0x1a, 0xa8, 0xc5, 0x0f, 0xe9, 0x00, 0x73,
-	0xe0, 0xf2, 0xe3, 0xc2, 0x32, 0x18, 0x83, 0x9e, 0x7a, 0x96, 0xb7, 0x3e, 0x8f, 0xc1, 0x58, 0x85,
-	0x11, 0xbd, 0x04, 0xe3, 0xf2, 0xfa, 0xcb, 0x58, 0xb1, 0x2b, 0xd8, 0x52, 0x1b, 0x6d, 0x2c, 0x5f,
-	0x17, 0xed, 0x71, 0xe8, 0x4d, 0xf8, 0x7f, 0xc8, 0x8e, 0xdf, 0x4b, 0xe2, 0xae, 0xaf, 0x33, 0xac,
-	0x9b, 0xd5, 0x45, 0xbf, 0x78, 0x00, 0xb3, 0xfd, 0x1b, 0xb6, 0x32, 0x8c, 0x40, 0xa6, 0x8d, 0xbb,
-	0x7f, 0x4d, 0x47, 0xb4, 0x7b, 0x00, 0xb1, 0xd9, 0x35, 0x92, 0xa0, 0x3f, 0x39, 0xa3, 0x30, 0x3c,
-	0x17, 0xb1, 0xbd, 0x84, 0xb9, 0xe4, 0x24, 0xe5, 0x93, 0xb0, 0x44, 0x81, 0xb1, 0x3e, 0xa2, 0xa0,
-	0x47, 0xbe, 0x5d, 0x3e, 0xbd, 0x34, 0xb5, 0xb3, 0x4b, 0x53, 0xfb, 0x71, 0x69, 0x6a, 0xef, 0xae,
-	0xcc, 0xd4, 0xd9, 0x95, 0x99, 0xfa, 0x76, 0x65, 0xa6, 0x5e, 0xc4, 0x2f, 0xf5, 0x27, 0xcf, 0x9e,
-	0x77, 0x37, 0xc9, 0x11, 0xad, 0xa3, 0x23, 0x5b, 0x3e, 0xb8, 0x5d, 0xf9, 0xe4, 0xca, 0x9b, 0xbd,
-	0x3e, 0x21, 0x1f, 0xbf, 0x07, 0xbf, 0x03, 0x00, 0x00, 0xff, 0xff, 0x1a, 0x52, 0x94, 0xcb, 0x8b,
-	0x07, 0x00, 0x00,
+	// 780 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xbc, 0x56, 0x4f, 0x4f, 0xdb, 0x58,
+	0x10, 0x8f, 0x13, 0xfe, 0x4e, 0xf8, 0x13, 0x4c, 0xd8, 0x4d, 0x0c, 0x38, 0x28, 0x68, 0x01, 0xad,
+	0x14, 0x5b, 0x61, 0x6f, 0xd9, 0xdd, 0x03, 0xb0, 0x68, 0x85, 0x44, 0xd4, 0xca, 0x14, 0xa9, 0x6a,
+	0xd5, 0x46, 0x4e, 0xfc, 0xfa, 0xb0, 0xc0, 0x7e, 0x91, 0x9f, 0x13, 0xc2, 0xad, 0xea, 0xa9, 0xc7,
+	0x7e, 0x80, 0x1e, 0x90, 0x7a, 0xeb, 0xa9, 0x07, 0x3e, 0x04, 0xbd, 0x21, 0x4e, 0x55, 0x0f, 0xb4,
+	0x82, 0x4a, 0xed, 0x97, 0xa8, 0x54, 0xf9, 0xe5, 0xd9, 0x8a, 0x1d, 0x9a, 0x70, 0x88, 0x7a, 0x8a,
+	0x3d, 0xbf, 0x99, 0xdf, 0xfc, 0x66, 0x3c, 0x6f, 0xf2, 0x20, 0x8d, 0x1b, 0x4e, 0x43, 0xad, 0xa1,
+	0x96, 0xda, 0x2c, 0xaa, 0x6e, 0x4b, 0xa9, 0x3b, 0xc4, 0x25, 0x62, 0xd2, 0xb3, 0x2a, 0x35, 0xd4,
+	0x52, 0x9a, 0x45, 0x69, 0xae, 0xd3, 0xc5, 0xb3, 0x31, 0x1f, 0x49, 0xae, 0x11, 0x6a, 0x11, 0xaa,
+	0x56, 0x75, 0x8a, 0xd4, 0x66, 0xb1, 0x8a, 0x5c, 0xbd, 0xa8, 0xd6, 0x88, 0x69, 0x73, 0xfc, 0x77,
+	0x8e, 0x5b, 0x14, 0x7b, 0x81, 0x16, 0xc5, 0x1c, 0xc8, 0xb6, 0x81, 0x0a, 0x7b, 0x53, 0xdb, 0x2f,
+	0x1c, 0x4a, 0x63, 0x82, 0x49, 0xdb, 0xee, 0x3d, 0xb5, 0xad, 0xf9, 0xab, 0x38, 0x8c, 0x96, 0x29,
+	0xde, 0x3b, 0xd6, 0xeb, 0xe2, 0xdf, 0x30, 0xf1, 0xcc, 0x21, 0x56, 0x45, 0x37, 0x0c, 0x07, 0x51,
+	0x9a, 0x11, 0x96, 0x84, 0xb5, 0xf1, 0xcd, 0xcc, 0xe5, 0x59, 0x21, 0xcd, 0x99, 0x36, 0xda, 0xc8,
+	0x9e, 0xeb, 0x98, 0x36, 0xd6, 0x92, 0x9e, 0x37, 0x37, 0x89, 0x4f, 0x20, 0x89, 0x5a, 0xb5, 0x03,
+	0xdd, 0xc6, 0xa8, 0x62, 0x1a, 0x99, 0x38, 0x8b, 0xfd, 0xe7, 0xfc, 0x2a, 0x17, 0xfb, 0x78, 0x95,
+	0x5b, 0xc1, 0xa6, 0x7b, 0xd0, 0xa8, 0x2a, 0x35, 0x62, 0x71, 0x51, 0xfc, 0xa7, 0x40, 0x8d, 0x43,
+	0xd5, 0x3d, 0xa9, 0x23, 0xaa, 0xec, 0xd8, 0xee, 0xe5, 0x59, 0x01, 0x78, 0xa6, 0x1d, 0xdb, 0xd5,
+	0xc0, 0x27, 0xdc, 0x31, 0xc4, 0x45, 0x00, 0xa6, 0xcd, 0x40, 0x36, 0xb1, 0x32, 0x09, 0x8f, 0x5d,
+	0x1b, 0xf7, 0x2c, 0xff, 0x79, 0x06, 0x31, 0x0b, 0x63, 0x2e, 0xe1, 0xe0, 0x10, 0x03, 0x47, 0x5d,
+	0xd2, 0x86, 0xaa, 0x30, 0xa2, 0x5b, 0xa4, 0x61, 0xbb, 0x99, 0xe1, 0x25, 0x61, 0x2d, 0xb9, 0x9e,
+	0x55, 0x78, 0x0a, 0xaf, 0xb9, 0x0a, 0x6f, 0xae, 0xb2, 0x45, 0x4c, 0x7b, 0x53, 0xf5, 0xe4, 0xbe,
+	0xfd, 0x94, 0x5b, 0xbd, 0x83, 0x5c, 0x2f, 0x40, 0xe3, 0xcc, 0xa5, 0xec, 0xcb, 0xd3, 0x5c, 0xec,
+	0xdb, 0x69, 0x2e, 0xf6, 0xe2, 0xeb, 0xbb, 0x3f, 0x43, 0x4d, 0xcc, 0xcf, 0xc0, 0x34, 0xef, 0xaf,
+	0x86, 0x68, 0x9d, 0xd8, 0x14, 0xe5, 0x5f, 0x0b, 0x30, 0x55, 0xa6, 0x58, 0x43, 0x16, 0x69, 0xa2,
+	0x0d, 0xc3, 0x32, 0x6d, 0x71, 0x1b, 0x66, 0x2c, 0x62, 0x20, 0x47, 0x77, 0x89, 0x73, 0xe7, 0xfe,
+	0xa7, 0x82, 0x10, 0xff, 0x23, 0x2c, 0xc3, 0xa4, 0xee, 0xf1, 0x05, 0x14, 0xec, 0x33, 0x68, 0x13,
+	0xcc, 0xc8, 0x9d, 0x4a, 0x72, 0xa7, 0xd8, 0xee, 0xb4, 0xf9, 0x0c, 0xfc, 0x16, 0x56, 0x17, 0x08,
+	0xff, 0x2e, 0x40, 0x8a, 0x41, 0xd8, 0xa4, 0x2e, 0x72, 0x7e, 0xb9, 0xf4, 0xe8, 0x90, 0x25, 0x06,
+	0x3b, 0x64, 0x7d, 0x3b, 0x23, 0x41, 0x26, 0x5a, 0x7e, 0xd0, 0x9b, 0x37, 0x02, 0xcc, 0x76, 0x80,
+	0xdb, 0x9c, 0x55, 0xfc, 0x37, 0x5a, 0x57, 0xbf, 0xd6, 0x84, 0x2b, 0x2e, 0xc2, 0x98, 0x2f, 0x90,
+	0x95, 0x9b, 0x5c, 0x9f, 0x53, 0x3a, 0x16, 0x88, 0xe2, 0xe7, 0xd1, 0x02, 0xb7, 0x92, 0xd4, 0x59,
+	0x45, 0x38, 0x79, 0x7e, 0x11, 0xe6, 0x6f, 0x11, 0x19, 0x14, 0xf1, 0x45, 0x80, 0x99, 0x32, 0xc5,
+	0xfb, 0x75, 0x43, 0x77, 0xd1, 0xa0, 0x4a, 0xd8, 0x85, 0xf8, 0x80, 0x16, 0x42, 0xdc, 0x34, 0xc4,
+	0x14, 0x24, 0x0e, 0xd1, 0x09, 0xdf, 0x00, 0xde, 0xa3, 0x98, 0x86, 0xe1, 0xa6, 0x7e, 0xd4, 0x40,
+	0xfc, 0xe0, 0xb7, 0x5f, 0x7a, 0x76, 0x61, 0x1e, 0xb2, 0x5d, 0x55, 0x06, 0x3d, 0x78, 0x2f, 0x80,
+	0x58, 0xa6, 0x78, 0x8b, 0x59, 0xcb, 0xfe, 0x0c, 0x0c, 0x6a, 0xcc, 0x77, 0x61, 0xce, 0x46, 0xc7,
+	0x95, 0x6e, 0xaa, 0x78, 0x1f, 0xaa, 0x59, 0x1b, 0x1d, 0x97, 0x23, 0x6c, 0x7d, 0x07, 0x76, 0x01,
+	0xa4, 0xee, 0x52, 0xfc, 0x4a, 0xd7, 0x9f, 0x0f, 0x41, 0xa2, 0x4c, 0xb1, 0x58, 0x82, 0x21, 0xb6,
+	0xff, 0xd3, 0xa1, 0xc9, 0xe2, 0x5b, 0x4b, 0x5a, 0xb8, 0xcd, 0xea, 0x73, 0x88, 0xfb, 0x30, 0x19,
+	0x5e, 0x07, 0x8b, 0x51, 0xf7, 0x10, 0x2c, 0xfd, 0xd1, 0x13, 0x0e, 0x68, 0xef, 0x41, 0xb2, 0x73,
+	0x3d, 0xce, 0x77, 0x47, 0x05, 0xa0, 0xb4, 0xdc, 0x03, 0x0c, 0x08, 0x9f, 0x42, 0xaa, 0xeb, 0x68,
+	0x2e, 0xfd, 0x4c, 0x8b, 0xef, 0x21, 0xad, 0xf5, 0xf3, 0x08, 0xf8, 0x1f, 0xc2, 0x54, 0xe4, 0xd4,
+	0xc8, 0xd1, 0xd8, 0x30, 0x2e, 0xad, 0xf4, 0xc6, 0x03, 0xe6, 0xc7, 0x30, 0x1d, 0x9d, 0xc5, 0x5c,
+	0x34, 0x34, 0xe2, 0x20, 0xad, 0xf6, 0x71, 0xf0, 0xc9, 0x37, 0x37, 0xce, 0xaf, 0x65, 0xe1, 0xe2,
+	0x5a, 0x16, 0x3e, 0x5f, 0xcb, 0xc2, 0xab, 0x1b, 0x39, 0x76, 0x71, 0x23, 0xc7, 0x3e, 0xdc, 0xc8,
+	0xb1, 0x47, 0x9d, 0xff, 0x81, 0xff, 0xdf, 0x7f, 0xd0, 0x2a, 0xe0, 0x23, 0x52, 0xd5, 0x8f, 0x54,
+	0x76, 0x61, 0x69, 0xb1, 0x2b, 0x0b, 0x3b, 0xa6, 0xd5, 0x11, 0x76, 0x91, 0xf8, 0xeb, 0x47, 0x00,
+	0x00, 0x00, 0xff, 0xff, 0xa6, 0xd1, 0x1d, 0x23, 0xee, 0x08, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -495,15 +580,11 @@ const _ = grpc.SupportPackageIsVersion4
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type MsgClient interface {
-	// Swap defines a method for swapping between two coins.
 	Swap(ctx context.Context, in *MsgSwap, opts ...grpc.CallOption) (*MsgSwapResponse, error)
-	// RegisterReserveAccount defines a method for updating the reserve account address.
-	RegisterReserveAccount(ctx context.Context, in *MsgRegisterReserveAccount, opts ...grpc.CallOption) (*MsgRegisterReserveAccountResponse, error)
-	// RegisterAdmin defines a method for registering admin for specific coin pair.
 	RegisterAdmin(ctx context.Context, in *MsgRegisterAdmin, opts ...grpc.CallOption) (*MsgRegisterAdminResponse, error)
-	// UpdateRate defines a method for updating the currencsy rate for coin pair.
-	UpdateRate(ctx context.Context, in *MsgUpdateRate, opts ...grpc.CallOption) (*MsgUpdateRateResponse, error)
-	// ChangeModerator defines a method for changing moderator.
+	RemoveAdmin(ctx context.Context, in *MsgRemoveAdmin, opts ...grpc.CallOption) (*MsgRemoveAdminResponse, error)
+	RegisterExchange(ctx context.Context, in *MsgRegisterExchange, opts ...grpc.CallOption) (*MsgRegisterExchangeResponse, error)
+	UpdateExchange(ctx context.Context, in *MsgUpdateExchange, opts ...grpc.CallOption) (*MsgUpdateExchangeResponse, error)
 	ChangeModerator(ctx context.Context, in *MsgChangeModerator, opts ...grpc.CallOption) (*MsgChangeModeratorResponse, error)
 }
 
@@ -524,15 +605,6 @@ func (c *msgClient) Swap(ctx context.Context, in *MsgSwap, opts ...grpc.CallOpti
 	return out, nil
 }
 
-func (c *msgClient) RegisterReserveAccount(ctx context.Context, in *MsgRegisterReserveAccount, opts ...grpc.CallOption) (*MsgRegisterReserveAccountResponse, error) {
-	out := new(MsgRegisterReserveAccountResponse)
-	err := c.cc.Invoke(ctx, "/guru.cex.v1.Msg/RegisterReserveAccount", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 func (c *msgClient) RegisterAdmin(ctx context.Context, in *MsgRegisterAdmin, opts ...grpc.CallOption) (*MsgRegisterAdminResponse, error) {
 	out := new(MsgRegisterAdminResponse)
 	err := c.cc.Invoke(ctx, "/guru.cex.v1.Msg/RegisterAdmin", in, out, opts...)
@@ -542,9 +614,27 @@ func (c *msgClient) RegisterAdmin(ctx context.Context, in *MsgRegisterAdmin, opt
 	return out, nil
 }
 
-func (c *msgClient) UpdateRate(ctx context.Context, in *MsgUpdateRate, opts ...grpc.CallOption) (*MsgUpdateRateResponse, error) {
-	out := new(MsgUpdateRateResponse)
-	err := c.cc.Invoke(ctx, "/guru.cex.v1.Msg/UpdateRate", in, out, opts...)
+func (c *msgClient) RemoveAdmin(ctx context.Context, in *MsgRemoveAdmin, opts ...grpc.CallOption) (*MsgRemoveAdminResponse, error) {
+	out := new(MsgRemoveAdminResponse)
+	err := c.cc.Invoke(ctx, "/guru.cex.v1.Msg/RemoveAdmin", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *msgClient) RegisterExchange(ctx context.Context, in *MsgRegisterExchange, opts ...grpc.CallOption) (*MsgRegisterExchangeResponse, error) {
+	out := new(MsgRegisterExchangeResponse)
+	err := c.cc.Invoke(ctx, "/guru.cex.v1.Msg/RegisterExchange", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *msgClient) UpdateExchange(ctx context.Context, in *MsgUpdateExchange, opts ...grpc.CallOption) (*MsgUpdateExchangeResponse, error) {
+	out := new(MsgUpdateExchangeResponse)
+	err := c.cc.Invoke(ctx, "/guru.cex.v1.Msg/UpdateExchange", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -562,15 +652,11 @@ func (c *msgClient) ChangeModerator(ctx context.Context, in *MsgChangeModerator,
 
 // MsgServer is the server API for Msg service.
 type MsgServer interface {
-	// Swap defines a method for swapping between two coins.
 	Swap(context.Context, *MsgSwap) (*MsgSwapResponse, error)
-	// RegisterReserveAccount defines a method for updating the reserve account address.
-	RegisterReserveAccount(context.Context, *MsgRegisterReserveAccount) (*MsgRegisterReserveAccountResponse, error)
-	// RegisterAdmin defines a method for registering admin for specific coin pair.
 	RegisterAdmin(context.Context, *MsgRegisterAdmin) (*MsgRegisterAdminResponse, error)
-	// UpdateRate defines a method for updating the currencsy rate for coin pair.
-	UpdateRate(context.Context, *MsgUpdateRate) (*MsgUpdateRateResponse, error)
-	// ChangeModerator defines a method for changing moderator.
+	RemoveAdmin(context.Context, *MsgRemoveAdmin) (*MsgRemoveAdminResponse, error)
+	RegisterExchange(context.Context, *MsgRegisterExchange) (*MsgRegisterExchangeResponse, error)
+	UpdateExchange(context.Context, *MsgUpdateExchange) (*MsgUpdateExchangeResponse, error)
 	ChangeModerator(context.Context, *MsgChangeModerator) (*MsgChangeModeratorResponse, error)
 }
 
@@ -581,14 +667,17 @@ type UnimplementedMsgServer struct {
 func (*UnimplementedMsgServer) Swap(ctx context.Context, req *MsgSwap) (*MsgSwapResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Swap not implemented")
 }
-func (*UnimplementedMsgServer) RegisterReserveAccount(ctx context.Context, req *MsgRegisterReserveAccount) (*MsgRegisterReserveAccountResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method RegisterReserveAccount not implemented")
-}
 func (*UnimplementedMsgServer) RegisterAdmin(ctx context.Context, req *MsgRegisterAdmin) (*MsgRegisterAdminResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RegisterAdmin not implemented")
 }
-func (*UnimplementedMsgServer) UpdateRate(ctx context.Context, req *MsgUpdateRate) (*MsgUpdateRateResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method UpdateRate not implemented")
+func (*UnimplementedMsgServer) RemoveAdmin(ctx context.Context, req *MsgRemoveAdmin) (*MsgRemoveAdminResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RemoveAdmin not implemented")
+}
+func (*UnimplementedMsgServer) RegisterExchange(ctx context.Context, req *MsgRegisterExchange) (*MsgRegisterExchangeResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RegisterExchange not implemented")
+}
+func (*UnimplementedMsgServer) UpdateExchange(ctx context.Context, req *MsgUpdateExchange) (*MsgUpdateExchangeResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateExchange not implemented")
 }
 func (*UnimplementedMsgServer) ChangeModerator(ctx context.Context, req *MsgChangeModerator) (*MsgChangeModeratorResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ChangeModerator not implemented")
@@ -616,24 +705,6 @@ func _Msg_Swap_Handler(srv interface{}, ctx context.Context, dec func(interface{
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Msg_RegisterReserveAccount_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(MsgRegisterReserveAccount)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(MsgServer).RegisterReserveAccount(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/guru.cex.v1.Msg/RegisterReserveAccount",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(MsgServer).RegisterReserveAccount(ctx, req.(*MsgRegisterReserveAccount))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 func _Msg_RegisterAdmin_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(MsgRegisterAdmin)
 	if err := dec(in); err != nil {
@@ -652,20 +723,56 @@ func _Msg_RegisterAdmin_Handler(srv interface{}, ctx context.Context, dec func(i
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Msg_UpdateRate_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(MsgUpdateRate)
+func _Msg_RemoveAdmin_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MsgRemoveAdmin)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(MsgServer).UpdateRate(ctx, in)
+		return srv.(MsgServer).RemoveAdmin(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/guru.cex.v1.Msg/UpdateRate",
+		FullMethod: "/guru.cex.v1.Msg/RemoveAdmin",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(MsgServer).UpdateRate(ctx, req.(*MsgUpdateRate))
+		return srv.(MsgServer).RemoveAdmin(ctx, req.(*MsgRemoveAdmin))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Msg_RegisterExchange_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MsgRegisterExchange)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MsgServer).RegisterExchange(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/guru.cex.v1.Msg/RegisterExchange",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MsgServer).RegisterExchange(ctx, req.(*MsgRegisterExchange))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Msg_UpdateExchange_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MsgUpdateExchange)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MsgServer).UpdateExchange(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/guru.cex.v1.Msg/UpdateExchange",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MsgServer).UpdateExchange(ctx, req.(*MsgUpdateExchange))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -697,16 +804,20 @@ var _Msg_serviceDesc = grpc.ServiceDesc{
 			Handler:    _Msg_Swap_Handler,
 		},
 		{
-			MethodName: "RegisterReserveAccount",
-			Handler:    _Msg_RegisterReserveAccount_Handler,
-		},
-		{
 			MethodName: "RegisterAdmin",
 			Handler:    _Msg_RegisterAdmin_Handler,
 		},
 		{
-			MethodName: "UpdateRate",
-			Handler:    _Msg_UpdateRate_Handler,
+			MethodName: "RemoveAdmin",
+			Handler:    _Msg_RemoveAdmin_Handler,
+		},
+		{
+			MethodName: "RegisterExchange",
+			Handler:    _Msg_RegisterExchange_Handler,
+		},
+		{
+			MethodName: "UpdateExchange",
+			Handler:    _Msg_UpdateExchange_Handler,
 		},
 		{
 			MethodName: "ChangeModerator",
@@ -746,14 +857,7 @@ func (m *MsgSwap) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 		i = encodeVarintTx(dAtA, i, uint64(size))
 	}
 	i--
-	dAtA[i] = 0x32
-	if len(m.ToChannel) > 0 {
-		i -= len(m.ToChannel)
-		copy(dAtA[i:], m.ToChannel)
-		i = encodeVarintTx(dAtA, i, uint64(len(m.ToChannel)))
-		i--
-		dAtA[i] = 0x2a
-	}
+	dAtA[i] = 0x2a
 	if len(m.ToDenom) > 0 {
 		i -= len(m.ToDenom)
 		copy(dAtA[i:], m.ToDenom)
@@ -761,20 +865,23 @@ func (m *MsgSwap) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 		i--
 		dAtA[i] = 0x22
 	}
-	if len(m.FromChannel) > 0 {
-		i -= len(m.FromChannel)
-		copy(dAtA[i:], m.FromChannel)
-		i = encodeVarintTx(dAtA, i, uint64(len(m.FromChannel)))
-		i--
-		dAtA[i] = 0x1a
-	}
 	if len(m.FromDenom) > 0 {
 		i -= len(m.FromDenom)
 		copy(dAtA[i:], m.FromDenom)
 		i = encodeVarintTx(dAtA, i, uint64(len(m.FromDenom)))
 		i--
-		dAtA[i] = 0x12
+		dAtA[i] = 0x1a
 	}
+	{
+		size := m.ExchangeId.Size()
+		i -= size
+		if _, err := m.ExchangeId.MarshalTo(dAtA[i:]); err != nil {
+			return 0, err
+		}
+		i = encodeVarintTx(dAtA, i, uint64(size))
+	}
+	i--
+	dAtA[i] = 0x12
 	if len(m.FromAddress) > 0 {
 		i -= len(m.FromAddress)
 		copy(dAtA[i:], m.FromAddress)
@@ -808,7 +915,7 @@ func (m *MsgSwapResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
-func (m *MsgRegisterReserveAccount) Marshal() (dAtA []byte, err error) {
+func (m *MsgRemoveAdmin) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -818,20 +925,20 @@ func (m *MsgRegisterReserveAccount) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *MsgRegisterReserveAccount) MarshalTo(dAtA []byte) (int, error) {
+func (m *MsgRemoveAdmin) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *MsgRegisterReserveAccount) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *MsgRemoveAdmin) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
-	if len(m.NewReserveAddress) > 0 {
-		i -= len(m.NewReserveAddress)
-		copy(dAtA[i:], m.NewReserveAddress)
-		i = encodeVarintTx(dAtA, i, uint64(len(m.NewReserveAddress)))
+	if len(m.AdminAddress) > 0 {
+		i -= len(m.AdminAddress)
+		copy(dAtA[i:], m.AdminAddress)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.AdminAddress)))
 		i--
 		dAtA[i] = 0x12
 	}
@@ -845,7 +952,7 @@ func (m *MsgRegisterReserveAccount) MarshalToSizedBuffer(dAtA []byte) (int, erro
 	return len(dAtA) - i, nil
 }
 
-func (m *MsgRegisterReserveAccountResponse) Marshal() (dAtA []byte, err error) {
+func (m *MsgRemoveAdminResponse) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -855,12 +962,12 @@ func (m *MsgRegisterReserveAccountResponse) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *MsgRegisterReserveAccountResponse) MarshalTo(dAtA []byte) (int, error) {
+func (m *MsgRemoveAdminResponse) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *MsgRegisterReserveAccountResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *MsgRemoveAdminResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
@@ -888,17 +995,20 @@ func (m *MsgRegisterAdmin) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
-	if len(m.PairDenom) > 0 {
-		i -= len(m.PairDenom)
-		copy(dAtA[i:], m.PairDenom)
-		i = encodeVarintTx(dAtA, i, uint64(len(m.PairDenom)))
-		i--
-		dAtA[i] = 0x1a
+	{
+		size := m.ExchangeId.Size()
+		i -= size
+		if _, err := m.ExchangeId.MarshalTo(dAtA[i:]); err != nil {
+			return 0, err
+		}
+		i = encodeVarintTx(dAtA, i, uint64(size))
 	}
-	if len(m.NewAdminAddress) > 0 {
-		i -= len(m.NewAdminAddress)
-		copy(dAtA[i:], m.NewAdminAddress)
-		i = encodeVarintTx(dAtA, i, uint64(len(m.NewAdminAddress)))
+	i--
+	dAtA[i] = 0x1a
+	if len(m.AdminAddress) > 0 {
+		i -= len(m.AdminAddress)
+		copy(dAtA[i:], m.AdminAddress)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.AdminAddress)))
 		i--
 		dAtA[i] = 0x12
 	}
@@ -935,7 +1045,7 @@ func (m *MsgRegisterAdminResponse) MarshalToSizedBuffer(dAtA []byte) (int, error
 	return len(dAtA) - i, nil
 }
 
-func (m *MsgUpdateRate) Marshal() (dAtA []byte, err error) {
+func (m *MsgRegisterExchange) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -945,29 +1055,27 @@ func (m *MsgUpdateRate) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *MsgUpdateRate) MarshalTo(dAtA []byte) (int, error) {
+func (m *MsgRegisterExchange) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *MsgUpdateRate) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *MsgRegisterExchange) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
-	if len(m.NewRate) > 0 {
-		i -= len(m.NewRate)
-		copy(dAtA[i:], m.NewRate)
-		i = encodeVarintTx(dAtA, i, uint64(len(m.NewRate)))
+	if m.Exchange != nil {
+		{
+			size, err := m.Exchange.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintTx(dAtA, i, uint64(size))
+		}
 		i--
 		dAtA[i] = 0x1a
-	}
-	if len(m.PairDenom) > 0 {
-		i -= len(m.PairDenom)
-		copy(dAtA[i:], m.PairDenom)
-		i = encodeVarintTx(dAtA, i, uint64(len(m.PairDenom)))
-		i--
-		dAtA[i] = 0x12
 	}
 	if len(m.AdminAddress) > 0 {
 		i -= len(m.AdminAddress)
@@ -979,7 +1087,7 @@ func (m *MsgUpdateRate) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
-func (m *MsgUpdateRateResponse) Marshal() (dAtA []byte, err error) {
+func (m *MsgRegisterExchangeResponse) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -989,12 +1097,89 @@ func (m *MsgUpdateRateResponse) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *MsgUpdateRateResponse) MarshalTo(dAtA []byte) (int, error) {
+func (m *MsgRegisterExchangeResponse) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *MsgUpdateRateResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *MsgRegisterExchangeResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	return len(dAtA) - i, nil
+}
+
+func (m *MsgUpdateExchange) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgUpdateExchange) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgUpdateExchange) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.Value) > 0 {
+		i -= len(m.Value)
+		copy(dAtA[i:], m.Value)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.Value)))
+		i--
+		dAtA[i] = 0x22
+	}
+	if len(m.Key) > 0 {
+		i -= len(m.Key)
+		copy(dAtA[i:], m.Key)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.Key)))
+		i--
+		dAtA[i] = 0x1a
+	}
+	{
+		size := m.Id.Size()
+		i -= size
+		if _, err := m.Id.MarshalTo(dAtA[i:]); err != nil {
+			return 0, err
+		}
+		i = encodeVarintTx(dAtA, i, uint64(size))
+	}
+	i--
+	dAtA[i] = 0x12
+	if len(m.AdminAddress) > 0 {
+		i -= len(m.AdminAddress)
+		copy(dAtA[i:], m.AdminAddress)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.AdminAddress)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *MsgUpdateExchangeResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgUpdateExchangeResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgUpdateExchangeResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
@@ -1083,19 +1268,13 @@ func (m *MsgSwap) Size() (n int) {
 	if l > 0 {
 		n += 1 + l + sovTx(uint64(l))
 	}
+	l = m.ExchangeId.Size()
+	n += 1 + l + sovTx(uint64(l))
 	l = len(m.FromDenom)
 	if l > 0 {
 		n += 1 + l + sovTx(uint64(l))
 	}
-	l = len(m.FromChannel)
-	if l > 0 {
-		n += 1 + l + sovTx(uint64(l))
-	}
 	l = len(m.ToDenom)
-	if l > 0 {
-		n += 1 + l + sovTx(uint64(l))
-	}
-	l = len(m.ToChannel)
 	if l > 0 {
 		n += 1 + l + sovTx(uint64(l))
 	}
@@ -1113,7 +1292,7 @@ func (m *MsgSwapResponse) Size() (n int) {
 	return n
 }
 
-func (m *MsgRegisterReserveAccount) Size() (n int) {
+func (m *MsgRemoveAdmin) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -1123,14 +1302,14 @@ func (m *MsgRegisterReserveAccount) Size() (n int) {
 	if l > 0 {
 		n += 1 + l + sovTx(uint64(l))
 	}
-	l = len(m.NewReserveAddress)
+	l = len(m.AdminAddress)
 	if l > 0 {
 		n += 1 + l + sovTx(uint64(l))
 	}
 	return n
 }
 
-func (m *MsgRegisterReserveAccountResponse) Size() (n int) {
+func (m *MsgRemoveAdminResponse) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -1149,14 +1328,12 @@ func (m *MsgRegisterAdmin) Size() (n int) {
 	if l > 0 {
 		n += 1 + l + sovTx(uint64(l))
 	}
-	l = len(m.NewAdminAddress)
+	l = len(m.AdminAddress)
 	if l > 0 {
 		n += 1 + l + sovTx(uint64(l))
 	}
-	l = len(m.PairDenom)
-	if l > 0 {
-		n += 1 + l + sovTx(uint64(l))
-	}
+	l = m.ExchangeId.Size()
+	n += 1 + l + sovTx(uint64(l))
 	return n
 }
 
@@ -1169,7 +1346,7 @@ func (m *MsgRegisterAdminResponse) Size() (n int) {
 	return n
 }
 
-func (m *MsgUpdateRate) Size() (n int) {
+func (m *MsgRegisterExchange) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -1179,18 +1356,46 @@ func (m *MsgUpdateRate) Size() (n int) {
 	if l > 0 {
 		n += 1 + l + sovTx(uint64(l))
 	}
-	l = len(m.PairDenom)
+	if m.Exchange != nil {
+		l = m.Exchange.Size()
+		n += 1 + l + sovTx(uint64(l))
+	}
+	return n
+}
+
+func (m *MsgRegisterExchangeResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	return n
+}
+
+func (m *MsgUpdateExchange) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.AdminAddress)
 	if l > 0 {
 		n += 1 + l + sovTx(uint64(l))
 	}
-	l = len(m.NewRate)
+	l = m.Id.Size()
+	n += 1 + l + sovTx(uint64(l))
+	l = len(m.Key)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	l = len(m.Value)
 	if l > 0 {
 		n += 1 + l + sovTx(uint64(l))
 	}
 	return n
 }
 
-func (m *MsgUpdateRateResponse) Size() (n int) {
+func (m *MsgUpdateExchangeResponse) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -1294,6 +1499,40 @@ func (m *MsgSwap) Unmarshal(dAtA []byte) error {
 			iNdEx = postIndex
 		case 2:
 			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ExchangeId", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := m.ExchangeId.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field FromDenom", wireType)
 			}
 			var stringLen uint64
@@ -1323,38 +1562,6 @@ func (m *MsgSwap) Unmarshal(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			m.FromDenom = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		case 3:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field FromChannel", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowTx
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthTx
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthTx
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.FromChannel = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		case 4:
 			if wireType != 2 {
@@ -1389,38 +1596,6 @@ func (m *MsgSwap) Unmarshal(dAtA []byte) error {
 			m.ToDenom = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		case 5:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field ToChannel", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowTx
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthTx
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthTx
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.ToChannel = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		case 6:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Amount", wireType)
 			}
@@ -1524,7 +1699,7 @@ func (m *MsgSwapResponse) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *MsgRegisterReserveAccount) Unmarshal(dAtA []byte) error {
+func (m *MsgRemoveAdmin) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -1547,10 +1722,10 @@ func (m *MsgRegisterReserveAccount) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: MsgRegisterReserveAccount: wiretype end group for non-group")
+			return fmt.Errorf("proto: MsgRemoveAdmin: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: MsgRegisterReserveAccount: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: MsgRemoveAdmin: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -1587,7 +1762,7 @@ func (m *MsgRegisterReserveAccount) Unmarshal(dAtA []byte) error {
 			iNdEx = postIndex
 		case 2:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field NewReserveAddress", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field AdminAddress", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -1615,7 +1790,7 @@ func (m *MsgRegisterReserveAccount) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.NewReserveAddress = string(dAtA[iNdEx:postIndex])
+			m.AdminAddress = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
@@ -1638,7 +1813,7 @@ func (m *MsgRegisterReserveAccount) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *MsgRegisterReserveAccountResponse) Unmarshal(dAtA []byte) error {
+func (m *MsgRemoveAdminResponse) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -1661,10 +1836,10 @@ func (m *MsgRegisterReserveAccountResponse) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: MsgRegisterReserveAccountResponse: wiretype end group for non-group")
+			return fmt.Errorf("proto: MsgRemoveAdminResponse: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: MsgRegisterReserveAccountResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: MsgRemoveAdminResponse: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		default:
@@ -1751,7 +1926,7 @@ func (m *MsgRegisterAdmin) Unmarshal(dAtA []byte) error {
 			iNdEx = postIndex
 		case 2:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field NewAdminAddress", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field AdminAddress", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -1779,11 +1954,11 @@ func (m *MsgRegisterAdmin) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.NewAdminAddress = string(dAtA[iNdEx:postIndex])
+			m.AdminAddress = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		case 3:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field PairDenom", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field ExchangeId", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -1811,7 +1986,9 @@ func (m *MsgRegisterAdmin) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.PairDenom = string(dAtA[iNdEx:postIndex])
+			if err := m.ExchangeId.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
@@ -1884,7 +2061,7 @@ func (m *MsgRegisterAdminResponse) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *MsgUpdateRate) Unmarshal(dAtA []byte) error {
+func (m *MsgRegisterExchange) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -1907,10 +2084,178 @@ func (m *MsgUpdateRate) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: MsgUpdateRate: wiretype end group for non-group")
+			return fmt.Errorf("proto: MsgRegisterExchange: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: MsgUpdateRate: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: MsgRegisterExchange: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field AdminAddress", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.AdminAddress = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Exchange", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Exchange == nil {
+				m.Exchange = &Exchange{}
+			}
+			if err := m.Exchange.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTx(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTx
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgRegisterExchangeResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTx
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgRegisterExchangeResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgRegisterExchangeResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTx(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTx
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgUpdateExchange) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTx
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgUpdateExchange: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgUpdateExchange: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -1947,7 +2292,7 @@ func (m *MsgUpdateRate) Unmarshal(dAtA []byte) error {
 			iNdEx = postIndex
 		case 2:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field PairDenom", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Id", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -1975,11 +2320,13 @@ func (m *MsgUpdateRate) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.PairDenom = string(dAtA[iNdEx:postIndex])
+			if err := m.Id.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
 			iNdEx = postIndex
 		case 3:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field NewRate", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Key", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -2007,7 +2354,39 @@ func (m *MsgUpdateRate) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.NewRate = string(dAtA[iNdEx:postIndex])
+			m.Key = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 4:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Value", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Value = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
@@ -2030,7 +2409,7 @@ func (m *MsgUpdateRate) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *MsgUpdateRateResponse) Unmarshal(dAtA []byte) error {
+func (m *MsgUpdateExchangeResponse) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -2053,10 +2432,10 @@ func (m *MsgUpdateRateResponse) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: MsgUpdateRateResponse: wiretype end group for non-group")
+			return fmt.Errorf("proto: MsgUpdateExchangeResponse: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: MsgUpdateRateResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: MsgUpdateExchangeResponse: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		default:
