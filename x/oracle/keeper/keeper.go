@@ -59,16 +59,16 @@ func (k Keeper) SetOracleRequestDoc(ctx sdk.Context, doc types.RequestOracleDoc)
 	store.Set(types.GetOracleRequestDocKey(doc.RequestId), bz)
 }
 
-func (k Keeper) GetOracleRequestDoc(ctx sdk.Context, id uint64) *types.RequestOracleDoc {
+func (k Keeper) GetOracleRequestDoc(ctx sdk.Context, id uint64) (*types.RequestOracleDoc, error) {
 	store := ctx.KVStore(k.storeKey)
 	bz := store.Get(types.GetOracleRequestDocKey(id))
 	if len(bz) == 0 {
-		return nil
+		return nil, fmt.Errorf("Not exist RequestDoc(req_id: %d)", id)
 	}
 
 	var doc types.RequestOracleDoc
 	k.cdc.MustUnmarshal(bz, &doc)
-	return &doc
+	return &doc, nil
 }
 
 // GetModeratorAddress returns the current moderator address.

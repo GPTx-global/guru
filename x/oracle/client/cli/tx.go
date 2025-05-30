@@ -1,13 +1,16 @@
 package cli
 
 import (
+	"encoding/json"
 	"fmt"
+	"os"
 	"strconv"
 
 	"cosmossdk.io/math"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
+	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/spf13/cobra"
 
 	gurutypes "github.com/GPTx-global/guru/types"
@@ -36,26 +39,26 @@ func GetTxCmd() *cobra.Command {
 // NewRegisterOracleRequestDocCmd implements the register oracle request document command
 func NewRegisterOracleRequestDocCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "register-request [request-doc] [fee]",
+		Use:   "register-request [path/to/request-doc.json]",
 		Short: "Register a new oracle request document",
-		Args:  cobra.ExactArgs(2),
+		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientTxContext(cmd)
 			if err != nil {
 				return err
 			}
 
-			var requestDoc types.RequestOracleDoc
-
-			// requestDoc := args[0]
-			// fee, err := types.ParseCoin(args[1])
-			fee := gurutypes.NewGuruCoin(math.NewInt(630000))
+			requestDoc, err := parseRequestDocJson(clientCtx.Codec, args[0])
 			if err != nil {
 				return err
 			}
 
+			fmt.Println(requestDoc)
+
+			fee := gurutypes.NewGuruCoin(math.NewInt(630000))
+
 			msg := types.NewMsgRegisterOracleRequestDoc(
-				requestDoc,
+				*requestDoc,
 				fee,
 				clientCtx.GetFromAddress().String(),
 				"", // signature will be added by the client
@@ -137,4 +140,20 @@ func NewSubmitOracleDataCmd() *cobra.Command {
 
 	flags.AddTxFlagsToCmd(cmd)
 	return cmd
+}
+
+func parseRequestDocJson(cdc codec.Codec, path string) (*types.RequestOracleDoc, error) {
+	var doc types.RequestOracleDoc
+
+	contents, err := os.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+
+	err = json.Unmarshal(contents, &doc)
+	if err != nil {
+		return nil, err
+	}
+
+	return &doc, nil
 }

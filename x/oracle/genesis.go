@@ -7,7 +7,7 @@ import (
 )
 
 // InitGenesis new oracle genesis
-func InitGenesis(ctx sdk.Context, keeper keeper.Keeper, bk types.BankKeeper, data types.GenesisState) {
+func InitGenesis(ctx sdk.Context, data types.GenesisState) {
 	// keeper.SetModeratorAddress(ctx, data.ModeratorAddress)
 	// keeper.SetCoinRates(ctx, data.CoinRates)
 }

@@ -2,8 +2,10 @@ package keeper
 
 import (
 	"context"
+	"strconv"
 
 	"github.com/GPTx-global/guru/x/oracle/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 var _ types.QueryServer = Keeper{}
@@ -20,7 +22,18 @@ func (k Keeper) OracleData(ctx context.Context, req *types.QueryOracleDataReques
 
 // OracleRequestDoc queries oracle request doc by ID
 func (k Keeper) OracleRequestDoc(ctx context.Context, req *types.QueryOracleRequestDocRequest) (*types.QueryOracleRequestDocResponse, error) {
-	return &types.QueryOracleRequestDocResponse{}, nil
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	requestId, err := strconv.ParseUint(req.RequestId, 10, 64)
+	if err != nil {
+		return nil, err
+	}
+	doc, err := k.GetOracleRequestDoc(sdkCtx, requestId)
+	if err != nil {
+		return nil, err
+	}
+	return &types.QueryOracleRequestDocResponse{
+		RequestDoc: *doc,
+	}, nil
 }
 
 // OracleRequestDocs queries an oracle request document list

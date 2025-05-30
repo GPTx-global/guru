@@ -38,6 +38,24 @@ func (k Keeper) RegisterOracleRequestDoc(c context.Context, doc *types.MsgRegist
 	// Increment the count
 	k.SetOracleRequestDocCount(ctx, count+1)
 
+	// Emit event for registering oracle request document
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			types.EventTypeRegisterOracleRequestDoc,
+			sdk.NewAttribute(types.AttributeKeyRequestID, string(oracleRequestDoc.RequestId)),
+			sdk.NewAttribute(types.AttributeKeyOracleType, string(oracleRequestDoc.OracleType)),
+			sdk.NewAttribute(types.AttributeKeyName, oracleRequestDoc.Name),
+			sdk.NewAttribute(types.AttributeKeyDescription, oracleRequestDoc.Description),
+			sdk.NewAttribute(types.AttributeKeyPeriod, string(oracleRequestDoc.Period)),
+			sdk.NewAttribute(types.AttributeKeyNodeList, oracleRequestDoc.NodeList[0]),
+			sdk.NewAttribute(types.AttributeKeyURLs, oracleRequestDoc.Urls[0]),
+			sdk.NewAttribute(types.AttributeKeyParseRule, oracleRequestDoc.ParseRule),
+			sdk.NewAttribute(types.AttributeKeyAggregateRule, string(oracleRequestDoc.AggregateRule)),
+			sdk.NewAttribute(types.AttributeKeyStatus, string(oracleRequestDoc.Status)),
+			sdk.NewAttribute(types.AttributeKeyCreator, oracleRequestDoc.Creator),
+		),
+	)
+
 	return &types.MsgRegisterOracleRequestDocResponse{
 		RequestId: oracleRequestDoc.RequestId,
 	}, nil

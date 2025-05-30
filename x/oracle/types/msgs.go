@@ -12,6 +12,8 @@ func NewMsgRegisterOracleRequestDoc(
 	creator string,
 	signature string,
 ) *MsgRegisterOracleRequestDoc {
+
+	requestDoc.Creator = creator
 	return &MsgRegisterOracleRequestDoc{
 		RequestDoc: requestDoc,
 		Fee:        fee,
@@ -56,9 +58,9 @@ func (msg MsgRegisterOracleRequestDoc) ValidateBasic() error {
 	if msg.Fee.IsZero() {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "fee cannot be zero")
 	}
-	if msg.Signature == "" {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "signature cannot be empty")
-	}
+	// if msg.Signature == "" {
+	// 	return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "signature cannot be empty")
+	// }
 	return nil
 }
 
