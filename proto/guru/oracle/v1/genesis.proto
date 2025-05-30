@@ -1,0 +1,40 @@
+syntax = "proto3";
+package guru.oracle.v1;
+
+import "gogoproto/gogo.proto";
+import "guru/oracle/v1/oracle.proto";
+
+option go_package = "github.com/GPTx-global/guru/x/oracle/types";
+
+// GenesisState defines the oracle module's genesis state
+message GenesisState {
+  // params defines all the parameters of the module
+  Params params = 1 [(gogoproto.nullable) = false];
+  
+  // request_oracle_docs defines the list of oracle request documents
+  repeated RequestOracleDoc request_oracle_docs = 2 [(gogoproto.nullable) = false];
+  
+  // moderator_address defines the address of the oracle moderator
+  string moderator_address = 3;
+}
+
+// Params defines the parameters for the oracle module
+message Params {
+  // enable_oracle defines whether the oracle module is enabled
+  bool enable_oracle = 1;
+  
+  // submit_window defines the time window in seconds for submitting oracle data
+  uint64 submit_window = 2;
+  
+  // min_submit_per_window defines the minimum number of submissions required per window
+  bytes min_submit_per_window = 3 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+  
+  // slash_fraction_downtime defines the fraction of stake to slash for downtime
+  bytes slash_fraction_downtime = 4 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+} 

@@ -1,0 +1,73 @@
+syntax = "proto3";
+package guru.oracle.v1;
+
+import "gogoproto/gogo.proto";
+import "google/api/annotations.proto";
+import "guru/oracle/v1/oracle.proto";
+import "guru/oracle/v1/genesis.proto";
+
+option go_package = "github.com/GPTx-global/guru/x/oracle/types";
+
+// Query defines the gRPC querier service
+service Query {
+  // Parameters queries the parameters of the module
+  rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
+    option (google.api.http).get = "/guru/oracle/params";
+  }
+  
+  // OracleData queries oracle data by ID
+  rpc OracleData(QueryOracleDataRequest) returns (QueryOracleDataResponse) {
+    option (google.api.http).get = "/guru/oracle/v1/data/{request_id}";
+  }
+  
+  // OracleRequestDoc queries oracle request doc by ID
+  rpc OracleRequestDoc(QueryOracleRequestDocRequest) returns (QueryOracleRequestDocResponse) {
+    option (google.api.http).get = "/guru/oracle/request_doc/{request_id}";
+  }
+  
+  // OracleRequestDocs queries an oracle request document list
+  rpc OracleRequestDocs(QueryOracleRequestDocsRequest) returns (QueryOracleRequestDocsResponse) {
+    option (google.api.http).get = "/guru/oracle/v1/request_docs";
+  }
+}
+
+// QueryParamsRequest is request type for the Query/Params RPC method
+message QueryParamsRequest {}
+
+// QueryParamsResponse is response type for the Query/Params RPC method
+message QueryParamsResponse {
+  // params holds all the parameters of this module
+  Params params = 1 [(gogoproto.nullable) = false];
+}
+
+// QueryOracleDataRequest is request type for the Query/OracleData RPC method
+message QueryOracleDataRequest {
+  // request_id is the unique identifier of the oracle request
+  string request_id = 1;
+}
+
+// QueryOracleDataResponse is response type for the Query/OracleData RPC method
+message QueryOracleDataResponse {
+  // data is the oracle data for the requested ID
+  DataSet data_set = 1;
+}
+
+// QueryOracleRequestRequest is request type for the Query/OracleRequest RPC method
+message QueryOracleRequestDocRequest {
+  // request_id is the unique identifier of the oracle request
+  string request_id = 1;
+}
+
+// QueryOracleRequestResponse is response type for the Query/OracleRequest RPC method
+message QueryOracleRequestDocResponse {
+  // request is the oracle request for the requested ID
+  RequestOracleDoc request_doc = 1 [(gogoproto.nullable) = false];
+}
+
+// QueryOracleRequestDocRequest is the request type for the Query/OracleRequestDoc RPC method
+message QueryOracleRequestDocsRequest {}
+
+// QueryOracleRequestDocResponse is the response type for the Query/OracleRequestDoc RPC method
+message QueryOracleRequestDocsResponse {
+  repeated RequestOracleDoc request_docs = 1;
+} 

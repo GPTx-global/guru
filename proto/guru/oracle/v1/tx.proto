@@ -1,0 +1,68 @@
+syntax = "proto3";
+package guru.oracle.v1;
+
+import "gogoproto/gogo.proto";
+import "cosmos/base/v1beta1/coin.proto";
+import "guru/oracle/v1/oracle.proto";
+
+option go_package = "github.com/GPTx-global/guru/x/oracle/types";
+
+// Msg defines the oracle Msg service
+service Msg {
+  // RegisterOracleRequestDoc defines a method for registering a new oracle request document
+  rpc RegisterOracleRequestDoc(MsgRegisterOracleRequestDoc) returns (MsgRegisterOracleRequestDocResponse);
+  
+  // UpdateOracleRequestDoc defines a method for updating an existing oracle request document
+  rpc UpdateOracleRequestDoc(MsgUpdateOracleRequestDoc) returns (MsgUpdateOracleRequestDocResponse);
+  
+  // SubmitOracleData defines a method for submitting oracle data
+  rpc SubmitOracleData(MsgSubmitOracleData) returns (MsgSubmitOracleDataResponse);
+}
+
+// MsgRegisterOracleRequestDoc represents a message to register a new oracle request document
+message MsgRegisterOracleRequestDoc {
+  // The oracle request document to be registered
+  RequestOracleDoc request_doc = 1 [(gogoproto.nullable) = false];
+  // Fee for the oracle request
+  cosmos.base.v1beta1.Coin fee = 2 [(gogoproto.nullable) = false];
+  // Address of the request creator
+  string creator = 3;
+  // Signature of the request document by the creator
+  string signature = 4;
+}
+
+// MsgRegisterOracleRequestDocResponse defines the Msg/RegisterOracleRequestDoc response type
+message MsgRegisterOracleRequestDocResponse {
+  // ID of the registered oracle request
+  uint64 request_id = 1;
+}
+
+// MsgUpdateOracleRequestDoc represents a message to update an existing oracle request document
+message MsgUpdateOracleRequestDoc {
+  // ID of the request to be updated
+  uint64 request_id = 1;
+  // The updated oracle request document
+  RequestOracleDoc request_doc = 2 [(gogoproto.nullable) = false];
+  // Address of the request updater
+  string updater = 3;
+  // Signature of the updated request document by the updater
+  string signature = 4;
+  // Reason for the update
+  string reason = 5;
+}
+
+// MsgUpdateOracleRequestDocResponse defines the Msg/UpdateOracleRequestDoc response type
+message MsgUpdateOracleRequestDocResponse {
+  // ID of the updated oracle request
+  uint64 request_id = 1;
+}
+
+// MsgSubmitOracleData represents a message to submit oracle data
+message MsgSubmitOracleData {
+  // The oracle data set to be submitted, containing the raw data and metadata
+  SubmitDataSet data_set = 1;
+
+}
+
+// MsgSubmitOracleDataResponse defines the Msg/SubmitOracleData response type
+message MsgSubmitOracleDataResponse {} 

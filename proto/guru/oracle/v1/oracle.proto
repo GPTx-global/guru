@@ -1,0 +1,107 @@
+syntax = "proto3";
+package guru.oracle.v1;
+
+import "gogoproto/gogo.proto";
+import "google/protobuf/timestamp.proto";
+import "cosmos/base/v1beta1/coin.proto";
+
+option go_package = "github.com/GPTx-global/guru/x/oracle/types";
+
+// OracleType defines the type of oracle data that can be requested and provided
+// This enum helps categorize different kinds of oracle data sources and their purposes
+enum OracleType {
+  // Default value, should not be used
+  ORACLE_TYPE_UNSPECIFIED = 0;
+  // Minimum gas price oracle for network fee estimation
+  ORACLE_TYPE_MIN_GAS_PRICE = 1;
+  // Currency exchange rates and forex data
+  ORACLE_TYPE_CURRENCY = 2;
+  // Stock market data and indices
+  ORACLE_TYPE_STOCK = 3;
+  // Cryptocurrency prices and market data
+  ORACLE_TYPE_CRYPTO = 4;
+}
+
+// RequestStatus defines the current state of an oracle request
+// This helps track the lifecycle of oracle data requests
+enum RequestStatus {
+  // Default value, should not be used
+  REQUEST_STATUS_UNSPECIFIED = 0;
+  // Request is waiting to be processed
+  REQUEST_STATUS_PENDING = 1;
+  // Request was successfully processed and data is available
+  REQUEST_STATUS_SUCCESS = 2;
+  // Request failed to process or data is invalid
+  REQUEST_STATUS_FAILED = 3;
+  // Request was stopped or cancelled
+  REQUEST_STATUS_STOP = 4;
+}
+
+// AggregationRule defines the enumeration for aggregating oracle data
+// Specifies how multiple data points should be combined into a single value
+enum AggregationRule {
+    // Default value, should not be used
+    AGGREGATION_RULE_UNSPECIFIED = 0;
+    // Use average value to aggregate the data
+    AGGREGATION_RULE_AVG = 1;
+    // Use minimum value to aggregate the data
+    AGGREGATION_RULE_MIN = 2;
+    // Use maximum value to aggregate the data
+    AGGREGATION_RULE_MAX = 3;
+}
+
+// RequestOracleDoc defines the structure for oracle request documents
+// This is the main document that describes what oracle data is needed and how it should be processed
+message RequestOracleDoc {
+  // Unique identifier for the oracle request
+  uint64 request_id = 1;
+  // Type of oracle data being requested
+  OracleType oracle_type = 2;
+  // Human-readable name for the oracle request
+  string name = 3;
+  // Detailed description of what data is needed and its purpose
+  string description = 4;
+  // Time period in seconds between data updates
+  uint32 period = 5;
+  // List of node(account) addresses that are authorized to provide data
+  repeated string node_list = 6;
+  // Source URLs where the data can be fetched
+  repeated string urls = 7;
+  // JSONPath or similar rule to parse the raw data
+  string parse_rule = 8;
+  // Rule for aggregating multiple data points (e.g., median, mean)
+  AggregationRule aggregate_rule = 9;
+  // Current status of the request
+  RequestStatus status = 10;
+  // Address of the request creator
+  string creator = 11;
+  // Sequential number to ensure data freshness
+  uint64 nonce = 12;
+}
+
+// SubmitDataSet defines the structure for oracle data sets for submit
+// This represents a single data point provided by an oracle node
+message SubmitDataSet {
+  // ID of the request this data set belongs to
+  string request_id = 1;
+  // Sequential number to prevent replay attacks
+  uint64 nonce = 2;
+  // Raw data in string format (can be JSON, CSV, etc.)
+  string raw_data = 3;
+  // Address of the data provider
+  string provider = 4;
+  // Cryptographic signature of the data for verification
+  string signature = 5;
+}
+
+// DataSet defines the structure for oracle data sets
+message DataSet {
+  // ID of the request this data set belongs to
+  string request_id = 1;
+  // Sequential number to prevent replay attacks
+  uint64 nonce = 2;
+  // Block height - represents the height of the block where the data was aggregated
+  uint64 block_height = 3;
+  // Raw data in string format (can be JSON, CSV, etc.)
+  string raw_data = 4;
+}
