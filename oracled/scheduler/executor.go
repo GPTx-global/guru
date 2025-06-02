@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"time"
 
 	"github.com/GPTx-global/guru/oracled/types"
 )
@@ -15,37 +16,50 @@ type Executor struct {
 	ctx    context.Context
 }
 
-func NewExecutor() *Executor {
+func NewExecutor(ctx context.Context) *Executor {
 	return &Executor{
 		client: &http.Client{},
-		ctx:    context.Background(),
+		ctx:    ctx,
 	}
 }
 
 func (e *Executor) ExecuteJob(job *types.Job) (*types.OracleData, error) {
-	fmt.Printf("Executing job: %s (URL: %s, nonce: %d)\n", job.ID, job.URL, job.Nonce)
+	if 0 < job.Nonce {
+		time.Sleep(job.Delay)
+	}
 
-	// 외부 데이터 수집
-	data, err := e.fetchExternalData(job)
+	rawData, err := e.fetchRawData(job.URL)
 	if err != nil {
-		return nil, fmt.Errorf("failed to fetch data for job %s: %w", job.ID, err)
+		return nil, fmt.Errorf("failed to fetch raw data for job %s: %w", job.ID, err)
 	}
 
-	// Oracle 데이터 생성
+	if err := e.validateResponse(rawData); err != nil {
+		return nil, fmt.Errorf("invalid response for job %s: %w", job.ID, err)
+	}
+
+	parsedData, err := e.parseJSON(rawData)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse JSON for job %s: %w", job.ID, err)
+	}
+
+	extractedValue, err := e.extractDataByPath(parsedData, job.Path)
+	if err != nil {
+		return nil, fmt.Errorf("failed to extract data for job %s: %w", job.ID, err)
+	}
+
 	oracleData := &types.OracleData{
-		RequestID: job.ID,    // Job.ID 그대로 사용 (nonce 포함하지 않음)
-		Data:      data,      // 최근에 수집한 데이터
-		Nonce:     job.Nonce, // Job.Nonce
+		RequestID: job.ID,
+		Data:      extractedValue,
+		Nonce:     job.Nonce,
 	}
 
-	fmt.Printf("Oracle data created for job %s (nonce: %d): %s\n", job.ID, job.Nonce, data)
 	return oracleData, nil
 }
 
-func (e *Executor) fetchExternalData(job *types.Job) (string, error) {
-	req, err := http.NewRequestWithContext(e.ctx, "GET", job.URL, nil)
+func (e *Executor) fetchRawData(url string) ([]byte, error) {
+	req, err := http.NewRequestWithContext(e.ctx, "GET", url, nil)
 	if err != nil {
-		return "", fmt.Errorf("failed to create request: %w", err)
+		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
 
 	req.Header.Set("User-Agent", "Oracle-Daemon/1.0")
@@ -53,36 +67,46 @@ func (e *Executor) fetchExternalData(job *types.Job) (string, error) {
 
 	resp, err := e.client.Do(req)
 	if err != nil {
-		return "", fmt.Errorf("failed to do request: %w", err)
+		return nil, fmt.Errorf("failed to do request: %w", err)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("HTTP %d: %s", resp.StatusCode, resp.Status)
+		return nil, fmt.Errorf("HTTP %d: %s", resp.StatusCode, resp.Status)
 	}
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return "", fmt.Errorf("failed to read response body: %w", err)
+		return nil, fmt.Errorf("failed to read response body: %w", err)
 	}
 
+	return body, nil
+}
+
+func (e *Executor) validateResponse(data []byte) error {
+	if len(data) == 0 {
+		return fmt.Errorf("empty response body")
+	}
+
+	var temp interface{}
+	if err := json.Unmarshal(data, &temp); err != nil {
+		return fmt.Errorf("invalid JSON format: %w", err)
+	}
+
+	return nil
+}
+
+func (e *Executor) parseJSON(data []byte) (map[string]interface{}, error) {
 	var result map[string]interface{}
-	if err := json.Unmarshal(body, &result); err != nil {
-		return "", fmt.Errorf("failed to unmarshal response body: %w", err)
+	if err := json.Unmarshal(data, &result); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal JSON: %w", err)
 	}
 
-	// Path를 사용하여 데이터 추출
-	value, err := e.extractDataByPath(result, job.Path)
-	if err != nil {
-		return "", fmt.Errorf("failed to extract data: %w", err)
-	}
-
-	return value, nil
+	return result, nil
 }
 
 func (e *Executor) extractDataByPath(data map[string]interface{}, path string) (string, error) {
 	if path == "" {
-		// Path가 없으면 전체 JSON을 문자열로 반환
 		jsonBytes, err := json.Marshal(data)
 		if err != nil {
 			return "", err
@@ -90,7 +114,7 @@ func (e *Executor) extractDataByPath(data map[string]interface{}, path string) (
 		return string(jsonBytes), nil
 	}
 
-	// 간단한 path 추출 (예: "price", "data.amount" 등)
+	// TODO: 더 복잡한 path 처리 필요
 	if value, ok := data[path]; ok {
 		switch v := value.(type) {
 		case string:
