@@ -800,6 +800,22 @@ func (app *Guru) setPostHandler() {
 // BeginBlocker will schedule the upgrade plan and perform the state migration (if any).
 func (app *Guru) BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) abci.ResponseBeginBlock {
 	// Perform any scheduled forks before executing the modules logic
+	defer func() {
+		if req.Header.Height%3 != 0 {
+			return
+		}
+		fmt.Println("<----------emit event----------->")
+		ctx.EventManager().EmitEvents(
+			sdk.Events{
+				sdk.NewEvent(
+					"complete_oracle_data_set",
+					sdk.NewAttribute("OracleGruopId", "0000"),
+					sdk.NewAttribute("OracleId", "0000"),
+					sdk.NewAttribute("OracleNonce", "0000"),
+				),
+			},
+		)
+	}()
 	app.ScheduleForkUpgrade(ctx)
 	return app.mm.BeginBlock(ctx, req)
 }
