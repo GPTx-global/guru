@@ -47,23 +47,14 @@ func NewTxBuilder(config *Config) (*TxBuilder, error) {
 	}, nil
 }
 
-func (tb *TxBuilder) BuildOracleTx(ctx context.Context, oracleData []types.OracleData) ([]byte, error) {
-	// Oracle 모듈이 구현되면 실제 메시지로 교체
-	// 현재는 예시로 bank send 메시지 사용
-	msgs := make([]sdk.Msg, 0, len(oracleData))
-
-	for _, data := range oracleData {
-		// TODO: 실제 Oracle 메시지로 교체
-		// msg := &oracletypes.MsgSubmitOracleData{
-		//     Oracle: data.Oracle,
-		//     RequestId: data.RequestID,
-		//     Data: data.Data,
-		// }
-		// msgs = append(msgs, msg)
-
-		// 임시로 로그 출력
-		fmt.Printf("Oracle Data - ID: %s, Data: %s\n", data.RequestID, data.Data)
-	}
+func (tb *TxBuilder) BuildOracleTx(ctx context.Context, oracleData types.OracleData) ([]byte, error) {
+	msgs := make([]sdk.Msg, 0, 1)
+	// msg := &oracletypes.MsgSubmitOracleData{
+	// 	RequestId: oracleData.RequestID,
+	// 	Data:      oracleData.Data,
+	// 	Nonce:     oracleData.Nonce,
+	// }
+	// msgs = append(msgs, msg)
 
 	if len(msgs) == 0 {
 		return nil, fmt.Errorf("no messages to send")
