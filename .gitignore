@@ -64,6 +64,7 @@ vagrant
 .idea/
 *.iml
 *.code-workspace
+.cursor
 
 # Graphviz
 dependency-graph.png
