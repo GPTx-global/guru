@@ -9,6 +9,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/spf13/cobra"
 
+	errorsmod "cosmossdk.io/errors"
 	"github.com/GPTx-global/guru/x/oracle/types"
 	"github.com/cosmos/cosmos-sdk/version"
 )
@@ -77,7 +78,7 @@ func GetCmdQueryOracleRequestDoc() *cobra.Command {
 
 			requestId, err := strconv.ParseUint(args[0], 10, 64)
 			if err != nil {
-				return fmt.Errorf("invalid request ID: %w", err)
+				return errorsmod.Wrapf(types.ErrInvalidRequestId, "args[0] parse error: %s", args[0])
 			}
 
 			res, err := queryClient.OracleRequestDoc(cmd.Context(), &types.QueryOracleRequestDocRequest{
@@ -111,7 +112,7 @@ func GetCmdQueryOracleData() *cobra.Command {
 
 			requestId, err := strconv.ParseUint(args[0], 10, 64)
 			if err != nil {
-				return fmt.Errorf("invalid request ID: %w", err)
+				return errorsmod.Wrapf(types.ErrInvalidRequestId, "args[0] parse error: %s", args[0])
 			}
 
 			res, err := queryClient.OracleData(cmd.Context(), &types.QueryOracleDataRequest{
@@ -155,7 +156,7 @@ Description:
 
 			requestId, err := strconv.ParseUint(args[0], 10, 64)
 			if err != nil {
-				return fmt.Errorf("invalid request ID: %w", err)
+				return errorsmod.Wrapf(types.ErrInvalidRequestId, "args[0] parse error: %s", args[0])
 			}
 
 			nonce, err := strconv.ParseUint(args[1], 10, 64)

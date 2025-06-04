@@ -85,6 +85,11 @@ func (k Keeper) UpdateOracleRequestDoc(context.Context, *types.MsgUpdateOracleRe
 func (k Keeper) SubmitOracleData(c context.Context, msg *types.MsgSubmitOracleData) (*types.MsgSubmitOracleDataResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 
+	err := k.validateSubmitData(*msg.DataSet)
+	if err != nil {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, err.Error())
+	}
+
 	requestId := msg.DataSet.RequestId
 
 	requestDoc, err := k.GetOracleRequestDoc(ctx, requestId)

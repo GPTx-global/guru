@@ -11,6 +11,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/tendermint/tendermint/libs/log"
 
+	errorsmod "cosmossdk.io/errors"
 	"github.com/GPTx-global/guru/x/oracle/types"
 )
 
@@ -171,7 +172,9 @@ func (k Keeper) GetSubmitDatas(ctx sdk.Context, requestId uint64, nonce uint64) 
 	var datas []*types.SubmitDataSet
 	for ; iterator.Valid(); iterator.Next() {
 		var data types.SubmitDataSet
-		k.cdc.MustUnmarshal(iterator.Value(), &data)
+		if err := k.cdc.Unmarshal(iterator.Value(), &data); err != nil {
+			return nil, fmt.Errorf("failed to unmarshal submit data: %w", err)
+		}
 		datas = append(datas, &data)
 	}
 	return datas, nil
@@ -210,6 +213,14 @@ func (k Keeper) checkAccountAuthorized(accountList []string, fromAddress string)
 	return false
 }
 
+// ProcessOracleDataSetAggregation processes oracle data set aggregation for all enabled requests
+// It performs the following steps:
+// 1. Retrieves all registered OracleRequestDocs
+// 2. For each enabled document:
+//   - Gets submit data sets for the next nonce
+//   - Checks if quorum is met
+//   - Aggregates data based on the rule
+//   - Stores the result and emits events
 func (k Keeper) ProcessOracleDataSetAggregation(ctx sdk.Context) {
 	// Get all registered OracleRequestDocs
 	requestDocs := k.GetOracleRequestDocs(ctx)
@@ -228,8 +239,10 @@ func (k Keeper) ProcessOracleDataSetAggregation(ctx sdk.Context) {
 		nextNonce := doc.Nonce + 1
 		submitDatas, err := k.GetSubmitDatas(ctx, doc.RequestId, nextNonce)
 		if err != nil {
-			k.Logger(ctx).Error(fmt.Sprintf("failed to get submit datas for request_id %d, nonce %d: %v",
-				doc.RequestId, nextNonce, err))
+			k.Logger(ctx).Error("failed to get submit datas",
+				"request_id", doc.RequestId,
+				"nonce", nextNonce,
+				"error", err)
 			continue
 		}
 
@@ -263,15 +276,15 @@ func (k Keeper) ProcessOracleDataSetAggregation(ctx sdk.Context) {
 		k.SetOracleRequestDoc(ctx, *doc)
 
 		// Emit event
-		ctx.EventManager().EmitEvent(
-			sdk.NewEvent(
-				types.EventTypeCompleteOracleDataSet,
-				sdk.NewAttribute(types.AttributeKeyRequestId, fmt.Sprintf("%d", doc.RequestId)),
-				sdk.NewAttribute(types.AttributeKeyNonce, fmt.Sprintf("%d", nextNonce)),
-				sdk.NewAttribute(types.AttributeKeyAggregationRule, string(doc.AggregationRule)),
-				sdk.NewAttribute(types.AttributeKeyQuorum, fmt.Sprintf("%d", doc.Quorum)),
-				sdk.NewAttribute(types.AttributeKeyRawData, aggregatedValue),
-			),
+		ctx.EventManager().EmitEvents(
+			sdk.Events{
+				sdk.NewEvent(
+					types.EventTypeCompleteOracleDataSet,
+					sdk.NewAttribute(types.AttributeKeyRequestId, fmt.Sprintf("%d", doc.RequestId)),
+					sdk.NewAttribute(types.AttributeKeyNonce, fmt.Sprintf("%d", nextNonce)),
+					sdk.NewAttribute(types.AttributeKeyRawData, aggregatedValue),
+				),
+			},
 		)
 
 		k.Logger(ctx).Info(fmt.Sprintf("successfully processed oracle request %d with nonce %d",
@@ -375,4 +388,20 @@ func (k Keeper) calculateMedian(submitDatas []*types.SubmitDataSet) (string, err
 	}
 	// Odd number of values, return the middle one
 	return values[mid].Text('f', -1), nil
+}
+
+func (k Keeper) validateSubmitData(data types.SubmitDataSet) error {
+	if data.RequestId == 0 {
+		return errorsmod.Wrapf(types.ErrInvalidRequestId, "request id is 0")
+	}
+	if data.Nonce == 0 {
+		return errorsmod.Wrapf(types.ErrInvalidNonce, "nonce is 0")
+	}
+	if data.Provider == "" {
+		return errorsmod.Wrapf(types.ErrInvalidProvider, "provider is empty")
+	}
+	if data.RawData == "" {
+		return errorsmod.Wrapf(types.ErrInvalidRawData, "raw data is empty")
+	}
+	return nil
 }
