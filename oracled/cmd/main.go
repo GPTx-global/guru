@@ -12,7 +12,7 @@ import (
 )
 
 func main() {
-	fmt.Println("----- Guru Oracle Daemon -----\n")
+	fmt.Println("----- Guru Oracle Daemon -----")
 
 	// 클라이언트와 스케줄러 생성
 	oracleClient := client.NewClient()

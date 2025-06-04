@@ -7,6 +7,7 @@ import (
 
 	"github.com/tendermint/tendermint/rpc/client/http"
 	coretypes "github.com/tendermint/tendermint/rpc/core/types"
+	tmtypes "github.com/tendermint/tendermint/types"
 
 	"github.com/GPTx-global/guru/oracled/types"
 )
@@ -82,16 +83,30 @@ func (c *Client) monitor(ctx context.Context) error {
 		return errors.New("not connected to rpc")
 	}
 
-	// 1. 블록 이벤트 구독 (작업 요청 tx 포함)
+	// 테스트용 블록 이벤트 구독
 	queryBlock := "tm.event='NewBlock'"
 	blockCh, err := c.rpcClient.Subscribe(ctx, "block_subscribe", queryBlock)
 	if err != nil {
 		return errors.New("failed to subscribe to block events: " + err.Error())
 	}
 
-	// 2. Oracle 완료 이벤트 구독
-	queryOracleComplete := "tm.event='Tx' AND complete_oracle_data_set EXISTS"
-	oracleCh, err := c.rpcClient.Subscribe(ctx, "oracle_subscribe", queryOracleComplete)
+	// Oracle 작업 등록 트랜잭션
+	queryRegisterOracle := "tm.event='Tx' AND message.action='/guru.oracle.v1.MsgRegisterOracleRequestDoc'"
+	registerCh, err := c.rpcClient.Subscribe(ctx, "register_oracle_subscribe", queryRegisterOracle)
+	if err != nil {
+		return errors.New("failed to subscribe to oracle register events: " + err.Error())
+	}
+
+	// Oracle 작업 수정 트랜잭션
+	queryUpdateOracle := "tm.event='Tx' AND message.action='/guru.oracle.v1.MsgUpdateOracleRequestDoc'"
+	updateCh, err := c.rpcClient.Subscribe(ctx, "update_oracle_subscribe", queryUpdateOracle)
+	if err != nil {
+		return errors.New("failed to subscribe to oracle update events: " + err.Error())
+	}
+
+	// Oracle 사용 완료 이벤트
+	queryCompleteOracle := "tm.event='NewBlock'"
+	completeCh, err := c.rpcClient.Subscribe(ctx, "complete_oracle_subscribe", queryCompleteOracle)
 	if err != nil {
 		return errors.New("failed to subscribe to oracle complete events: " + err.Error())
 	}
@@ -99,23 +114,43 @@ func (c *Client) monitor(ctx context.Context) error {
 	for {
 		select {
 		case event := <-blockCh:
-			c.checkEvent(event)
-		case event := <-oracleCh:
-			c.checkEvent(event)
+			_ = event
+			// c.checkBlockEvent(event)
+		case event := <-registerCh:
+			c.checkTxEvent(event)
+		case event := <-updateCh:
+			c.checkTxEvent(event)
+		case event := <-completeCh:
+			c.checkBlockEvent(event)
 		case <-ctx.Done():
 			return nil
 		}
 	}
 }
 
-func (c *Client) checkEvent(event coretypes.ResultEvent) {
+func (c *Client) checkTxEvent(event coretypes.ResultEvent) {
 	if event.Data == nil {
 		return
 	}
 
-	// TODO: 이벤트 타입 확인하는 로직 추가
+	txEvent := event.Data.(tmtypes.EventDataTx)
+
+	_ = txEvent
 
 	c.eventCh <- event
+}
+
+func (c *Client) checkBlockEvent(event coretypes.ResultEvent) {
+	if event.Data == nil {
+		return
+	}
+
+	blockEvent := event.Data.(tmtypes.EventDataNewBlock)
+	_ = blockEvent
+
+	fmt.Printf("Block Event: %v\n", blockEvent.ResultBeginBlock.Events)
+
+	// c.eventCh <- event
 }
 
 func (c *Client) serveOracle(ctx context.Context) {
@@ -123,7 +158,6 @@ func (c *Client) serveOracle(ctx context.Context) {
 		select {
 		case oracleResult := <-c.resultCh:
 			go c.processTransaction(ctx, oracleResult)
-
 		case <-ctx.Done():
 			return
 		}

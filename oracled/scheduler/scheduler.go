@@ -36,10 +36,6 @@ func (s *Scheduler) eventProcessor(ctx context.Context) {
 	for {
 		select {
 		case event := <-s.eventCh:
-			if !s.isOracleEvent(event) {
-				continue
-			}
-
 			job, err := s.eventToJob(event)
 			if err != nil || job == nil {
 				fmt.Printf("Failed to parse oracle event: %v\n", err)
@@ -168,20 +164,6 @@ func (s *Scheduler) parseFromGenericEvent(event coretypes.ResultEvent) (*types.J
 	}
 
 	return nil, nil
-}
-
-func (s *Scheduler) isOracleEvent(event coretypes.ResultEvent) bool {
-	if event.Data == nil {
-		return false
-	}
-
-	if strings.Contains(event.Query, "oracle") ||
-		strings.Contains(event.Query, "complete_oracle_data_set") ||
-		strings.Contains(event.Query, "NewBlock") {
-		return true
-	}
-
-	return false
 }
 
 func (s *Scheduler) SetEventChannel(ch <-chan coretypes.ResultEvent) {
