@@ -137,7 +137,7 @@ func (am AppModule) RegisterServices(cfg module.Configurator) {
 
 // BeginBlock returns the begin blocker for the cex module.
 func (am AppModule) BeginBlock(ctx sdk.Context, _ abci.RequestBeginBlock) {
-	// am.keeper.BeginBlocker(ctx)
+	am.keeper.BeginBlocker(ctx)
 }
 
 // EndBlock returns the end blocker for the cex module.

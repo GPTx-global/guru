@@ -31,18 +31,18 @@ func (k Keeper) RegisterOracleRequestDoc(c context.Context, doc *types.MsgRegist
 
 	// Create a new oracle request document
 	oracleRequestDoc := types.OracleRequestDoc{
-		RequestId:     count + 1,
-		Status:        doc.RequestDoc.Status,
-		OracleType:    doc.RequestDoc.OracleType,
-		Name:          doc.RequestDoc.Name,
-		Description:   doc.RequestDoc.Description,
-		Period:        doc.RequestDoc.Period,
-		AccountList:   doc.RequestDoc.AccountList,
-		Quorum:        doc.RequestDoc.Quorum,
-		Urls:          doc.RequestDoc.Urls,
-		ParseRule:     doc.RequestDoc.ParseRule,
-		AggregateRule: doc.RequestDoc.AggregateRule,
-		Creator:       doc.RequestDoc.Creator,
+		RequestId:       count + 1,
+		Status:          doc.RequestDoc.Status,
+		OracleType:      doc.RequestDoc.OracleType,
+		Name:            doc.RequestDoc.Name,
+		Description:     doc.RequestDoc.Description,
+		Period:          doc.RequestDoc.Period,
+		AccountList:     doc.RequestDoc.AccountList,
+		Quorum:          doc.RequestDoc.Quorum,
+		Urls:            doc.RequestDoc.Urls,
+		ParseRule:       doc.RequestDoc.ParseRule,
+		AggregationRule: doc.RequestDoc.AggregationRule,
+		Creator:         doc.RequestDoc.Creator,
 	}
 
 	// Store the oracle request document
@@ -63,7 +63,7 @@ func (k Keeper) RegisterOracleRequestDoc(c context.Context, doc *types.MsgRegist
 			// sdk.NewAttribute(types.AttributeKeyAccountList, oracleRequestDoc.AccountList[0]),
 			// sdk.NewAttribute(types.AttributeKeyURLs, oracleRequestDoc.Urls[0]),
 			sdk.NewAttribute(types.AttributeKeyParseRule, oracleRequestDoc.ParseRule),
-			sdk.NewAttribute(types.AttributeKeyAggregateRule, string(oracleRequestDoc.AggregateRule)),
+			sdk.NewAttribute(types.AttributeKeyAggregationRule, string(oracleRequestDoc.AggregationRule)),
 			sdk.NewAttribute(types.AttributeKeyStatus, string(oracleRequestDoc.Status)),
 			sdk.NewAttribute(types.AttributeKeyCreator, oracleRequestDoc.Creator),
 		),

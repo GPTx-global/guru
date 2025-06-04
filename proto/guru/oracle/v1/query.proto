@@ -67,7 +67,7 @@ message QueryOracleSubmitDataResponse {
 // QueryOracleDataRequest is request type for the Query/OracleData RPC method
 message QueryOracleDataRequest {
   // request_id is the unique identifier of the oracle request
-  string request_id = 1;
+  uint64 request_id = 1;
 }
 
 // QueryOracleDataResponse is response type for the Query/OracleData RPC method
@@ -79,7 +79,7 @@ message QueryOracleDataResponse {
 // QueryOracleRequestRequest is request type for the Query/OracleRequest RPC method
 message QueryOracleRequestDocRequest {
   // request_id is the unique identifier of the oracle request
-  string request_id = 1;
+  uint64 request_id = 1;
 }
 
 // QueryOracleRequestResponse is response type for the Query/OracleRequest RPC method

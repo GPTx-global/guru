@@ -4,6 +4,7 @@ package keeper
 import (
 	"encoding/binary"
 	"fmt"
+	"math/big"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
@@ -176,6 +177,25 @@ func (k Keeper) GetSubmitDatas(ctx sdk.Context, requestId uint64, nonce uint64) 
 	return datas, nil
 }
 
+// SetDataSet stores the aggregated oracle data
+func (k Keeper) SetDataSet(ctx sdk.Context, dataSet types.DataSet) {
+	store := ctx.KVStore(k.storeKey)
+	bz := k.cdc.MustMarshal(&dataSet)
+	store.Set(types.GetDataSetKey(dataSet.RequestId, dataSet.Nonce), bz)
+}
+
+func (k Keeper) GetDataSet(ctx sdk.Context, requestId uint64, nonce uint64) (*types.DataSet, error) {
+	store := ctx.KVStore(k.storeKey)
+	bz := store.Get(types.GetDataSetKey(requestId, nonce))
+	if len(bz) == 0 {
+		return nil, fmt.Errorf("not exist DataSet(req_id: %d, nonce: %d)", requestId, nonce)
+	}
+
+	var dataSet types.DataSet
+	k.cdc.MustUnmarshal(bz, &dataSet)
+	return &dataSet, nil
+}
+
 // Logger returns a logger instance with the module name prefixed
 func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 	return ctx.Logger().With("module", fmt.Sprintf("x/%s", types.ModuleName))
@@ -188,4 +208,171 @@ func (k Keeper) checkAccountAuthorized(accountList []string, fromAddress string)
 		}
 	}
 	return false
+}
+
+func (k Keeper) ProcessOracleDataSetAggregation(ctx sdk.Context) {
+	// Get all registered OracleRequestDocs
+	requestDocs := k.GetOracleRequestDocs(ctx)
+	if len(requestDocs) == 0 {
+		k.Logger(ctx).Info("no oracle request docs found")
+		return
+	}
+
+	// Process each OracleRequestDoc
+	for _, doc := range requestDocs {
+		if doc.Status != types.RequestStatus_REQUEST_STATUS_ENABLED {
+			continue
+		}
+
+		// Get submit data sets for current request_id and next nonce
+		nextNonce := doc.Nonce + 1
+		submitDatas, err := k.GetSubmitDatas(ctx, doc.RequestId, nextNonce)
+		if err != nil {
+			k.Logger(ctx).Error(fmt.Sprintf("failed to get submit datas for request_id %d, nonce %d: %v",
+				doc.RequestId, nextNonce, err))
+			continue
+		}
+
+		// Check if we have enough submissions (quorum)
+		if uint32(len(submitDatas)) < doc.Quorum {
+			k.Logger(ctx).Info(fmt.Sprintf("insufficient submissions for request_id %d, nonce %d: got %d, need %d",
+				doc.RequestId, nextNonce, len(submitDatas), doc.Quorum))
+			continue
+		}
+
+		// Aggregate data based on AggregationRule
+		aggregatedValue, err := k.aggregateData(doc.AggregationRule, submitDatas)
+		if err != nil {
+			k.Logger(ctx).Error(fmt.Sprintf("failed to aggregate data for request_id %d: %v",
+				doc.RequestId, err))
+			continue
+		}
+
+		// Create and store DataSet
+		dataSet := types.DataSet{
+			RequestId:   doc.RequestId,
+			Nonce:       nextNonce,
+			BlockHeight: uint64(ctx.BlockHeight()),
+			BlockTime:   uint64(ctx.BlockTime().Unix()),
+			RawData:     aggregatedValue,
+		}
+		k.SetDataSet(ctx, dataSet)
+
+		// Increment nonce
+		doc.Nonce = nextNonce
+		k.SetOracleRequestDoc(ctx, *doc)
+
+		// Emit event
+		ctx.EventManager().EmitEvent(
+			sdk.NewEvent(
+				types.EventTypeCompleteOracleDataSet,
+				sdk.NewAttribute(types.AttributeKeyRequestId, fmt.Sprintf("%d", doc.RequestId)),
+				sdk.NewAttribute(types.AttributeKeyNonce, fmt.Sprintf("%d", nextNonce)),
+				sdk.NewAttribute(types.AttributeKeyAggregationRule, string(doc.AggregationRule)),
+				sdk.NewAttribute(types.AttributeKeyQuorum, fmt.Sprintf("%d", doc.Quorum)),
+				sdk.NewAttribute(types.AttributeKeyRawData, aggregatedValue),
+			),
+		)
+
+		k.Logger(ctx).Info(fmt.Sprintf("successfully processed oracle request %d with nonce %d",
+			doc.RequestId, nextNonce))
+	}
+}
+
+// aggregateData aggregates the submitted data based on the aggregation rule
+func (k Keeper) aggregateData(rule types.AggregationRule, submitDatas []*types.SubmitDataSet) (string, error) {
+	switch rule {
+	case types.AggregationRule_AGGREGATION_RULE_AVG:
+		return k.calculateAverage(submitDatas)
+	case types.AggregationRule_AGGREGATION_RULE_MIN:
+		return k.calculateMin(submitDatas)
+	case types.AggregationRule_AGGREGATION_RULE_MAX:
+		return k.calculateMax(submitDatas)
+	case types.AggregationRule_AGGREGATION_RULE_MEDIAN:
+		return k.calculateMedian(submitDatas)
+	default:
+		return "", fmt.Errorf("unsupported aggregation rule: %s", rule)
+	}
+}
+
+func (k Keeper) calculateMax(submitDatas []*types.SubmitDataSet) (string, error) {
+	if len(submitDatas) == 0 {
+		return "", fmt.Errorf("no data to calculate max")
+	}
+
+	max := new(big.Float)
+	for _, data := range submitDatas {
+		value := new(big.Float)
+		value.SetString(data.RawData)
+		if value.Cmp(max) > 0 {
+			max = value
+		}
+	}
+	return max.Text('f', -1), nil
+}
+
+func (k Keeper) calculateMin(submitDatas []*types.SubmitDataSet) (string, error) {
+	if len(submitDatas) == 0 {
+		return "", fmt.Errorf("no data to calculate min")
+	}
+
+	min := new(big.Float)
+	for _, data := range submitDatas {
+		value := new(big.Float)
+		value.SetString(data.RawData)
+		if value.Cmp(min) < 0 {
+			min = value
+		}
+	}
+	return min.Text('f', -1), nil
+}
+
+// calculateAverage calculates the average of all submitted values
+func (k Keeper) calculateAverage(submitDatas []*types.SubmitDataSet) (string, error) {
+	if len(submitDatas) == 0 {
+		return "", fmt.Errorf("no data to average")
+	}
+
+	sum := new(big.Float)
+	for _, data := range submitDatas {
+		value := new(big.Float)
+		value.SetString(data.RawData)
+		sum.Add(sum, value)
+	}
+
+	avg := new(big.Float).Quo(sum, new(big.Float).SetInt64(int64(len(submitDatas))))
+	return avg.Text('f', -1), nil
+}
+
+// calculateMedian calculates the median of all submitted values
+func (k Keeper) calculateMedian(submitDatas []*types.SubmitDataSet) (string, error) {
+	if len(submitDatas) == 0 {
+		return "", fmt.Errorf("no data to calculate median")
+	}
+
+	values := make([]*big.Float, len(submitDatas))
+	for i, data := range submitDatas {
+		values[i] = new(big.Float)
+		values[i].SetString(data.RawData)
+	}
+
+	// Sort values
+	for i := 0; i < len(values)-1; i++ {
+		for j := i + 1; j < len(values); j++ {
+			if values[i].Cmp(values[j]) > 0 {
+				values[i], values[j] = values[j], values[i]
+			}
+		}
+	}
+
+	// Calculate median
+	mid := len(values) / 2
+	if len(values)%2 == 0 {
+		// Even number of values, average the middle two
+		median := new(big.Float).Add(values[mid-1], values[mid])
+		median.Quo(median, new(big.Float).SetInt64(2))
+		return median.Text('f', -1), nil
+	}
+	// Odd number of values, return the middle one
+	return values[mid].Text('f', -1), nil
 }

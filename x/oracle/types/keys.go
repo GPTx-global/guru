@@ -26,6 +26,7 @@ const (
 	prefixOracleRequestDoc
 	prefixOracleRequestDocCount
 	prefixOracleData
+	prefixOracleDataSet
 )
 
 // KV Store key prefixes
@@ -35,6 +36,7 @@ var (
 	KeyOracleRequestDoc      = []byte{prefixOracleRequestDoc}
 	KeyOracleRequestDocCount = []byte{prefixOracleRequestDocCount}
 	KeyOracleData            = []byte{prefixOracleData}
+	KeyOracleDataSet         = []byte{prefixOracleDataSet}
 )
 
 func IDToBytes(id uint64) []byte {
@@ -77,4 +79,9 @@ func GetSubmitDataKey(request_id uint64, nonce uint64) []byte {
 
 func GetSubmitDataKeyByProvider(request_id uint64, nonce uint64, provider string) []byte {
 	return append(GetSubmitDataKey(request_id, nonce), StringToBytes(provider)...)
+}
+
+// GetDataSetKey returns the key for storing a DataSet
+func GetDataSetKey(request_id uint64, nonce uint64) []byte {
+	return append(KeyOracleDataSet, IDToBytes(request_id)...)
 }

@@ -2,7 +2,6 @@ package keeper
 
 import (
 	"context"
-	"strconv"
 
 	"github.com/GPTx-global/guru/x/oracle/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -20,17 +19,25 @@ func (k Keeper) Params(ctx context.Context, req *types.QueryParamsRequest) (*typ
 
 // OracleData queries oracle data by ID
 func (k Keeper) OracleData(ctx context.Context, req *types.QueryOracleDataRequest) (*types.QueryOracleDataResponse, error) {
-	return &types.QueryOracleDataResponse{}, nil
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	doc, err := k.GetOracleRequestDoc(sdkCtx, req.RequestId)
+	if err != nil {
+		return nil, err
+	}
+	dataSet, err := k.GetDataSet(sdkCtx, req.RequestId, doc.Nonce)
+	if err != nil {
+		return nil, err
+	}
+	return &types.QueryOracleDataResponse{
+		DataSet: dataSet,
+	}, nil
 }
 
 // OracleRequestDoc queries oracle request doc by ID
 func (k Keeper) OracleRequestDoc(ctx context.Context, req *types.QueryOracleRequestDocRequest) (*types.QueryOracleRequestDocResponse, error) {
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
-	requestId, err := strconv.ParseUint(req.RequestId, 10, 64)
-	if err != nil {
-		return nil, err
-	}
-	doc, err := k.GetOracleRequestDoc(sdkCtx, requestId)
+
+	doc, err := k.GetOracleRequestDoc(sdkCtx, req.RequestId)
 	if err != nil {
 		return nil, err
 	}

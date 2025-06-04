@@ -27,14 +27,12 @@ enum OracleType {
 enum RequestStatus {
   // Default value, should not be used
   REQUEST_STATUS_UNSPECIFIED = 0;
-  // Request is waiting to be processed
-  REQUEST_STATUS_PENDING = 1;
-  // Request was successfully processed and data is available
-  REQUEST_STATUS_SUCCESS = 2;
-  // Request failed to process or data is invalid
-  REQUEST_STATUS_FAILED = 3;
-  // Request was stopped or cancelled
-  REQUEST_STATUS_STOP = 4;
+  // Request is enabled
+  REQUEST_STATUS_ENABLED = 1;
+  // Request is paused
+  REQUEST_STATUS_PAUSED = 2;
+  // Request is disabled
+  REQUEST_STATUS_DISABLED = 3;
 }
 
 // AggregationRule defines the enumeration for aggregating oracle data
@@ -48,6 +46,8 @@ enum AggregationRule {
     AGGREGATION_RULE_MIN = 2;
     // Use maximum value to aggregate the data
     AGGREGATION_RULE_MAX = 3;
+    // Use median value to aggregate the data
+    AGGREGATION_RULE_MEDIAN = 4;
 }
 
 // OracleRequestDoc defines the structure for oracle request documents
@@ -72,7 +72,7 @@ message OracleRequestDoc {
   // JSONPath or similar rule to parse the raw data
   string parse_rule = 9;
   // Rule for aggregating multiple data points (e.g., median, mean)
-  AggregationRule aggregate_rule = 10;
+  AggregationRule aggregation_rule = 10;
   // Current status of the request
   RequestStatus status = 11;
   // Address of the request creator
@@ -98,12 +98,14 @@ message SubmitDataSet {
 
 // DataSet defines the structure for oracle data sets
 message DataSet {
-  // ID of the request this data set belongs to
+  // request_id represents the ID of the request this data set belongs to
   uint64 request_id = 1;
-  // Sequential number to prevent replay attacks
+  // nonce represents the sequential number to prevent replay attacks
   uint64 nonce = 2;
-  // Block height - represents the height of the block where the data was aggregated
+  // block_height represents the height of the block where the data was aggregated
   uint64 block_height = 3;
-  // Raw data in string format (can be JSON, CSV, etc.)
-  string raw_data = 4;
+  // block_time represents the time of the block where the data was aggregated
+  uint64 block_time = 4;
+  // raw_data represents the raw data in string format (can be JSON, CSV, etc.)
+  string raw_data = 5;
 }

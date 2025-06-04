@@ -27,6 +27,7 @@ func GetQueryCmd() *cobra.Command {
 		GetCmdQueryParams(),
 		GetCmdQueryOracleRequestDoc(),
 		GetCmdQueryOracleData(),
+		GetCmdQueryOracleSubmitData(),
 		GetCmdQueryOracleRequestDocs(),
 		GetCmdQueryModeratorAddress(),
 	)
@@ -73,8 +74,14 @@ func GetCmdQueryOracleRequestDoc() *cobra.Command {
 			}
 
 			queryClient := types.NewQueryClient(clientCtx)
+
+			requestId, err := strconv.ParseUint(args[0], 10, 64)
+			if err != nil {
+				return fmt.Errorf("invalid request ID: %w", err)
+			}
+
 			res, err := queryClient.OracleRequestDoc(cmd.Context(), &types.QueryOracleRequestDocRequest{
-				RequestId: args[0],
+				RequestId: requestId,
 			})
 			if err != nil {
 				return err
@@ -90,6 +97,40 @@ func GetCmdQueryOracleRequestDoc() *cobra.Command {
 
 // GetCmdQueryOracleData implements the oracle data query command
 func GetCmdQueryOracleData() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "data [request-id]",
+		Short: "Query an oracle data by ID",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientQueryContext(cmd)
+			if err != nil {
+				return err
+			}
+
+			queryClient := types.NewQueryClient(clientCtx)
+
+			requestId, err := strconv.ParseUint(args[0], 10, 64)
+			if err != nil {
+				return fmt.Errorf("invalid request ID: %w", err)
+			}
+
+			res, err := queryClient.OracleData(cmd.Context(), &types.QueryOracleDataRequest{
+				RequestId: requestId,
+			})
+			if err != nil {
+				return err
+			}
+
+			return clientCtx.PrintProto(res)
+		},
+	}
+
+	flags.AddQueryFlagsToCmd(cmd)
+	return cmd
+}
+
+// GetCmdQueryOracleSubmitData implements the oracle data query command
+func GetCmdQueryOracleSubmitData() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "submit-data [request-id] [nonce] [provider-account]",
 		Short: "Query oracle submit data for a request",

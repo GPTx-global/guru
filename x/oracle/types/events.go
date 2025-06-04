@@ -35,6 +35,8 @@ const (
 	AttributeKeyNonce            = "nonce"
 	AttributeKeyFromAddress      = "from_address"
 	AttributeKeyRawData          = "raw_data"
+	AttributeKeyAggregationRule  = "aggregation_rule"
+	AttributeKeyQuorum           = "quorum"
 )
 
 const (
