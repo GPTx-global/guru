@@ -56,3 +56,14 @@ func (k Keeper) ModeratorAddress(ctx context.Context, req *types.QueryModeratorA
 		ModeratorAddress: address,
 	}, nil
 }
+
+func (k Keeper) OracleSubmitData(ctx context.Context, req *types.QueryOracleSubmitDataRequest) (*types.QueryOracleSubmitDataResponse, error) {
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	submitDatas, err := k.GetSubmitData(sdkCtx, req.RequestId, req.Nonce, req.Provider)
+	if err != nil {
+		return nil, err
+	}
+	return &types.QueryOracleSubmitDataResponse{
+		SubmitDatas: submitDatas,
+	}, nil
+}

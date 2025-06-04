@@ -15,6 +15,11 @@ service Query {
     option (google.api.http).get = "/guru/oracle/params";
   }
   
+  // OracleSubmitData queries oracle data by ID
+  rpc OracleSubmitData(QueryOracleSubmitDataRequest) returns (QueryOracleSubmitDataResponse) {
+    option (google.api.http).get = "/guru/oracle/v1/submit_data/{request_id}/{nonce}/{provider}";
+  }
+
   // OracleData queries oracle data by ID
   rpc OracleData(QueryOracleDataRequest) returns (QueryOracleDataResponse) {
     option (google.api.http).get = "/guru/oracle/v1/data/{request_id}";
@@ -43,6 +48,20 @@ message QueryParamsRequest {}
 message QueryParamsResponse {
   // params holds all the parameters of this module
   Params params = 1 [(gogoproto.nullable) = false];
+}
+
+// QueryOracleSubmitDataRequest is request type for the Query/OracleSubmitData RPC method
+message QueryOracleSubmitDataRequest {
+  // request_id is the unique identifier of the oracle request
+  uint64 request_id = 1;
+  uint64 nonce = 2;
+  string provider = 3;
+}
+
+// QueryOracleSubmitDataResponse is response type for the Query/OracleSubmitData RPC method
+message QueryOracleSubmitDataResponse {
+  // submit_datas is the list of oracle submit data for the requested ID, nonce and provider
+  repeated SubmitDataSet submit_datas = 1;
 }
 
 // QueryOracleDataRequest is request type for the Query/OracleData RPC method

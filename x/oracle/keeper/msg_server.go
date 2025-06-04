@@ -99,13 +99,8 @@ func (k Keeper) SubmitOracleData(c context.Context, msg *types.MsgSubmitOracleDa
 	accountList := requestDoc.AccountList
 	fromAddress := msg.FromAddress
 
-	fmt.Println("accountList", accountList)
-	fmt.Println("fromAddress", fromAddress)
-
-	for _, account := range accountList {
-		if account == fromAddress {
-			break
-		}
+	isAuthorized := k.checkAccountAuthorized(accountList, fromAddress)
+	if !isAuthorized {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "account is not authorized")
 	}
 

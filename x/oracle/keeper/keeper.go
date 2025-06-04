@@ -135,24 +135,36 @@ func (k Keeper) GetOracleRequestDocs(ctx sdk.Context) []*types.OracleRequestDoc 
 func (k Keeper) SetSubmitData(ctx sdk.Context, data types.SubmitDataSet) {
 	store := ctx.KVStore(k.storeKey)
 	bz := k.cdc.MustMarshal(&data)
-	store.Set(types.GetSubmitDataKey(data.RequestId, data.Nonce), bz)
+	key := types.GetSubmitDataKeyByProvider(data.RequestId, data.Nonce, data.Provider)
+	store.Set(key, bz)
 }
 
-func (k Keeper) GetSubmitData(ctx sdk.Context, requestId uint64, nonce uint64) (*types.SubmitDataSet, error) {
+func (k Keeper) GetSubmitData(ctx sdk.Context, requestId uint64, nonce uint64, provider string) ([]*types.SubmitDataSet, error) {
 	store := ctx.KVStore(k.storeKey)
-	bz := store.Get(types.GetSubmitDataKey(requestId, nonce))
-	if len(bz) == 0 {
-		return nil, fmt.Errorf("not exist SubmitData(req_id: %d, nonce: %d)", requestId, nonce)
+	var datas []*types.SubmitDataSet
+	if provider == "" {
+		datas, err := k.GetSubmitDatas(ctx, requestId, nonce)
+		if err != nil {
+			return nil, err
+		}
+		return datas, nil
+	} else {
+		key := types.GetSubmitDataKeyByProvider(requestId, nonce, provider)
+		bz := store.Get(key)
+		if len(bz) == 0 {
+			return nil, fmt.Errorf("not exist SubmitData(req_id: %d, nonce: %d, provider: %s)", requestId, nonce, provider)
+		}
+
+		var data types.SubmitDataSet
+		k.cdc.MustUnmarshal(bz, &data)
+		datas = append(datas, &data)
 	}
-
-	var data types.SubmitDataSet
-	k.cdc.MustUnmarshal(bz, &data)
-	return &data, nil
+	return datas, nil
 }
 
-func (k Keeper) GetSubmitDataByRequestId(ctx sdk.Context, requestId uint64) ([]*types.SubmitDataSet, error) {
+func (k Keeper) GetSubmitDatas(ctx sdk.Context, requestId uint64, nonce uint64) ([]*types.SubmitDataSet, error) {
 	store := ctx.KVStore(k.storeKey)
-	iterator := sdk.KVStorePrefixIterator(store, types.GetSubmitDataKey(requestId, 0))
+	iterator := sdk.KVStorePrefixIterator(store, types.GetSubmitDataKey(requestId, nonce))
 	defer iterator.Close()
 
 	var datas []*types.SubmitDataSet
@@ -167,4 +179,13 @@ func (k Keeper) GetSubmitDataByRequestId(ctx sdk.Context, requestId uint64) ([]*
 // Logger returns a logger instance with the module name prefixed
 func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 	return ctx.Logger().With("module", fmt.Sprintf("x/%s", types.ModuleName))
+}
+
+func (k Keeper) checkAccountAuthorized(accountList []string, fromAddress string) bool {
+	for _, account := range accountList {
+		if account == fromAddress {
+			return true
+		}
+	}
+	return false
 }

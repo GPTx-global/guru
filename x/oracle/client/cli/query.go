@@ -2,12 +2,15 @@ package cli
 
 import (
 	"fmt"
+	"strconv"
+	"strings"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/spf13/cobra"
 
 	"github.com/GPTx-global/guru/x/oracle/types"
+	"github.com/cosmos/cosmos-sdk/version"
 )
 
 // GetQueryCmd returns the cli query commands for this module
@@ -88,9 +91,19 @@ func GetCmdQueryOracleRequestDoc() *cobra.Command {
 // GetCmdQueryOracleData implements the oracle data query command
 func GetCmdQueryOracleData() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "data [request-id]",
-		Short: "Query oracle data for a request",
-		Args:  cobra.ExactArgs(1),
+		Use:   "submit-data [request-id] [nonce] [provider-account]",
+		Short: "Query oracle submit data for a request",
+		Long: strings.TrimSpace(fmt.Sprintf(`Query oracle submit data for a request.
+
+Example:
+$ %s query oracle submit-data 1 1
+$ %s query oracle submit-data 1 1 provider-account
+
+Description:
+- By default, shows all submissions for the given [request-id] and [nonce]
+- Optional [provider-account] parameter filters results to show only submissions from that account`,
+			version.AppName, version.AppName)),
+		Args: cobra.RangeArgs(2, 3),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientQueryContext(cmd)
 			if err != nil {
@@ -98,8 +111,26 @@ func GetCmdQueryOracleData() *cobra.Command {
 			}
 
 			queryClient := types.NewQueryClient(clientCtx)
-			res, err := queryClient.OracleData(cmd.Context(), &types.QueryOracleDataRequest{
-				RequestId: args[0],
+
+			requestId, err := strconv.ParseUint(args[0], 10, 64)
+			if err != nil {
+				return fmt.Errorf("invalid request ID: %w", err)
+			}
+
+			nonce, err := strconv.ParseUint(args[1], 10, 64)
+			if err != nil {
+				return fmt.Errorf("invalid nonce: %w", err)
+			}
+
+			provider := ""
+			if len(args) > 2 {
+				provider = args[2]
+			}
+
+			res, err := queryClient.OracleSubmitData(cmd.Context(), &types.QueryOracleSubmitDataRequest{
+				RequestId: requestId,
+				Nonce:     nonce,
+				Provider:  provider,
 			})
 			if err != nil {
 				return err

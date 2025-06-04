@@ -74,3 +74,7 @@ func GetSubmitDataKey(request_id uint64, nonce uint64) []byte {
 	}
 	return append(KeyOracleDataForRequest, IDToBytes(nonce)...)
 }
+
+func GetSubmitDataKeyByProvider(request_id uint64, nonce uint64, provider string) []byte {
+	return append(GetSubmitDataKey(request_id, nonce), StringToBytes(provider)...)
+}
