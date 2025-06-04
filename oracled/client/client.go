@@ -105,7 +105,8 @@ func (c *Client) monitor(ctx context.Context) error {
 	}
 
 	// Oracle 사용 완료 이벤트
-	queryCompleteOracle := "tm.event='NewBlock'"
+	queryCompleteOracle := fmt.Sprintf("tm.event='NewBlock' AND %s EXISTS", "complete_oracle_data_set.request_id")
+	// queryCompleteOracle := fmt.Sprintf("tm.event='NewBlock' AND %s.OracleId EXISTS", "alpha")
 	completeCh, err := c.rpcClient.Subscribe(ctx, "complete_oracle_subscribe", queryCompleteOracle)
 	if err != nil {
 		return errors.New("failed to subscribe to oracle complete events: " + err.Error())
@@ -115,7 +116,7 @@ func (c *Client) monitor(ctx context.Context) error {
 		select {
 		case event := <-blockCh:
 			_ = event
-			// c.checkBlockEvent(event)
+			c.checkBlockEvent(event)
 		case event := <-registerCh:
 			c.checkTxEvent(event)
 		case event := <-updateCh:
@@ -134,21 +135,33 @@ func (c *Client) checkTxEvent(event coretypes.ResultEvent) {
 	}
 
 	txEvent := event.Data.(tmtypes.EventDataTx)
+	fmt.Printf("[tx]: %v\n\n", event)
+	fmt.Printf("[tx]: %v\n\n", txEvent)
+	for key, value := range event.Events {
+		fmt.Printf("key: %s, value: %v\n", key, value)
+	}
 
 	_ = txEvent
 
-	c.eventCh <- event
+	// c.eventCh <- event
 }
 
 func (c *Client) checkBlockEvent(event coretypes.ResultEvent) {
-	if event.Data == nil {
+	if event.Events == nil {
 		return
 	}
 
-	blockEvent := event.Data.(tmtypes.EventDataNewBlock)
-	_ = blockEvent
+	// fmt.Printf("[alpha]: %T\n", event.Data)
+	// fmt.Printf("[alpha]: %v\n", event.Data.(tmtypes.EventDataNewBlock))
 
-	fmt.Printf("Block Event: %v\n", blockEvent.ResultBeginBlock.Events)
+	fmt.Printf("Block Event: %v\n\n", event.Events)
+	for key, value := range event.Events {
+		fmt.Printf("key: %s, value: %v\n", key, value)
+		// if strings.Contains(key, "alpha") {
+		// 	fmt.Printf("key: %s, value: %v\n", key, value)
+		// }
+	}
+	fmt.Println()
 
 	// c.eventCh <- event
 }

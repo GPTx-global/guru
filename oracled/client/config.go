@@ -23,6 +23,7 @@ func LoadConfig() *Config {
 	homeDir, _ := os.UserHomeDir()
 
 	return &Config{
+		// rpcEndpoint: "http://192.168.48.131:26657",
 		rpcEndpoint: "http://localhost:26657",
 		chainID:     "guru_3110-1",
 		keyringDir:  filepath.Join(homeDir, ".guru"),
