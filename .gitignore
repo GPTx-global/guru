@@ -83,3 +83,7 @@ dependency-graph.png
 
 # OpenZeppelin contracts
 contracts/@openzeppelin/*
+
+# Cursor
+.cursor/
+*.mdc

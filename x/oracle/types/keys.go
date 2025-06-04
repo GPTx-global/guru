@@ -43,6 +43,10 @@ func IDToBytes(id uint64) []byte {
 	return bz
 }
 
+func StringToBytes(str string) []byte {
+	return []byte(str)
+}
+
 // GetOracleRequestDocKey returns the key for storing OracleRequsetDoc
 func GetOracleRequestDocKey(id uint64) []byte {
 	return append(KeyOracleRequestDoc, IDToBytes(id)...)
@@ -61,4 +65,12 @@ func ParseOracleDataKey(key []byte) (uint64, error) {
 		return 0, fmt.Errorf("invalid oracle data key length: %d", len(key))
 	}
 	return binary.BigEndian.Uint64(key[1:]), nil
+}
+
+func GetSubmitDataKey(request_id uint64, nonce uint64) []byte {
+	KeyOracleDataForRequest := append(KeyOracleData, IDToBytes(request_id)...)
+	if nonce == 0 {
+		return KeyOracleDataForRequest
+	}
+	return append(KeyOracleDataForRequest, IDToBytes(nonce)...)
 }

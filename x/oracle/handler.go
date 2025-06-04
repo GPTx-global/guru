@@ -26,6 +26,10 @@ func NewHandler(msgServer types.MsgServer) sdk.Handler {
 			res, err := msgServer.SubmitOracleData(sdk.WrapSDKContext(ctx), msg)
 			return sdk.WrapServiceResult(ctx, res, err)
 
+		case *types.MsgUpdateModeratorAddress:
+			res, err := msgServer.UpdateModeratorAddress(sdk.WrapSDKContext(ctx), msg)
+			return sdk.WrapServiceResult(ctx, res, err)
+
 		default:
 			err := errorsmod.Wrapf(sdkerrors.ErrUnknownRequest, "unrecognized %s message type: %T", types.ModuleName, msg)
 			return nil, err

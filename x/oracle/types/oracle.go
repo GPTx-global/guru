@@ -4,13 +4,8 @@ import (
 	"fmt"
 )
 
-// type RequestDocument struct {
-// 	RequestOracleDoc
-// 	nonce uint64
-// }
-
-// Validate performs basic validation on RequestOracleDoc
-func (doc RequestOracleDoc) Validate() error {
+// Validate performs basic validation on OracleRequestDoc
+func (doc OracleRequestDoc) Validate() error {
 	// Check if oracle type is unspecified
 	if doc.OracleType == OracleType_ORACLE_TYPE_UNSPECIFIED {
 		return fmt.Errorf("oracle type cannot be unspecified")

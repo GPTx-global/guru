@@ -6,7 +6,9 @@ package types
 import (
 	context "context"
 	fmt "fmt"
-	types "github.com/cosmos/cosmos-sdk/types"
+	_ "github.com/cosmos/cosmos-proto"
+	_ "github.com/cosmos/cosmos-sdk/types"
+	_ "github.com/cosmos/cosmos-sdk/types/msgservice"
 	_ "github.com/cosmos/gogoproto/gogoproto"
 	grpc1 "github.com/gogo/protobuf/grpc"
 	proto "github.com/gogo/protobuf/proto"
@@ -31,14 +33,9 @@ const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
 // MsgRegisterOracleRequestDoc represents a message to register a new oracle request document
 type MsgRegisterOracleRequestDoc struct {
+	FromAddress string `protobuf:"bytes,1,opt,name=from_address,json=fromAddress,proto3" json:"from_address,omitempty"`
 	// The oracle request document to be registered
-	RequestDoc RequestOracleDoc `protobuf:"bytes,1,opt,name=request_doc,json=requestDoc,proto3" json:"request_doc"`
-	// Fee for the oracle request
-	Fee types.Coin `protobuf:"bytes,2,opt,name=fee,proto3" json:"fee"`
-	// Address of the request creator
-	Creator string `protobuf:"bytes,3,opt,name=creator,proto3" json:"creator,omitempty"`
-	// Signature of the request document by the creator
-	Signature string `protobuf:"bytes,4,opt,name=signature,proto3" json:"signature,omitempty"`
+	RequestDoc OracleRequestDoc `protobuf:"bytes,2,opt,name=request_doc,json=requestDoc,proto3" json:"request_doc"`
 }
 
 func (m *MsgRegisterOracleRequestDoc) Reset()         { *m = MsgRegisterOracleRequestDoc{} }
@@ -73,34 +70,6 @@ func (m *MsgRegisterOracleRequestDoc) XXX_DiscardUnknown() {
 }
 
 var xxx_messageInfo_MsgRegisterOracleRequestDoc proto.InternalMessageInfo
-
-func (m *MsgRegisterOracleRequestDoc) GetRequestDoc() RequestOracleDoc {
-	if m != nil {
-		return m.RequestDoc
-	}
-	return RequestOracleDoc{}
-}
-
-func (m *MsgRegisterOracleRequestDoc) GetFee() types.Coin {
-	if m != nil {
-		return m.Fee
-	}
-	return types.Coin{}
-}
-
-func (m *MsgRegisterOracleRequestDoc) GetCreator() string {
-	if m != nil {
-		return m.Creator
-	}
-	return ""
-}
-
-func (m *MsgRegisterOracleRequestDoc) GetSignature() string {
-	if m != nil {
-		return m.Signature
-	}
-	return ""
-}
 
 // MsgRegisterOracleRequestDocResponse defines the Msg/RegisterOracleRequestDoc response type
 type MsgRegisterOracleRequestDocResponse struct {
@@ -153,7 +122,7 @@ type MsgUpdateOracleRequestDoc struct {
 	// ID of the request to be updated
 	RequestId uint64 `protobuf:"varint,1,opt,name=request_id,json=requestId,proto3" json:"request_id,omitempty"`
 	// The updated oracle request document
-	RequestDoc RequestOracleDoc `protobuf:"bytes,2,opt,name=request_doc,json=requestDoc,proto3" json:"request_doc"`
+	RequestDoc OracleRequestDoc `protobuf:"bytes,2,opt,name=request_doc,json=requestDoc,proto3" json:"request_doc"`
 	// Address of the request updater
 	Updater string `protobuf:"bytes,3,opt,name=updater,proto3" json:"updater,omitempty"`
 	// Signature of the updated request document by the updater
@@ -202,11 +171,11 @@ func (m *MsgUpdateOracleRequestDoc) GetRequestId() uint64 {
 	return 0
 }
 
-func (m *MsgUpdateOracleRequestDoc) GetRequestDoc() RequestOracleDoc {
+func (m *MsgUpdateOracleRequestDoc) GetRequestDoc() OracleRequestDoc {
 	if m != nil {
 		return m.RequestDoc
 	}
-	return RequestOracleDoc{}
+	return OracleRequestDoc{}
 }
 
 func (m *MsgUpdateOracleRequestDoc) GetUpdater() string {
@@ -278,8 +247,9 @@ func (m *MsgUpdateOracleRequestDocResponse) GetRequestId() uint64 {
 
 // MsgSubmitOracleData represents a message to submit oracle data
 type MsgSubmitOracleData struct {
+	FromAddress string `protobuf:"bytes,1,opt,name=from_address,json=fromAddress,proto3" json:"from_address,omitempty"`
 	// The oracle data set to be submitted, containing the raw data and metadata
-	DataSet *SubmitDataSet `protobuf:"bytes,1,opt,name=data_set,json=dataSet,proto3" json:"data_set,omitempty"`
+	DataSet *SubmitDataSet `protobuf:"bytes,2,opt,name=data_set,json=dataSet,proto3" json:"data_set,omitempty"`
 }
 
 func (m *MsgSubmitOracleData) Reset()         { *m = MsgSubmitOracleData{} }
@@ -314,13 +284,6 @@ func (m *MsgSubmitOracleData) XXX_DiscardUnknown() {
 }
 
 var xxx_messageInfo_MsgSubmitOracleData proto.InternalMessageInfo
-
-func (m *MsgSubmitOracleData) GetDataSet() *SubmitDataSet {
-	if m != nil {
-		return m.DataSet
-	}
-	return nil
-}
 
 // MsgSubmitOracleDataResponse defines the Msg/SubmitOracleData response type
 type MsgSubmitOracleDataResponse struct {
@@ -359,6 +322,82 @@ func (m *MsgSubmitOracleDataResponse) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_MsgSubmitOracleDataResponse proto.InternalMessageInfo
 
+// MsgUpdateModeratorAddress represents a message to update the moderator address
+type MsgUpdateModeratorAddress struct {
+	FromAddress      string `protobuf:"bytes,1,opt,name=from_address,json=fromAddress,proto3" json:"from_address,omitempty"`
+	ModeratorAddress string `protobuf:"bytes,2,opt,name=moderator_address,json=moderatorAddress,proto3" json:"moderator_address,omitempty"`
+}
+
+func (m *MsgUpdateModeratorAddress) Reset()         { *m = MsgUpdateModeratorAddress{} }
+func (m *MsgUpdateModeratorAddress) String() string { return proto.CompactTextString(m) }
+func (*MsgUpdateModeratorAddress) ProtoMessage()    {}
+func (*MsgUpdateModeratorAddress) Descriptor() ([]byte, []int) {
+	return fileDescriptor_febdd1f478235f42, []int{6}
+}
+func (m *MsgUpdateModeratorAddress) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgUpdateModeratorAddress) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgUpdateModeratorAddress.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgUpdateModeratorAddress) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgUpdateModeratorAddress.Merge(m, src)
+}
+func (m *MsgUpdateModeratorAddress) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgUpdateModeratorAddress) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgUpdateModeratorAddress.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgUpdateModeratorAddress proto.InternalMessageInfo
+
+// MsgUpdateModeratorAddressResponse defines the Msg/UpdateModeratorAddress response type
+type MsgUpdateModeratorAddressResponse struct {
+}
+
+func (m *MsgUpdateModeratorAddressResponse) Reset()         { *m = MsgUpdateModeratorAddressResponse{} }
+func (m *MsgUpdateModeratorAddressResponse) String() string { return proto.CompactTextString(m) }
+func (*MsgUpdateModeratorAddressResponse) ProtoMessage()    {}
+func (*MsgUpdateModeratorAddressResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_febdd1f478235f42, []int{7}
+}
+func (m *MsgUpdateModeratorAddressResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgUpdateModeratorAddressResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgUpdateModeratorAddressResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgUpdateModeratorAddressResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgUpdateModeratorAddressResponse.Merge(m, src)
+}
+func (m *MsgUpdateModeratorAddressResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgUpdateModeratorAddressResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgUpdateModeratorAddressResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgUpdateModeratorAddressResponse proto.InternalMessageInfo
+
 func init() {
 	proto.RegisterType((*MsgRegisterOracleRequestDoc)(nil), "guru.oracle.v1.MsgRegisterOracleRequestDoc")
 	proto.RegisterType((*MsgRegisterOracleRequestDocResponse)(nil), "guru.oracle.v1.MsgRegisterOracleRequestDocResponse")
@@ -366,44 +405,52 @@ func init() {
 	proto.RegisterType((*MsgUpdateOracleRequestDocResponse)(nil), "guru.oracle.v1.MsgUpdateOracleRequestDocResponse")
 	proto.RegisterType((*MsgSubmitOracleData)(nil), "guru.oracle.v1.MsgSubmitOracleData")
 	proto.RegisterType((*MsgSubmitOracleDataResponse)(nil), "guru.oracle.v1.MsgSubmitOracleDataResponse")
+	proto.RegisterType((*MsgUpdateModeratorAddress)(nil), "guru.oracle.v1.MsgUpdateModeratorAddress")
+	proto.RegisterType((*MsgUpdateModeratorAddressResponse)(nil), "guru.oracle.v1.MsgUpdateModeratorAddressResponse")
 }
 
 func init() { proto.RegisterFile("guru/oracle/v1/tx.proto", fileDescriptor_febdd1f478235f42) }
 
 var fileDescriptor_febdd1f478235f42 = []byte{
-	// 500 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x9c, 0x54, 0xcf, 0x6f, 0xd3, 0x30,
-	0x14, 0x6e, 0xda, 0xb2, 0xd2, 0x37, 0x09, 0xa1, 0x80, 0x46, 0x96, 0xd1, 0x50, 0xb2, 0xcb, 0x60,
-	0xc2, 0x51, 0xb6, 0x0b, 0xe7, 0x52, 0x69, 0xe2, 0x50, 0x0d, 0x65, 0x70, 0xe1, 0x52, 0x39, 0x89,
-	0x31, 0x91, 0xda, 0xb8, 0xd8, 0x4e, 0x55, 0x24, 0xfe, 0x08, 0xfe, 0xac, 0x1d, 0x87, 0xb8, 0x70,
-	0x42, 0xd0, 0xfe, 0x23, 0x28, 0x8e, 0xd3, 0x89, 0xf4, 0x87, 0x0a, 0x37, 0x3f, 0x7f, 0xdf, 0xfb,
-	0xfc, 0xbd, 0x4f, 0x4f, 0x86, 0x47, 0x34, 0xe3, 0x99, 0xc7, 0x38, 0x8e, 0x46, 0xc4, 0x9b, 0xfa,
-	0x9e, 0x9c, 0xa1, 0x09, 0x67, 0x92, 0x99, 0xf7, 0x72, 0x00, 0x15, 0x00, 0x9a, 0xfa, 0xf6, 0x43,
-	0xca, 0x28, 0x53, 0x90, 0x97, 0x9f, 0x0a, 0x96, 0xed, 0x44, 0x4c, 0x8c, 0x99, 0xf0, 0x42, 0x2c,
-	0xf2, 0xf6, 0x90, 0x48, 0xec, 0x7b, 0x11, 0x4b, 0x52, 0x8d, 0x1f, 0x55, 0xe4, 0xb5, 0x9e, 0x02,
-	0xdd, 0x6f, 0x06, 0x1c, 0x0d, 0x04, 0x0d, 0x08, 0x4d, 0x84, 0x24, 0xfc, 0x52, 0x61, 0x01, 0xf9,
-	0x94, 0x11, 0x21, 0xfb, 0x2c, 0x32, 0x2f, 0x60, 0x9f, 0x17, 0xd5, 0x30, 0x66, 0x91, 0x65, 0x74,
-	0x8d, 0x93, 0xfd, 0xb3, 0x2e, 0xfa, 0xdb, 0x18, 0xd2, 0x0d, 0x45, 0x77, 0x9f, 0x45, 0xbd, 0xe6,
-	0xf5, 0xcf, 0x27, 0xb5, 0x00, 0xf8, 0xad, 0x90, 0x0f, 0x8d, 0x0f, 0x84, 0x58, 0x75, 0x25, 0x70,
-	0x88, 0x0a, 0xcf, 0x28, 0xf7, 0x8c, 0xb4, 0x67, 0xf4, 0x8a, 0x25, 0xa9, 0xee, 0xcc, 0xb9, 0xa6,
-	0x05, 0xad, 0x88, 0x13, 0x2c, 0x19, 0xb7, 0x1a, 0x5d, 0xe3, 0xa4, 0x1d, 0x94, 0xa5, 0xf9, 0x18,
-	0xda, 0x22, 0xa1, 0x29, 0x96, 0x19, 0x27, 0x56, 0x53, 0x61, 0xb7, 0x17, 0x6e, 0x1f, 0x8e, 0xb7,
-	0x8c, 0x14, 0x10, 0x31, 0x61, 0xa9, 0x20, 0x66, 0x07, 0x4a, 0x7f, 0xc3, 0x24, 0x56, 0x93, 0x35,
-	0x83, 0xb6, 0xbe, 0x79, 0x1d, 0xbb, 0xdf, 0x0d, 0x38, 0x1c, 0x08, 0xfa, 0x6e, 0x12, 0x63, 0x49,
-	0x56, 0x72, 0xd9, 0xde, 0x5c, 0x8d, 0xad, 0xfe, 0xdf, 0xb1, 0x59, 0xd0, 0xca, 0x94, 0x83, 0x65,
-	0x06, 0xba, 0xdc, 0x9e, 0x81, 0x79, 0x00, 0x7b, 0x9c, 0x60, 0xc1, 0x52, 0xeb, 0x8e, 0x82, 0x74,
-	0xe5, 0xf6, 0xe0, 0xe9, 0xc6, 0xa1, 0x76, 0x4d, 0xe6, 0x12, 0x1e, 0x0c, 0x04, 0xbd, 0xca, 0xc2,
-	0x71, 0x52, 0x7a, 0xc7, 0x12, 0x9b, 0x2f, 0xe1, 0x6e, 0x8c, 0x25, 0x1e, 0x0a, 0x22, 0xf5, 0x9e,
-	0x74, 0xaa, 0x03, 0x17, 0x3d, 0x39, 0xfb, 0x8a, 0xc8, 0xa0, 0x15, 0x17, 0x07, 0xb7, 0xa3, 0x76,
-	0xb0, 0x2a, 0x58, 0xda, 0x39, 0xfb, 0x5d, 0x87, 0xc6, 0x40, 0x50, 0xf3, 0x0b, 0x58, 0x1b, 0xf7,
-	0xf4, 0xb4, 0xfa, 0xd4, 0x96, 0x0d, 0xb0, 0xcf, 0xff, 0x81, 0xbc, 0x0c, 0x65, 0x0a, 0x07, 0x1b,
-	0x76, 0xe1, 0xd9, 0x1a, 0xb9, 0xf5, 0x54, 0xdb, 0xdf, 0x99, 0xba, 0x7c, 0x37, 0x86, 0xfb, 0x2b,
-	0x51, 0x1f, 0xaf, 0x91, 0xa9, 0x92, 0xec, 0xd3, 0x1d, 0x48, 0xe5, 0x2b, 0xbd, 0xfe, 0xf5, 0xdc,
-	0x31, 0x6e, 0xe6, 0x8e, 0xf1, 0x6b, 0xee, 0x18, 0x5f, 0x17, 0x4e, 0xed, 0x66, 0xe1, 0xd4, 0x7e,
-	0x2c, 0x9c, 0xda, 0xfb, 0xe7, 0x34, 0x91, 0x1f, 0xb3, 0x10, 0x45, 0x6c, 0xec, 0x5d, 0xbc, 0x79,
-	0x3b, 0x7b, 0x41, 0x47, 0x2c, 0xc4, 0x23, 0x4f, 0xfd, 0x2a, 0xb3, 0xf2, 0x5f, 0x91, 0x9f, 0x27,
-	0x44, 0x84, 0x7b, 0xea, 0x53, 0x39, 0xff, 0x13, 0x00, 0x00, 0xff, 0xff, 0x59, 0x01, 0xe2, 0xe4,
-	0xd2, 0x04, 0x00, 0x00,
+	// 601 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xac, 0x55, 0x31, 0x6f, 0xd3, 0x40,
+	0x14, 0xb6, 0x9b, 0xd0, 0x92, 0x0b, 0x42, 0xc5, 0x54, 0xad, 0x93, 0x12, 0x27, 0x24, 0x4b, 0x69,
+	0x55, 0x5b, 0x69, 0x17, 0x04, 0x13, 0x51, 0x50, 0xc5, 0x10, 0x81, 0x1c, 0x58, 0x58, 0xa2, 0xb3,
+	0x7d, 0x1c, 0x96, 0xe2, 0x5c, 0xb8, 0x3b, 0x47, 0x41, 0x62, 0x62, 0x62, 0xe4, 0x27, 0x74, 0x63,
+	0x65, 0x60, 0x62, 0x60, 0xee, 0x58, 0xc1, 0x02, 0x0b, 0x42, 0xc9, 0x00, 0x3f, 0x03, 0xd9, 0x67,
+	0x87, 0xd6, 0x89, 0x4d, 0x50, 0xd9, 0xfc, 0xde, 0xf7, 0xf9, 0xbd, 0xef, 0x7b, 0xf7, 0xce, 0x06,
+	0x5b, 0xd8, 0xa7, 0xbe, 0x41, 0x28, 0xb4, 0xfb, 0xc8, 0x18, 0x35, 0x0d, 0x3e, 0xd6, 0x87, 0x94,
+	0x70, 0xa2, 0x5c, 0x0d, 0x00, 0x5d, 0x00, 0xfa, 0xa8, 0x59, 0xde, 0xb2, 0x09, 0xf3, 0x08, 0x33,
+	0x3c, 0x86, 0x03, 0x9e, 0xc7, 0xb0, 0x20, 0x96, 0x4b, 0x02, 0xe8, 0x85, 0x91, 0x21, 0x82, 0x08,
+	0xda, 0xc0, 0x04, 0x13, 0x91, 0x0f, 0x9e, 0xa2, 0xec, 0x76, 0xa2, 0x65, 0xd4, 0x43, 0x80, 0x5a,
+	0xd4, 0xc6, 0x82, 0x2c, 0x00, 0x2d, 0xc4, 0x61, 0xd3, 0xb0, 0x89, 0x3b, 0x10, 0x78, 0xfd, 0x93,
+	0x0c, 0xb6, 0x3b, 0x0c, 0x9b, 0x08, 0xbb, 0x8c, 0x23, 0xfa, 0x30, 0x7c, 0xd7, 0x44, 0x2f, 0x7c,
+	0xc4, 0x78, 0x9b, 0xd8, 0xca, 0x5d, 0x70, 0xe5, 0x19, 0x25, 0x5e, 0x0f, 0x3a, 0x0e, 0x45, 0x8c,
+	0xa9, 0x72, 0x4d, 0xde, 0x29, 0xb4, 0xd4, 0xcf, 0x1f, 0xf6, 0x37, 0x22, 0x69, 0xf7, 0x04, 0xd2,
+	0xe5, 0xd4, 0x1d, 0x60, 0xb3, 0x18, 0xb0, 0xa3, 0x94, 0x72, 0x04, 0x8a, 0x54, 0x94, 0xea, 0x39,
+	0xc4, 0x56, 0x57, 0x6a, 0xf2, 0x4e, 0xf1, 0xa0, 0xa6, 0x9f, 0x9f, 0x84, 0x9e, 0xec, 0xd9, 0xca,
+	0x9f, 0x7c, 0xaf, 0x4a, 0x26, 0xa0, 0xb3, 0xcc, 0x9d, 0xd2, 0x9b, 0xe3, 0xaa, 0xf4, 0xeb, 0xb8,
+	0x2a, 0xbd, 0xfe, 0xf9, 0x7e, 0xf7, 0x9c, 0xa0, 0x7a, 0x1b, 0x34, 0x32, 0xf4, 0x9b, 0x88, 0x0d,
+	0xc9, 0x80, 0x21, 0xa5, 0x02, 0xe2, 0x7a, 0x3d, 0xd7, 0x09, 0x5d, 0xe4, 0xcd, 0x42, 0x94, 0x79,
+	0xe0, 0xd4, 0xbf, 0xc8, 0xa0, 0xd4, 0x61, 0xf8, 0xc9, 0xd0, 0x81, 0x1c, 0xcd, 0x0d, 0x21, 0xfb,
+	0xe5, 0xff, 0x66, 0x53, 0x51, 0xc1, 0x9a, 0x1f, 0x2a, 0xa0, 0x6a, 0x2e, 0x98, 0xb3, 0x19, 0x87,
+	0xca, 0x0d, 0x50, 0x60, 0x2e, 0x1e, 0x40, 0xee, 0x53, 0xa4, 0xe6, 0x43, 0xec, 0x4f, 0x42, 0xd9,
+	0x04, 0xab, 0x14, 0x41, 0x46, 0x06, 0xea, 0xa5, 0x10, 0x8a, 0xa2, 0x7a, 0x0b, 0xdc, 0x4c, 0x35,
+	0xb5, 0xec, 0x64, 0xde, 0xc9, 0xe0, 0x7a, 0x87, 0xe1, 0xae, 0x6f, 0x79, 0x2e, 0x17, 0x45, 0xda,
+	0x90, 0xc3, 0x8b, 0x2d, 0xc6, 0x6d, 0x70, 0xd9, 0x81, 0x1c, 0xf6, 0x18, 0xe2, 0xd1, 0xb8, 0x2a,
+	0xc9, 0x71, 0x89, 0x86, 0x41, 0xab, 0x2e, 0xe2, 0xe6, 0x9a, 0x23, 0x1e, 0xb2, 0x36, 0xa1, 0x12,
+	0x6e, 0x72, 0x52, 0x68, 0xec, 0xb3, 0xfe, 0xf1, 0xec, 0x11, 0x77, 0x88, 0x83, 0x28, 0xe4, 0x84,
+	0xc6, 0x8a, 0x2e, 0x64, 0xe7, 0x3e, 0xb8, 0xe6, 0xc5, 0x05, 0x67, 0x15, 0x56, 0xfe, 0x52, 0x61,
+	0xdd, 0x4b, 0x68, 0xc8, 0xf2, 0xd6, 0x38, 0x73, 0x92, 0x49, 0xed, 0xb1, 0xc3, 0x83, 0x6f, 0x39,
+	0x90, 0xeb, 0x30, 0xac, 0xbc, 0x02, 0x6a, 0xea, 0x7d, 0xde, 0x4b, 0xce, 0x39, 0xe3, 0xf2, 0x94,
+	0x0f, 0xff, 0x81, 0x3c, 0xdb, 0xa7, 0x11, 0xd8, 0x4c, 0xb9, 0x46, 0xb7, 0x16, 0x94, 0x5b, 0x4c,
+	0x2d, 0x37, 0x97, 0xa6, 0xce, 0xfa, 0x3a, 0x60, 0x7d, 0x6e, 0x49, 0x1b, 0x0b, 0xca, 0x24, 0x49,
+	0xe5, 0xbd, 0x25, 0x48, 0xf3, 0xee, 0xe6, 0x36, 0x28, 0xdd, 0x5d, 0x92, 0x9a, 0xe1, 0x2e, 0xed,
+	0x6c, 0x5b, 0xed, 0x93, 0x89, 0x26, 0x9f, 0x4e, 0x34, 0xf9, 0xc7, 0x44, 0x93, 0xdf, 0x4e, 0x35,
+	0xe9, 0x74, 0xaa, 0x49, 0x5f, 0xa7, 0x9a, 0xf4, 0x74, 0x17, 0xbb, 0xfc, 0xb9, 0x6f, 0xe9, 0x36,
+	0xf1, 0x8c, 0xa3, 0x47, 0x8f, 0xc7, 0xfb, 0xb8, 0x4f, 0x2c, 0xd8, 0x37, 0xc2, 0xbf, 0xc2, 0x38,
+	0xfe, 0x2f, 0xf0, 0x97, 0x43, 0xc4, 0xac, 0xd5, 0xf0, 0xa3, 0x7f, 0xf8, 0x3b, 0x00, 0x00, 0xff,
+	0xff, 0xac, 0xb6, 0xda, 0xef, 0xa6, 0x06, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -424,6 +471,8 @@ type MsgClient interface {
 	UpdateOracleRequestDoc(ctx context.Context, in *MsgUpdateOracleRequestDoc, opts ...grpc.CallOption) (*MsgUpdateOracleRequestDocResponse, error)
 	// SubmitOracleData defines a method for submitting oracle data
 	SubmitOracleData(ctx context.Context, in *MsgSubmitOracleData, opts ...grpc.CallOption) (*MsgSubmitOracleDataResponse, error)
+	// UpdateModeratorAddress defines a method for updating the moderator address
+	UpdateModeratorAddress(ctx context.Context, in *MsgUpdateModeratorAddress, opts ...grpc.CallOption) (*MsgUpdateModeratorAddressResponse, error)
 }
 
 type msgClient struct {
@@ -461,6 +510,15 @@ func (c *msgClient) SubmitOracleData(ctx context.Context, in *MsgSubmitOracleDat
 	return out, nil
 }
 
+func (c *msgClient) UpdateModeratorAddress(ctx context.Context, in *MsgUpdateModeratorAddress, opts ...grpc.CallOption) (*MsgUpdateModeratorAddressResponse, error) {
+	out := new(MsgUpdateModeratorAddressResponse)
+	err := c.cc.Invoke(ctx, "/guru.oracle.v1.Msg/UpdateModeratorAddress", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // MsgServer is the server API for Msg service.
 type MsgServer interface {
 	// RegisterOracleRequestDoc defines a method for registering a new oracle request document
@@ -469,6 +527,8 @@ type MsgServer interface {
 	UpdateOracleRequestDoc(context.Context, *MsgUpdateOracleRequestDoc) (*MsgUpdateOracleRequestDocResponse, error)
 	// SubmitOracleData defines a method for submitting oracle data
 	SubmitOracleData(context.Context, *MsgSubmitOracleData) (*MsgSubmitOracleDataResponse, error)
+	// UpdateModeratorAddress defines a method for updating the moderator address
+	UpdateModeratorAddress(context.Context, *MsgUpdateModeratorAddress) (*MsgUpdateModeratorAddressResponse, error)
 }
 
 // UnimplementedMsgServer can be embedded to have forward compatible implementations.
@@ -483,6 +543,9 @@ func (*UnimplementedMsgServer) UpdateOracleRequestDoc(ctx context.Context, req *
 }
 func (*UnimplementedMsgServer) SubmitOracleData(ctx context.Context, req *MsgSubmitOracleData) (*MsgSubmitOracleDataResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SubmitOracleData not implemented")
+}
+func (*UnimplementedMsgServer) UpdateModeratorAddress(ctx context.Context, req *MsgUpdateModeratorAddress) (*MsgUpdateModeratorAddressResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateModeratorAddress not implemented")
 }
 
 func RegisterMsgServer(s grpc1.Server, srv MsgServer) {
@@ -543,6 +606,24 @@ func _Msg_SubmitOracleData_Handler(srv interface{}, ctx context.Context, dec fun
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Msg_UpdateModeratorAddress_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MsgUpdateModeratorAddress)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MsgServer).UpdateModeratorAddress(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/guru.oracle.v1.Msg/UpdateModeratorAddress",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MsgServer).UpdateModeratorAddress(ctx, req.(*MsgUpdateModeratorAddress))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 var _Msg_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "guru.oracle.v1.Msg",
 	HandlerType: (*MsgServer)(nil),
@@ -558,6 +639,10 @@ var _Msg_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "SubmitOracleData",
 			Handler:    _Msg_SubmitOracleData_Handler,
+		},
+		{
+			MethodName: "UpdateModeratorAddress",
+			Handler:    _Msg_UpdateModeratorAddress_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
@@ -584,30 +669,6 @@ func (m *MsgRegisterOracleRequestDoc) MarshalToSizedBuffer(dAtA []byte) (int, er
 	_ = i
 	var l int
 	_ = l
-	if len(m.Signature) > 0 {
-		i -= len(m.Signature)
-		copy(dAtA[i:], m.Signature)
-		i = encodeVarintTx(dAtA, i, uint64(len(m.Signature)))
-		i--
-		dAtA[i] = 0x22
-	}
-	if len(m.Creator) > 0 {
-		i -= len(m.Creator)
-		copy(dAtA[i:], m.Creator)
-		i = encodeVarintTx(dAtA, i, uint64(len(m.Creator)))
-		i--
-		dAtA[i] = 0x1a
-	}
-	{
-		size, err := m.Fee.MarshalToSizedBuffer(dAtA[:i])
-		if err != nil {
-			return 0, err
-		}
-		i -= size
-		i = encodeVarintTx(dAtA, i, uint64(size))
-	}
-	i--
-	dAtA[i] = 0x12
 	{
 		size, err := m.RequestDoc.MarshalToSizedBuffer(dAtA[:i])
 		if err != nil {
@@ -617,7 +678,14 @@ func (m *MsgRegisterOracleRequestDoc) MarshalToSizedBuffer(dAtA []byte) (int, er
 		i = encodeVarintTx(dAtA, i, uint64(size))
 	}
 	i--
-	dAtA[i] = 0xa
+	dAtA[i] = 0x12
+	if len(m.FromAddress) > 0 {
+		i -= len(m.FromAddress)
+		copy(dAtA[i:], m.FromAddress)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.FromAddress)))
+		i--
+		dAtA[i] = 0xa
+	}
 	return len(dAtA) - i, nil
 }
 
@@ -766,6 +834,13 @@ func (m *MsgSubmitOracleData) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 			i = encodeVarintTx(dAtA, i, uint64(size))
 		}
 		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.FromAddress) > 0 {
+		i -= len(m.FromAddress)
+		copy(dAtA[i:], m.FromAddress)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.FromAddress)))
+		i--
 		dAtA[i] = 0xa
 	}
 	return len(dAtA) - i, nil
@@ -794,6 +869,66 @@ func (m *MsgSubmitOracleDataResponse) MarshalToSizedBuffer(dAtA []byte) (int, er
 	return len(dAtA) - i, nil
 }
 
+func (m *MsgUpdateModeratorAddress) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgUpdateModeratorAddress) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgUpdateModeratorAddress) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.ModeratorAddress) > 0 {
+		i -= len(m.ModeratorAddress)
+		copy(dAtA[i:], m.ModeratorAddress)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.ModeratorAddress)))
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.FromAddress) > 0 {
+		i -= len(m.FromAddress)
+		copy(dAtA[i:], m.FromAddress)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.FromAddress)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *MsgUpdateModeratorAddressResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgUpdateModeratorAddressResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgUpdateModeratorAddressResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	return len(dAtA) - i, nil
+}
+
 func encodeVarintTx(dAtA []byte, offset int, v uint64) int {
 	offset -= sovTx(v)
 	base := offset
@@ -811,18 +946,12 @@ func (m *MsgRegisterOracleRequestDoc) Size() (n int) {
 	}
 	var l int
 	_ = l
+	l = len(m.FromAddress)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
 	l = m.RequestDoc.Size()
 	n += 1 + l + sovTx(uint64(l))
-	l = m.Fee.Size()
-	n += 1 + l + sovTx(uint64(l))
-	l = len(m.Creator)
-	if l > 0 {
-		n += 1 + l + sovTx(uint64(l))
-	}
-	l = len(m.Signature)
-	if l > 0 {
-		n += 1 + l + sovTx(uint64(l))
-	}
 	return n
 }
 
@@ -882,6 +1011,10 @@ func (m *MsgSubmitOracleData) Size() (n int) {
 	}
 	var l int
 	_ = l
+	l = len(m.FromAddress)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
 	if m.DataSet != nil {
 		l = m.DataSet.Size()
 		n += 1 + l + sovTx(uint64(l))
@@ -890,6 +1023,32 @@ func (m *MsgSubmitOracleData) Size() (n int) {
 }
 
 func (m *MsgSubmitOracleDataResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	return n
+}
+
+func (m *MsgUpdateModeratorAddress) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.FromAddress)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	l = len(m.ModeratorAddress)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	return n
+}
+
+func (m *MsgUpdateModeratorAddressResponse) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -935,6 +1094,38 @@ func (m *MsgRegisterOracleRequestDoc) Unmarshal(dAtA []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field FromAddress", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.FromAddress = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field RequestDoc", wireType)
 			}
 			var msglen int
@@ -965,103 +1156,6 @@ func (m *MsgRegisterOracleRequestDoc) Unmarshal(dAtA []byte) error {
 			if err := m.RequestDoc.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
-			iNdEx = postIndex
-		case 2:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Fee", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowTx
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLengthTx
-			}
-			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthTx
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if err := m.Fee.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
-		case 3:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Creator", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowTx
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthTx
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthTx
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Creator = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		case 4:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Signature", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowTx
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthTx
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthTx
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Signature = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
@@ -1451,6 +1545,38 @@ func (m *MsgSubmitOracleData) Unmarshal(dAtA []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field FromAddress", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.FromAddress = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field DataSet", wireType)
 			}
 			var msglen int
@@ -1533,6 +1659,170 @@ func (m *MsgSubmitOracleDataResponse) Unmarshal(dAtA []byte) error {
 		}
 		if fieldNum <= 0 {
 			return fmt.Errorf("proto: MsgSubmitOracleDataResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTx(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTx
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgUpdateModeratorAddress) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTx
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgUpdateModeratorAddress: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgUpdateModeratorAddress: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field FromAddress", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.FromAddress = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ModeratorAddress", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.ModeratorAddress = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTx(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTx
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgUpdateModeratorAddressResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTx
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgUpdateModeratorAddressResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgUpdateModeratorAddressResponse: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		default:

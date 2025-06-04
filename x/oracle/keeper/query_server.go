@@ -12,7 +12,10 @@ var _ types.QueryServer = Keeper{}
 
 // Parameters queries the parameters of the module
 func (k Keeper) Params(ctx context.Context, req *types.QueryParamsRequest) (*types.QueryParamsResponse, error) {
-	return &types.QueryParamsResponse{}, nil
+	params := k.GetParams(sdk.UnwrapSDKContext(ctx))
+	return &types.QueryParamsResponse{
+		Params: params,
+	}, nil
 }
 
 // OracleData queries oracle data by ID
@@ -38,5 +41,18 @@ func (k Keeper) OracleRequestDoc(ctx context.Context, req *types.QueryOracleRequ
 
 // OracleRequestDocs queries an oracle request document list
 func (k Keeper) OracleRequestDocs(ctx context.Context, req *types.QueryOracleRequestDocsRequest) (*types.QueryOracleRequestDocsResponse, error) {
-	return &types.QueryOracleRequestDocsResponse{}, nil
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	docs := k.GetOracleRequestDocs(sdkCtx)
+	return &types.QueryOracleRequestDocsResponse{
+		OracleRequestDocs: docs,
+	}, nil
+}
+
+// GetModeratorAddress queries the moderator address
+func (k Keeper) ModeratorAddress(ctx context.Context, req *types.QueryModeratorAddressRequest) (*types.QueryModeratorAddressResponse, error) {
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	address := k.GetModeratorAddress(sdkCtx)
+	return &types.QueryModeratorAddressResponse{
+		ModeratorAddress: address,
+	}, nil
 }

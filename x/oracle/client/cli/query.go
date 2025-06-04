@@ -24,6 +24,8 @@ func GetQueryCmd() *cobra.Command {
 		GetCmdQueryParams(),
 		GetCmdQueryOracleRequestDoc(),
 		GetCmdQueryOracleData(),
+		GetCmdQueryOracleRequestDocs(),
+		GetCmdQueryModeratorAddress(),
 	)
 
 	return cmd
@@ -58,7 +60,7 @@ func GetCmdQueryParams() *cobra.Command {
 // GetCmdQueryOracleRequestDoc implements the oracle request document query command
 func GetCmdQueryOracleRequestDoc() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "request [request-id]",
+		Use:   "request-doc [request-id]",
 		Short: "Query an oracle request document by ID",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -107,6 +109,57 @@ func GetCmdQueryOracleData() *cobra.Command {
 		},
 	}
 
+	flags.AddQueryFlagsToCmd(cmd)
+	return cmd
+}
+
+// GetCmdQueryOracleRequestDocs implements the oracle request documents query command
+func GetCmdQueryOracleRequestDocs() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "request-docs",
+		Short: "Query all oracle request documents",
+		Args:  cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientQueryContext(cmd)
+			if err != nil {
+				return err
+			}
+
+			queryClient := types.NewQueryClient(clientCtx)
+			res, err := queryClient.OracleRequestDocs(cmd.Context(), &types.QueryOracleRequestDocsRequest{})
+			if err != nil {
+				return err
+			}
+
+			return clientCtx.PrintProto(res)
+		},
+	}
+
+	flags.AddQueryFlagsToCmd(cmd)
+	return cmd
+}
+
+// GetCmdQueryModeratorAddress implements the moderator address query command
+func GetCmdQueryModeratorAddress() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "moderator-address",
+		Short: "Query the moderator address",
+		Args:  cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientQueryContext(cmd)
+			if err != nil {
+				return err
+			}
+
+			queryClient := types.NewQueryClient(clientCtx)
+			res, err := queryClient.ModeratorAddress(cmd.Context(), &types.QueryModeratorAddressRequest{})
+			if err != nil {
+				return err
+			}
+
+			return clientCtx.PrintProto(res)
+		},
+	}
 	flags.AddQueryFlagsToCmd(cmd)
 	return cmd
 }

@@ -6,15 +6,13 @@ import (
 	"os"
 	"strconv"
 
-	"cosmossdk.io/math"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
-	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/spf13/cobra"
 
-	gurutypes "github.com/GPTx-global/guru/types"
 	"github.com/GPTx-global/guru/x/oracle/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
 // GetTxCmd returns the transaction commands for this module
@@ -31,6 +29,7 @@ func GetTxCmd() *cobra.Command {
 		NewRegisterOracleRequestDocCmd(),
 		NewUpdateOracleRequestDocCmd(),
 		NewSubmitOracleDataCmd(),
+		NewUpdateModeratorAddressCmd(),
 	)
 
 	return cmd
@@ -48,20 +47,14 @@ func NewRegisterOracleRequestDocCmd() *cobra.Command {
 				return err
 			}
 
-			requestDoc, err := parseRequestDocJson(clientCtx.Codec, args[0])
+			requestDoc, err := parseRequestDocJson(args[0])
 			if err != nil {
 				return err
 			}
 
-			fmt.Println(requestDoc)
-
-			fee := gurutypes.NewGuruCoin(math.NewInt(630000))
-
 			msg := types.NewMsgRegisterOracleRequestDoc(
-				*requestDoc,
-				fee,
 				clientCtx.GetFromAddress().String(),
-				"", // signature will be added by the client
+				*requestDoc,
 			)
 
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
@@ -90,7 +83,7 @@ func NewUpdateOracleRequestDocCmd() *cobra.Command {
 				return fmt.Errorf("failed to parse request ID: %w", err)
 			}
 
-			var requestDoc types.RequestOracleDoc
+			var requestDoc types.OracleRequestDoc
 			if err := clientCtx.Codec.UnmarshalJSON([]byte(args[1]), &requestDoc); err != nil {
 				return fmt.Errorf("failed to parse request document: %w", err)
 			}
@@ -115,9 +108,9 @@ func NewUpdateOracleRequestDocCmd() *cobra.Command {
 // NewSubmitOracleDataCmd implements the submit oracle data command
 func NewSubmitOracleDataCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "submit-data [request-id] [raw-data]",
+		Use:   "submit-data [request-id] [nonce] [raw-data]",
 		Short: "Submit oracle data for a request",
-		Args:  cobra.ExactArgs(2),
+		Args:  cobra.ExactArgs(3),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientTxContext(cmd)
 			if err != nil {
@@ -125,13 +118,26 @@ func NewSubmitOracleDataCmd() *cobra.Command {
 			}
 
 			requestId := args[0]
-			rawData := args[1]
+			nonce := args[1]
+			rawData := args[2]
+
+			requestIdUint64, err := strconv.ParseUint(requestId, 10, 64)
+			if err != nil {
+				return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "request id is not a valid uint64")
+			}
+
+			nonceUint64, err := strconv.ParseUint(nonce, 10, 64)
+			if err != nil {
+				return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "nonce is not a valid uint64")
+			}
 
 			msg := types.NewMsgSubmitOracleData(
-				requestId,
+				requestIdUint64,
+				nonceUint64,
 				rawData,
 				clientCtx.GetFromAddress().String(),
-				"", // signature will be added by the client
+				"NOT USED", // signature will be added by the client
+				clientCtx.GetFromAddress().String(),
 			)
 
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
@@ -142,8 +148,32 @@ func NewSubmitOracleDataCmd() *cobra.Command {
 	return cmd
 }
 
-func parseRequestDocJson(cdc codec.Codec, path string) (*types.RequestOracleDoc, error) {
-	var doc types.RequestOracleDoc
+func NewUpdateModeratorAddressCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "update-moderator-address [moderator-address]",
+		Short: "Update the moderator address",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return err
+			}
+
+			msg := types.NewMsgUpdateModeratorAddress(
+				clientCtx.GetFromAddress().String(),
+				args[0],
+			)
+
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
+		},
+	}
+
+	flags.AddTxFlagsToCmd(cmd)
+	return cmd
+}
+
+func parseRequestDocJson(path string) (*types.OracleRequestDoc, error) {
+	var doc types.OracleRequestDoc
 
 	contents, err := os.ReadFile(path)
 	if err != nil {

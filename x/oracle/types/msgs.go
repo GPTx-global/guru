@@ -7,18 +7,12 @@ import (
 
 // NewMsgRegisterOracleRequestDoc creates a new MsgRegisterOracleRequestDoc instance
 func NewMsgRegisterOracleRequestDoc(
-	requestDoc RequestOracleDoc,
-	fee sdk.Coin,
-	creator string,
-	signature string,
+	fromAddress string,
+	requestDoc OracleRequestDoc,
 ) *MsgRegisterOracleRequestDoc {
-
-	requestDoc.Creator = creator
 	return &MsgRegisterOracleRequestDoc{
-		RequestDoc: requestDoc,
-		Fee:        fee,
-		Creator:    creator,
-		Signature:  signature,
+		FromAddress: fromAddress,
+		RequestDoc:  requestDoc,
 	}
 }
 
@@ -34,11 +28,11 @@ func (msg MsgRegisterOracleRequestDoc) Type() string {
 
 // GetSigners implements the sdk.Msg interface
 func (msg MsgRegisterOracleRequestDoc) GetSigners() []sdk.AccAddress {
-	creator, err := sdk.AccAddressFromBech32(msg.Creator)
+	fromAddress, err := sdk.AccAddressFromBech32(msg.FromAddress)
 	if err != nil {
 		panic(err)
 	}
-	return []sdk.AccAddress{creator}
+	return []sdk.AccAddress{fromAddress}
 }
 
 // GetSignBytes implements the sdk.Msg interface
@@ -49,25 +43,19 @@ func (msg MsgRegisterOracleRequestDoc) GetSignBytes() []byte {
 
 // ValidateBasic implements the sdk.Msg interface
 func (msg MsgRegisterOracleRequestDoc) ValidateBasic() error {
-	if _, err := sdk.AccAddressFromBech32(msg.Creator); err != nil {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid creator address (%s)", err)
+	if _, err := sdk.AccAddressFromBech32(msg.FromAddress); err != nil {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid from address (%s)", err)
 	}
 	if err := msg.RequestDoc.Validate(); err != nil {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, err.Error())
 	}
-	if msg.Fee.IsZero() {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "fee cannot be zero")
-	}
-	// if msg.Signature == "" {
-	// 	return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "signature cannot be empty")
-	// }
 	return nil
 }
 
 // NewMsgUpdateOracleRequestDoc creates a new MsgUpdateOracleRequestDoc instance
 func NewMsgUpdateOracleRequestDoc(
 	requestId uint64,
-	requestDoc RequestOracleDoc,
+	requestDoc OracleRequestDoc,
 	updater string,
 	signature string,
 	reason string,
@@ -125,14 +113,18 @@ func (msg MsgUpdateOracleRequestDoc) ValidateBasic() error {
 
 // NewMsgSubmitOracleData creates a new MsgSubmitOracleData instance
 func NewMsgSubmitOracleData(
-	requestId string,
+	requestId uint64,
+	nonce uint64,
 	rawData string,
 	provider string,
 	signature string,
+	fromAddress string,
 ) *MsgSubmitOracleData {
 	return &MsgSubmitOracleData{
+		FromAddress: fromAddress,
 		DataSet: &SubmitDataSet{
 			RequestId: requestId,
+			Nonce:     nonce,
 			RawData:   rawData,
 			Provider:  provider,
 			Signature: signature,
@@ -170,7 +162,7 @@ func (msg MsgSubmitOracleData) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(msg.DataSet.Provider); err != nil {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid provider address (%s)", err)
 	}
-	if msg.DataSet.RequestId == "" {
+	if msg.DataSet.RequestId == 0 {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "request ID cannot be empty")
 	}
 	if msg.DataSet.RawData == "" {
@@ -178,6 +170,47 @@ func (msg MsgSubmitOracleData) ValidateBasic() error {
 	}
 	if msg.DataSet.Signature == "" {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "signature cannot be empty")
+	}
+	return nil
+}
+
+// NewMsgUpdateModeratorAddress creates a new MsgUpdateModeratorAddress instance
+func NewMsgUpdateModeratorAddress(fromAddress string, moderatorAddress string) *MsgUpdateModeratorAddress {
+	return &MsgUpdateModeratorAddress{
+		FromAddress:      fromAddress,
+		ModeratorAddress: moderatorAddress,
+	}
+}
+
+// Route implements the sdk.Msg interface
+func (msg MsgUpdateModeratorAddress) Route() string {
+	return RouterKey
+}
+
+// Type implements the sdk.Msg interface
+func (msg MsgUpdateModeratorAddress) Type() string {
+	return "update_moderator_address"
+}
+
+// GetSigners implements the sdk.Msg interface
+func (msg MsgUpdateModeratorAddress) GetSigners() []sdk.AccAddress {
+	FromAddress, err := sdk.AccAddressFromBech32(msg.FromAddress)
+	if err != nil {
+		panic(err)
+	}
+	return []sdk.AccAddress{FromAddress}
+}
+
+// GetSignBytes implements the sdk.Msg interface
+func (msg MsgUpdateModeratorAddress) GetSignBytes() []byte {
+	bz := ModuleCdc.MustMarshalJSON(&msg)
+	return sdk.MustSortJSON(bz)
+}
+
+// ValidateBasic implements the sdk.Msg interface
+func (msg MsgUpdateModeratorAddress) ValidateBasic() error {
+	if _, err := sdk.AccAddressFromBech32(msg.ModeratorAddress); err != nil {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid moderator address (%s)", err)
 	}
 	return nil
 }

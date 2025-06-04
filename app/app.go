@@ -583,8 +583,6 @@ func NewEvmos(
 	app.OracleKeeper = *oraclekeeper.NewKeeper(
 		appCodec,
 		keys[oracletypes.StoreKey],
-		app.AccountKeeper,
-		app.BankKeeper,
 	)
 
 	// NOTE: Any module instantiated in the module manager that is later modified

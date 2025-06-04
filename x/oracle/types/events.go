@@ -10,21 +10,31 @@ const (
 
 	// EventTypeCompleteOracleDataSet defines the event type for complete oracle data set
 	EventTypeCompleteOracleDataSet = "complete_oracle_data_set"
+
+	// EventTypeUpdateModeratorAddress defines the event type for updating moderator address
+	EventTypeUpdateModeratorAddress = "update_moderator_address"
+
+	// EventTypeSubmitOracleData defines the event type for submitting oracle data
+	EventTypeSubmitOracleData = "submit_oracle_data"
 )
 
 // Event attribute keys
 const (
-	AttributeKeyRequestID     = "request_id"
-	AttributeKeyOracleType    = "oracle_type"
-	AttributeKeyName          = "name"
-	AttributeKeyDescription   = "description"
-	AttributeKeyPeriod        = "period"
-	AttributeKeyNodeList      = "node_list"
-	AttributeKeyURLs          = "urls"
-	AttributeKeyParseRule     = "parse_rule"
-	AttributeKeyAggregateRule = "aggregate_rule"
-	AttributeKeyStatus        = "status"
-	AttributeKeyCreator       = "creator"
+	AttributeKeyRequestId        = "request_id"
+	AttributeKeyOracleType       = "oracle_type"
+	AttributeKeyName             = "name"
+	AttributeKeyDescription      = "description"
+	AttributeKeyPeriod           = "period"
+	AttributeKeyAccountList      = "account_list"
+	AttributeKeyURLs             = "urls"
+	AttributeKeyParseRule        = "parse_rule"
+	AttributeKeyAggregateRule    = "aggregate_rule"
+	AttributeKeyStatus           = "status"
+	AttributeKeyCreator          = "creator"
+	AttributeKeyModeratorAddress = "moderator_address"
+	AttributeKeyNonce            = "nonce"
+	AttributeKeyFromAddress      = "from_address"
+	AttributeKeyRawData          = "raw_data"
 )
 
 const (

@@ -7,10 +7,10 @@ import (
 )
 
 // NewGenesisState creates a new genesis state.
-func NewGenesisState(params Params, docs []RequestOracleDoc, moderatorAddress string) GenesisState {
+func NewGenesisState(params Params, docs []OracleRequestDoc, moderatorAddress string) GenesisState {
 	return GenesisState{
 		Params:            params,
-		RequestOracleDocs: docs,
+		OracleRequestDocs: docs,
 		ModeratorAddress:  moderatorAddress,
 	}
 }
@@ -19,7 +19,7 @@ func NewGenesisState(params Params, docs []RequestOracleDoc, moderatorAddress st
 func DefaultGenesisState() *GenesisState {
 	return &GenesisState{
 		Params:            DefaultParams(),
-		RequestOracleDocs: []RequestOracleDoc{},
+		OracleRequestDocs: []OracleRequestDoc{},
 		ModeratorAddress:  "",
 	}
 }
@@ -32,10 +32,15 @@ func (gs GenesisState) Validate() error {
 	}
 
 	// Validate each request oracle doc
-	for _, doc := range gs.RequestOracleDocs {
+	for _, doc := range gs.OracleRequestDocs {
 		if err := doc.Validate(); err != nil {
 			return fmt.Errorf("invalid request oracle doc: %w", err)
 		}
+	}
+
+	// Validate params
+	if err := gs.Params.Validate(); err != nil {
+		return fmt.Errorf("invalid params: %w", err)
 	}
 
 	// Validate moderator address if provided

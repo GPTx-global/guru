@@ -50,9 +50,9 @@ enum AggregationRule {
     AGGREGATION_RULE_MAX = 3;
 }
 
-// RequestOracleDoc defines the structure for oracle request documents
+// OracleRequestDoc defines the structure for oracle request documents
 // This is the main document that describes what oracle data is needed and how it should be processed
-message RequestOracleDoc {
+message OracleRequestDoc {
   // Unique identifier for the oracle request
   uint64 request_id = 1;
   // Type of oracle data being requested
@@ -63,27 +63,29 @@ message RequestOracleDoc {
   string description = 4;
   // Time period in seconds between data updates
   uint32 period = 5;
-  // List of node(account) addresses that are authorized to provide data
-  repeated string node_list = 6;
+  // List of account addresses that are authorized to provide data
+  repeated string account_list = 6;
+  // Minimum number of oracle nodes required to validate the data
+  uint32 quorum = 7;
   // Source URLs where the data can be fetched
-  repeated string urls = 7;
+  repeated string urls = 8;
   // JSONPath or similar rule to parse the raw data
-  string parse_rule = 8;
+  string parse_rule = 9;
   // Rule for aggregating multiple data points (e.g., median, mean)
-  AggregationRule aggregate_rule = 9;
+  AggregationRule aggregate_rule = 10;
   // Current status of the request
-  RequestStatus status = 10;
+  RequestStatus status = 11;
   // Address of the request creator
-  string creator = 11;
+  string creator = 12;
   // Sequential number to ensure data freshness
-  uint64 nonce = 12;
+  uint64 nonce = 13;
 }
 
 // SubmitDataSet defines the structure for oracle data sets for submit
 // This represents a single data point provided by an oracle node
 message SubmitDataSet {
   // ID of the request this data set belongs to
-  string request_id = 1;
+  uint64 request_id = 1;
   // Sequential number to prevent replay attacks
   uint64 nonce = 2;
   // Raw data in string format (can be JSON, CSV, etc.)
@@ -97,7 +99,7 @@ message SubmitDataSet {
 // DataSet defines the structure for oracle data sets
 message DataSet {
   // ID of the request this data set belongs to
-  string request_id = 1;
+  uint64 request_id = 1;
   // Sequential number to prevent replay attacks
   uint64 nonce = 2;
   // Block height - represents the height of the block where the data was aggregated
