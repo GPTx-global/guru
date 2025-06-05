@@ -57,7 +57,7 @@ func (c *Client) connect() error {
 		return errors.New("failed to start rpc client: " + err.Error())
 	}
 
-	if c.txBuilder, err = NewTxBuilder(c.config); err != nil {
+	if c.txBuilder, err = NewTxBuilder(c.config, c.rpcClient); err != nil {
 		return fmt.Errorf("failed to create tx builder: %w", err)
 	}
 
@@ -105,8 +105,8 @@ func (c *Client) monitor(ctx context.Context) error {
 	}
 
 	// Oracle 사용 완료 이벤트
-	queryCompleteOracle := fmt.Sprintf("tm.event='NewBlock' AND %s EXISTS", "complete_oracle_data_set.request_id")
-	// queryCompleteOracle := fmt.Sprintf("tm.event='NewBlock' AND %s.OracleId EXISTS", "alpha")
+	// queryCompleteOracle := fmt.Sprintf("tm.event='NewBlock' AND %s EXISTS", "complete_oracle_data_set.request_id")
+	queryCompleteOracle := fmt.Sprintf("tm.event='NewBlock' AND %s.OracleId EXISTS", "alpha")
 	completeCh, err := c.rpcClient.Subscribe(ctx, "complete_oracle_subscribe", queryCompleteOracle)
 	if err != nil {
 		return errors.New("failed to subscribe to oracle complete events: " + err.Error())
@@ -116,7 +116,7 @@ func (c *Client) monitor(ctx context.Context) error {
 		select {
 		case event := <-blockCh:
 			_ = event
-			c.checkBlockEvent(event)
+			// c.checkBlockEvent(event)
 		case event := <-registerCh:
 			c.checkTxEvent(event)
 		case event := <-updateCh:
@@ -154,16 +154,16 @@ func (c *Client) checkBlockEvent(event coretypes.ResultEvent) {
 	// fmt.Printf("[alpha]: %T\n", event.Data)
 	// fmt.Printf("[alpha]: %v\n", event.Data.(tmtypes.EventDataNewBlock))
 
-	fmt.Printf("Block Event: %v\n\n", event.Events)
-	for key, value := range event.Events {
-		fmt.Printf("key: %s, value: %v\n", key, value)
-		// if strings.Contains(key, "alpha") {
-		// 	fmt.Printf("key: %s, value: %v\n", key, value)
-		// }
-	}
+	// fmt.Printf("Block Event: %v\n\n", event.Events)
+	// for key, value := range event.Events {
+	// 	fmt.Printf("key: %s, value: %v\n", key, value)
+	// 	// if strings.Contains(key, "alpha") {
+	// 	// 	fmt.Printf("key: %s, value: %v\n", key, value)
+	// 	// }
+	// }
 	fmt.Println()
 
-	// c.eventCh <- event
+	c.eventCh <- event
 }
 
 func (c *Client) serveOracle(ctx context.Context) {
@@ -193,6 +193,7 @@ func (c *Client) processTransaction(ctx context.Context, oracleResult types.Orac
 	}
 
 	fmt.Printf("Oracle transaction sent successfully: %s\n", resp.TxHash)
+	c.txBuilder.incSequence()
 }
 
 func (c *Client) GetEventChannel() <-chan coretypes.ResultEvent {
