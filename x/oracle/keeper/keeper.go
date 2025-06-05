@@ -143,14 +143,9 @@ func (k Keeper) updateOracleRequestDoc(ctx sdk.Context, doc types.OracleRequestD
 		existingDoc.Quorum = doc.Quorum
 	}
 
-	// Update the urls if they are not empty
-	if len(doc.Urls) != 0 {
-		existingDoc.Urls = doc.Urls
-	}
-
-	// Update the parse rule if it is not empty
-	if doc.ParseRule != "" {
-		existingDoc.ParseRule = doc.ParseRule
+	// Update the endpoints if they are not empty
+	if len(doc.Endpoints) != 0 {
+		existingDoc.Endpoints = doc.Endpoints
 	}
 
 	// Update the aggregation rule if it is not empty

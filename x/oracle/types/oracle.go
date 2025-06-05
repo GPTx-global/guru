@@ -20,9 +20,13 @@ func (doc OracleRequestDoc) Validate() error {
 	if doc.Name == "" {
 		return fmt.Errorf("name cannot be empty")
 	}
-	// Check if parse rule is empty
-	if doc.ParseRule == "" {
-		return fmt.Errorf("parse rule cannot be empty")
+	// Check if endpoints is empty
+	if doc.Endpoints == nil {
+		return fmt.Errorf("endpoints cannot be empty")
+	}
+	// Check if endpoints is empty
+	if len(doc.Endpoints) == 0 {
+		return fmt.Errorf("endpoints cannot be empty")
 	}
 	// Check if aggregation rule is unspecified
 	if doc.AggregationRule == AggregationRule_AGGREGATION_RULE_UNSPECIFIED {

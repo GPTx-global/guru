@@ -39,8 +39,7 @@ func (k Keeper) RegisterOracleRequestDoc(c context.Context, doc *types.MsgRegist
 		Period:          doc.RequestDoc.Period,
 		AccountList:     doc.RequestDoc.AccountList,
 		Quorum:          doc.RequestDoc.Quorum,
-		Urls:            doc.RequestDoc.Urls,
-		ParseRule:       doc.RequestDoc.ParseRule,
+		Endpoints:       doc.RequestDoc.Endpoints,
 		AggregationRule: doc.RequestDoc.AggregationRule,
 		Creator:         doc.RequestDoc.Creator,
 	}
@@ -62,7 +61,7 @@ func (k Keeper) RegisterOracleRequestDoc(c context.Context, doc *types.MsgRegist
 			sdk.NewAttribute(types.AttributeKeyPeriod, fmt.Sprint(oracleRequestDoc.Period)),
 			// sdk.NewAttribute(types.AttributeKeyAccountList, oracleRequestDoc.AccountList[0]),
 			// sdk.NewAttribute(types.AttributeKeyURLs, oracleRequestDoc.Urls[0]),
-			sdk.NewAttribute(types.AttributeKeyParseRule, oracleRequestDoc.ParseRule),
+			sdk.NewAttribute(types.AttributeKeyEndpoints, oracleRequestDoc.Endpoints[0].Url),
 			sdk.NewAttribute(types.AttributeKeyAggregationRule, string(oracleRequestDoc.AggregationRule)),
 			sdk.NewAttribute(types.AttributeKeyStatus, string(oracleRequestDoc.Status)),
 			sdk.NewAttribute(types.AttributeKeyCreator, oracleRequestDoc.Creator),
