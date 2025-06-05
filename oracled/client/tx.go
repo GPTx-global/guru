@@ -3,6 +3,7 @@ package client
 import (
 	"context"
 	"fmt"
+	"sync/atomic"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/tx"
@@ -22,7 +23,7 @@ type TxBuilder struct {
 	clientCtx client.Context
 	config    *Config
 	keyring   keyring.Keyring
-	sequence  uint64
+	sequence  atomic.Uint64
 }
 
 func NewTxBuilder(config *Config, rpcClient *http.HTTP) (*TxBuilder, error) {
@@ -33,7 +34,6 @@ func NewTxBuilder(config *Config, rpcClient *http.HTTP) (*TxBuilder, error) {
 		return nil, fmt.Errorf("failed to get keyring: %w", err)
 	}
 
-	// keyring에서 키 정보 가져오기
 	keyInfo, err := keyRing.Key(config.keyName)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get key %s: %w", config.keyName, err)
@@ -58,12 +58,18 @@ func NewTxBuilder(config *Config, rpcClient *http.HTTP) (*TxBuilder, error) {
 		WithFromName(config.keyName).
 		WithBroadcastMode("sync")
 
-	return &TxBuilder{
-		clientCtx: clientCtx,
-		config:    config,
-		keyring:   keyRing,
-		sequence:  3, // 고정값이 아니라 불러오기
-	}, nil
+	_, seq, err := clientCtx.AccountRetriever.GetAccountNumberSequence(clientCtx, fromAddress)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get account number sequence: %w", err)
+	}
+
+	tb := new(TxBuilder)
+	tb.clientCtx = clientCtx
+	tb.config = config
+	tb.keyring = keyRing
+	tb.sequence.Store(seq)
+
+	return tb, nil
 }
 
 func (tb *TxBuilder) BuildOracleTx(ctx context.Context, oracleData types.OracleData) ([]byte, error) {
@@ -98,7 +104,7 @@ func (tb *TxBuilder) BuildOracleTx(ctx context.Context, oracleData types.OracleD
 		WithGasAdjustment(1.2).
 		WithGasPrices(sdk.NewDecCoins(gasPrice).String()).
 		WithSignMode(signing.SignMode_SIGN_MODE_DIRECT).
-		WithSequence(tb.sequence)
+		WithSequence(tb.sequence.Load())
 
 	txBuilder, err := factory.BuildUnsignedTx(msgs...)
 	if err != nil {
@@ -131,5 +137,5 @@ func (tb *TxBuilder) BroadcastTx(ctx context.Context, txBytes []byte) (*sdk.TxRe
 }
 
 func (tb *TxBuilder) incSequence() {
-	tb.sequence++
+	tb.sequence.Add(1)
 }

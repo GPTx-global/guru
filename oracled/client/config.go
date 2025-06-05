@@ -2,8 +2,6 @@ package client
 
 import (
 	"fmt"
-	"os"
-	"path/filepath"
 
 	"github.com/GPTx-global/guru/app"
 	"github.com/GPTx-global/guru/crypto/hd"
@@ -21,13 +19,11 @@ type Config struct {
 }
 
 func LoadConfig() *Config {
-	homeDir, _ := os.UserHomeDir()
-
 	return &Config{
 		// rpcEndpoint: "http://192.168.48.131:26657",
 		rpcEndpoint: "http://localhost:26657",
 		chainID:     "guru_3110-1",
-		keyringDir:  filepath.Join(homeDir, ".gurud"),
+		keyringDir:  "../",
 		keyName:     "node0",
 		gasPrice:    "20000000000aguru", // 20 gwei
 		gasLimit:    200000,

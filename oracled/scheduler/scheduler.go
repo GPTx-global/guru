@@ -58,26 +58,6 @@ func (s *Scheduler) eventProcessor(ctx context.Context) {
 	}
 }
 
-func (s *Scheduler) processJob(ctx context.Context, job *types.Job) {
-	fmt.Printf("Processing job: %s\n", job.ID)
-	s.activeJobsMux.Lock()
-	if existingJob, exists := s.activeJobs[job.ID]; exists {
-		job = existingJob
-		job.Nonce++
-	}
-	s.activeJobs[job.ID] = job
-	s.activeJobsMux.Unlock()
-
-	executor := NewExecutor(ctx)
-	oracleData, err := executor.ExecuteJob(job)
-	if err != nil {
-		fmt.Printf("Failed to execute job %s: %v\n", job.ID, err)
-		return
-	}
-	fmt.Printf("Oracle data: %s\n", oracleData.RequestID)
-	s.resultCh <- *oracleData
-}
-
 func (s *Scheduler) eventToJob(event coretypes.ResultEvent) (*types.Job, error) {
 	job := new(types.Job)
 
@@ -102,6 +82,26 @@ func (s *Scheduler) eventToJob(event coretypes.ResultEvent) (*types.Job, error) 
 	}
 
 	return job, nil
+}
+
+func (s *Scheduler) processJob(ctx context.Context, job *types.Job) {
+	fmt.Printf("Processing job: %s\n", job.ID)
+	s.activeJobsMux.Lock()
+	if existingJob, exists := s.activeJobs[job.ID]; exists {
+		job = existingJob
+		job.Nonce++
+	}
+	s.activeJobs[job.ID] = job
+	s.activeJobsMux.Unlock()
+
+	executor := NewExecutor(ctx)
+	oracleData, err := executor.ExecuteJob(job)
+	if err != nil {
+		fmt.Printf("Failed to execute job %s: %v\n", job.ID, err)
+		return
+	}
+	fmt.Printf("Oracle data: %s\n", oracleData.RequestID)
+	s.resultCh <- *oracleData
 }
 
 func (s *Scheduler) SetEventChannel(ch <-chan coretypes.ResultEvent) {

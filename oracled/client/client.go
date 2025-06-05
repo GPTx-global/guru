@@ -7,7 +7,6 @@ import (
 
 	"github.com/tendermint/tendermint/rpc/client/http"
 	coretypes "github.com/tendermint/tendermint/rpc/core/types"
-	tmtypes "github.com/tendermint/tendermint/types"
 
 	"github.com/GPTx-global/guru/oracled/types"
 )
@@ -83,13 +82,6 @@ func (c *Client) monitor(ctx context.Context) error {
 		return errors.New("not connected to rpc")
 	}
 
-	// 테스트용 블록 이벤트 구독
-	queryBlock := "tm.event='NewBlock'"
-	blockCh, err := c.rpcClient.Subscribe(ctx, "block_subscribe", queryBlock)
-	if err != nil {
-		return errors.New("failed to subscribe to block events: " + err.Error())
-	}
-
 	// Oracle 작업 등록 트랜잭션
 	queryRegisterOracle := "tm.event='Tx' AND message.action='/guru.oracle.v1.MsgRegisterOracleRequestDoc'"
 	registerCh, err := c.rpcClient.Subscribe(ctx, "register_oracle_subscribe", queryRegisterOracle)
@@ -114,54 +106,26 @@ func (c *Client) monitor(ctx context.Context) error {
 
 	for {
 		select {
-		case event := <-blockCh:
-			_ = event
-			// c.checkBlockEvent(event)
 		case event := <-registerCh:
-			c.checkTxEvent(event)
+			c.checkEvent(event)
 		case event := <-updateCh:
-			c.checkTxEvent(event)
+			c.checkEvent(event)
 		case event := <-completeCh:
-			c.checkBlockEvent(event)
+			c.checkEvent(event)
 		case <-ctx.Done():
 			return nil
 		}
 	}
 }
 
-func (c *Client) checkTxEvent(event coretypes.ResultEvent) {
+func (c *Client) checkEvent(event coretypes.ResultEvent) {
 	if event.Data == nil {
 		return
 	}
 
-	txEvent := event.Data.(tmtypes.EventDataTx)
-	fmt.Printf("[tx]: %v\n\n", event)
-	fmt.Printf("[tx]: %v\n\n", txEvent)
-	for key, value := range event.Events {
-		fmt.Printf("key: %s, value: %v\n", key, value)
-	}
-
-	_ = txEvent
-
-	// c.eventCh <- event
-}
-
-func (c *Client) checkBlockEvent(event coretypes.ResultEvent) {
-	if event.Events == nil {
-		return
-	}
-
-	// fmt.Printf("[alpha]: %T\n", event.Data)
-	// fmt.Printf("[alpha]: %v\n", event.Data.(tmtypes.EventDataNewBlock))
-
-	// fmt.Printf("Block Event: %v\n\n", event.Events)
-	// for key, value := range event.Events {
-	// 	fmt.Printf("key: %s, value: %v\n", key, value)
-	// 	// if strings.Contains(key, "alpha") {
-	// 	// 	fmt.Printf("key: %s, value: %v\n", key, value)
-	// 	// }
-	// }
-	fmt.Println()
+	/*
+		TODO: 이벤트 검사하는 로직 추가
+	*/
 
 	c.eventCh <- event
 }
