@@ -41,9 +41,22 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, data types.GenesisState) {
 
 // ExportGenesis returns a GenesisState for a given context and keeper.
 func ExportGenesis(ctx sdk.Context, keeper keeper.Keeper) types.GenesisState {
-	var params types.Params
-	var docs []types.OracleRequestDoc
+	// Get the current parameters from the keeper
+	params := keeper.GetParams(ctx)
 
-	moderator_address := keeper.GetModeratorAddress(ctx)
-	return types.NewGenesisState(params, docs, moderator_address)
+	// Get the current moderator address from the keeper
+	moderatorAddress := keeper.GetModeratorAddress(ctx)
+
+	// Get the current oracle request documents from the keeper
+	tmpDocs := keeper.GetOracleRequestDocs(ctx)
+
+	// Initialize a new slice to hold the oracle request documents
+	docs := make([]types.OracleRequestDoc, len(tmpDocs))
+
+	// Copy the oracle request documents from the temporary slice to the new slice
+	for i, doc := range tmpDocs {
+		docs[i] = *doc
+	}
+
+	return types.NewGenesisState(params, docs, moderatorAddress)
 }
