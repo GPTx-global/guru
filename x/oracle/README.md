@@ -102,7 +102,7 @@ gurud query oracle data [request-id]
 ```
 
 ### Oracle Submit Data
-Query oracle submit data for a request.
+Query oracle submit data for a request. You can provide [request-id], [nonce], and [provider-account] as arguments. However, if you only provide [request-id] and [nonce], you can view the list of submitted data corresponding to the [nonce] of the specified [request-id].
 ```bash
 gurud query oracle submit-data [request-id] [nonce] [provider-account]
 ```
@@ -122,6 +122,45 @@ gurud query oracle moderator-address
 ## CLI Examples
 
 ### Register a New Oracle Request
+### Oracle Types
+The Oracle module supports the following types of oracle data:
+
+| Constant | Value | Description |
+| --- | --- | --- |
+| `ORACLE_TYPE_UNSPECIFIED` | 0 | Default value, should not be used |
+| `ORACLE_TYPE_MIN_GAS_PRICE` | 1 | Minimum gas price oracle for network fee estimation |
+| `ORACLE_TYPE_CURRENCY` | 2 | Exchange rate and foreign exchange data |
+| `ORACLE_TYPE_STOCK` | 3 | Stock market data and indices |
+| `ORACLE_TYPE_CRYPTO` | 4 | Cryptocurrency price and market data |
+
+Each oracle request must specify the type of data it requires using one of these oracle types.
+
+### Aggregation Rules
+The Oracle module supports the following rules for aggregating oracle data:
+
+| Constant | Value | Description |
+| --- | --- | --- |
+| `AGGREGATION_RULE_UNSPECIFIED` | 0 | Default value, should not be used |
+| `AGGREGATION_RULE_AVG` | 1 | Use average value for data aggregation |
+| `AGGREGATION_RULE_MIN` | 2 | Use minimum value for data aggregation |
+| `AGGREGATION_RULE_MAX` | 3 | Use maximum value for data aggregation |
+| `AGGREGATION_RULE_MEDIAN` | 4 | Use median value for data aggregation |
+
+Each oracle request must specify the rule for aggregating data using one of these aggregation rules.
+
+### Request Statuses
+The Oracle module supports the following statuses for oracle requests:
+
+| Constant | Value | Description |
+| --- | --- | --- |
+| `REQUEST_STATUS_UNSPECIFIED` | 0 | Default value, should not be used |
+| `REQUEST_STATUS_ENABLED` | 1 | Request is enabled |
+| `REQUEST_STATUS_PAUSED` | 2 | Request is paused |
+| `REQUEST_STATUS_DISABLED` | 3 | Request is disabled |
+
+Each oracle request must specify its current status using one of these request statuses.
+
+
 ```bash
 # Create a request document JSON file
 # request_id is omitted.
