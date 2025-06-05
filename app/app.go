@@ -585,6 +585,14 @@ func NewEvmos(
 		keys[oracletypes.StoreKey],
 	)
 
+	oracleKeeper := oraclekeeper.NewKeeper(appCodec, keys[oracletypes.StoreKey])
+	app.OracleKeeper = *oracleKeeper.SetHooks(
+		oraclekeeper.NewMultiOracleHooks(
+			// insert oracle hooks receivers here
+			app.FeeMarketKeeper.Hooks(),
+		),
+	)
+
 	// NOTE: Any module instantiated in the module manager that is later modified
 	// must be passed by reference here.
 	app.mm = module.NewManager(

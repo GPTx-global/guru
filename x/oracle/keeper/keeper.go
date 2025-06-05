@@ -18,7 +18,7 @@ import (
 type Keeper struct {
 	cdc      codec.BinaryCodec
 	storeKey storetypes.StoreKey
-	// hooks    types.OracleHooks
+	hooks    types.OracleHooks
 }
 
 func NewKeeper(
@@ -29,6 +29,17 @@ func NewKeeper(
 		cdc:      cdc,
 		storeKey: storeKey,
 	}
+}
+
+// SetHooks set the oracle hooks
+func (k *Keeper) SetHooks(eh types.OracleHooks) *Keeper {
+	if k.hooks != nil {
+		panic("cannot set oracle hooks twice")
+	}
+
+	k.hooks = eh
+
+	return k
 }
 
 // SetParams stores the oracle module parameters in the state store
@@ -316,7 +327,14 @@ func (k Keeper) ProcessOracleDataSetAggregation(ctx sdk.Context) {
 			BlockTime:   uint64(ctx.BlockTime().Unix()),
 			RawData:     aggregatedValue,
 		}
+
+		// Store the data set
 		k.SetDataSet(ctx, dataSet)
+
+		// After storing the DataSet, the AfterOracleEnd hook is called. This is only performed when the OracleType is ORACLE_TYPE_MIN_GAS_PRICE.
+		if doc.OracleType == types.OracleType_ORACLE_TYPE_MIN_GAS_PRICE {
+			k.hooks.AfterOracleEnd(ctx, dataSet)
+		}
 
 		// Increment nonce
 		doc.Nonce = nextNonce
