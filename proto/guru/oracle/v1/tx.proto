@@ -47,16 +47,18 @@ message MsgRegisterOracleRequestDocResponse {
 
 // MsgUpdateOracleRequestDoc represents a message to update an existing oracle request document
 message MsgUpdateOracleRequestDoc {
-  // ID of the request to be updated
-  uint64 request_id = 1;
+  option (cosmos.msg.v1.signer) = "from_address";
+
+  option (gogoproto.equal)           = false;
+  option (gogoproto.goproto_getters) = false;
+
+  string from_address = 1
+      [(cosmos_proto.scalar) = "cosmos.AddressString"];
+
   // The updated oracle request document
   OracleRequestDoc request_doc = 2 [(gogoproto.nullable) = false];
-  // Address of the request updater
-  string updater = 3;
-  // Signature of the updated request document by the updater
-  string signature = 4;
   // Reason for the update
-  string reason = 5;
+  string reason = 3;
 }
 
 // MsgUpdateOracleRequestDocResponse defines the Msg/UpdateOracleRequestDoc response type

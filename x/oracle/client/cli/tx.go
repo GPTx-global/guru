@@ -68,32 +68,25 @@ func NewRegisterOracleRequestDocCmd() *cobra.Command {
 // NewUpdateOracleRequestDocCmd implements the update oracle request document command
 func NewUpdateOracleRequestDocCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "update-request [request-id] [request-doc] [reason]",
+		Use:   "update-request [path/to/request-doc.json] [reason]",
 		Short: "Update an existing oracle request document",
-		Args:  cobra.ExactArgs(3),
+		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientTxContext(cmd)
 			if err != nil {
 				return err
 			}
 
-			requestId := args[0]
-			requestIdUint64, err := strconv.ParseUint(requestId, 10, 64)
+			requestDoc, err := parseRequestDocJson(args[0])
 			if err != nil {
-				return fmt.Errorf("failed to parse request ID: %w", err)
+				return err
 			}
 
-			var requestDoc types.OracleRequestDoc
-			if err := clientCtx.Codec.UnmarshalJSON([]byte(args[1]), &requestDoc); err != nil {
-				return fmt.Errorf("failed to parse request document: %w", err)
-			}
-			reason := args[2]
+			reason := args[1]
 
 			msg := types.NewMsgUpdateOracleRequestDoc(
-				requestIdUint64,
-				requestDoc,
 				clientCtx.GetFromAddress().String(),
-				"", // signature will be added by the client
+				*requestDoc,
 				reason,
 			)
 

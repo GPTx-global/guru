@@ -75,9 +75,25 @@ func (k Keeper) RegisterOracleRequestDoc(c context.Context, doc *types.MsgRegist
 }
 
 // UpdateOracleRequestDoc defines a method for updating an existing oracle request document
-func (k Keeper) UpdateOracleRequestDoc(context.Context, *types.MsgUpdateOracleRequestDoc) (*types.MsgUpdateOracleRequestDocResponse, error) {
+func (k Keeper) UpdateOracleRequestDoc(c context.Context, doc *types.MsgUpdateOracleRequestDoc) (*types.MsgUpdateOracleRequestDocResponse, error) {
+	ctx := sdk.UnwrapSDKContext(c)
+
+	moderatorAddress := k.GetModeratorAddress(ctx)
+
+	if moderatorAddress == "" {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "moderator address is not set")
+	}
+	if moderatorAddress != doc.FromAddress {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "moderator address is not authorized")
+	}
+
+	err := k.updateOracleRequestDoc(ctx, doc.RequestDoc)
+	if err != nil {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, err.Error())
+	}
+
 	return &types.MsgUpdateOracleRequestDocResponse{
-		RequestId: 0,
+		RequestId: doc.RequestDoc.RequestId,
 	}, nil
 }
 

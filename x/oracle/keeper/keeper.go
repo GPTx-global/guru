@@ -105,6 +105,53 @@ func (k Keeper) SetOracleRequestDoc(ctx sdk.Context, doc types.OracleRequestDoc)
 	store.Set(types.GetOracleRequestDocKey(doc.RequestId), bz)
 }
 
+func (k Keeper) updateOracleRequestDoc(ctx sdk.Context, doc types.OracleRequestDoc) error {
+	// Retrieve the existing oracle request document
+	existingDoc, err := k.GetOracleRequestDoc(ctx, doc.RequestId)
+	if err != nil {
+		return err
+	}
+
+	// Update the period if it is not empty
+	if doc.Period != 0 {
+		existingDoc.Period = doc.Period
+	}
+
+	// Update the status if it is not empty
+	if doc.Status != types.RequestStatus_REQUEST_STATUS_UNSPECIFIED {
+		existingDoc.Status = doc.Status
+	}
+
+	// Update the account list if it is not empty
+	if len(doc.AccountList) != 0 {
+		existingDoc.AccountList = doc.AccountList
+	}
+
+	// Update the quorum if it is not empty
+	if doc.Quorum != 0 {
+		existingDoc.Quorum = doc.Quorum
+	}
+
+	// Update the urls if they are not empty
+	if len(doc.Urls) != 0 {
+		existingDoc.Urls = doc.Urls
+	}
+
+	// Update the parse rule if it is not empty
+	if doc.ParseRule != "" {
+		existingDoc.ParseRule = doc.ParseRule
+	}
+
+	// Update the aggregation rule if it is not empty
+	if doc.AggregationRule != types.AggregationRule_AGGREGATION_RULE_UNSPECIFIED {
+		existingDoc.AggregationRule = doc.AggregationRule
+	}
+
+	// Store the updated oracle request document
+	k.SetOracleRequestDoc(ctx, *existingDoc)
+	return nil
+}
+
 // GetOracleRequestDoc retrieves an oracle request document by ID from the state store
 // id: ID of the document to retrieve
 // Returns: retrieved oracle request document and error (error if document doesn't exist)
