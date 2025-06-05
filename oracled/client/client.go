@@ -97,8 +97,8 @@ func (c *Client) monitor(ctx context.Context) error {
 	}
 
 	// Oracle 사용 완료 이벤트
-	// queryCompleteOracle := fmt.Sprintf("tm.event='NewBlock' AND %s EXISTS", "complete_oracle_data_set.request_id")
-	queryCompleteOracle := fmt.Sprintf("tm.event='NewBlock' AND %s.OracleId EXISTS", "alpha")
+	queryCompleteOracle := fmt.Sprintf("tm.event='NewBlock' AND %s EXISTS", "complete_oracle_data_set.request_id")
+	// queryCompleteOracle := fmt.Sprintf("tm.event='NewBlock' AND %s.OracleId EXISTS", "alpha")
 	completeCh, err := c.rpcClient.Subscribe(ctx, "complete_oracle_subscribe", queryCompleteOracle)
 	if err != nil {
 		return errors.New("failed to subscribe to oracle complete events: " + err.Error())

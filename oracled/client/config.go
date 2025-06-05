@@ -24,7 +24,7 @@ func LoadConfig() *Config {
 		rpcEndpoint: "http://localhost:26657",
 		chainID:     "guru_3110-1",
 		keyringDir:  "../",
-		keyName:     "node0",
+		keyName:     "node1",
 		gasPrice:    "20000000000aguru", // 20 gwei
 		gasLimit:    200000,
 	}
