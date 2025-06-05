@@ -14,6 +14,136 @@ Oracle Daemon은 다음과 같은 완전 자동화된 워크플로우를 제공�
 6. **트랜잭션 생성**: 수집된 데이터를 포함한 트랜잭션 생성 및 서명
 7. **네트워크 전송**: 생성된 트랜잭션을 Guru 네트워크에 전송
 
+## 향상된 JSON 경로 처리
+
+Oracle은 이제 복잡한 중첩 JSON 구조에서 데이터를 정확하게 추출할 수 있습니다.
+
+### 지원하는 경로 형식
+
+#### 1. 단순 경로
+```
+path: "price"
+JSON: {"price": "42000.50"}
+결과: "42000.50"
+```
+
+#### 2. 중첩 객체 경로
+```
+path: "data.amount"
+JSON: {
+  "data": {
+    "amount": "1000.25",
+    "currency": "USD"
+  }
+}
+결과: "1000.25"
+```
+
+#### 3. 깊은 중첩 경로
+```
+path: "response.data.price.usd"
+JSON: {
+  "response": {
+    "data": {
+      "price": {
+        "usd": "45000.00"
+      }
+    }
+  }
+}
+결과: "45000.00"
+```
+
+#### 4. 배열 인덱스 경로
+```
+path: "items.0"
+JSON: {"items": ["first", "second", "third"]}
+결과: "first"
+
+path: "items.1.name"
+JSON: {
+  "items": [
+    {"name": "item1"},
+    {"name": "item2"}
+  ]
+}
+결과: "item2"
+```
+
+#### 5. 복합 경로 (객체 + 배열)
+```
+path: "data.prices.0.value"
+JSON: {
+  "data": {
+    "prices": [
+      {"symbol": "BTC", "value": "42000"},
+      {"symbol": "ETH", "value": "3000"}
+    ]
+  }
+}
+결과: "42000"
+```
+
+### 실제 API 사용 예시
+
+#### Binance API
+```
+URL: "https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT"
+응답: {"symbol":"BTCUSDT","price":"42123.45000000"}
+경로: "price"
+결과: "42123.45000000"
+```
+
+#### CoinGecko API
+```
+URL: "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd"
+응답: {"bitcoin":{"usd":42500}}
+경로: "bitcoin.usd"
+결과: "42500"
+```
+
+#### 복잡한 거래소 API
+```
+URL: "https://api.example.com/v1/market/btc"
+응답: {
+  "status": "success",
+  "data": {
+    "market": "BTC/USD",
+    "ticker": {
+      "last": "42000.50",
+      "bid": "41999.00",
+      "ask": "42001.00",
+      "volume": {
+        "base": "123.45",
+        "quote": "5234567.89"
+      }
+    }
+  }
+}
+
+경로 옵션:
+- "data.ticker.last" → "42000.50"
+- "data.ticker.volume.base" → "123.45"
+- "data.ticker.volume.quote" → "5234567.89"
+```
+
+### 에러 처리
+
+함수는 다음과 같은 경우에 명확한 에러 메시지를 제공합니다:
+
+- **존재하지 않는 키**: `path 'data.nonexistent' not found at level 1 (key: 'nonexistent')`
+- **배열 범위 초과**: `path 'items.10' at level 1: array index 10 out of bounds (length: 3)`
+- **잘못된 배열 인덱스**: `path 'items.invalid' at level 1: expected array index but got 'invalid'`
+- **더 이상 탐색 불가**: `path 'price.invalid' at level 1: cannot traverse further, current type: string`
+
+### 지원하는 데이터 타입
+
+- **문자열**: 그대로 반환
+- **숫자** (int, int32, int64, float32, float64): 적절한 형식으로 문자열 변환
+- **불린**: "true" 또는 "false"
+- **null**: 빈 문자열
+- **객체/배열**: JSON 직렬화
+
 ## 아키텍처
 
 ```

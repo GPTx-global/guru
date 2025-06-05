@@ -10,6 +10,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/tx/signing"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	"github.com/tendermint/tendermint/rpc/client/http"
 
 	"github.com/GPTx-global/guru/app"
 	"github.com/GPTx-global/guru/encoding"
@@ -20,14 +22,26 @@ type TxBuilder struct {
 	clientCtx client.Context
 	config    *Config
 	keyring   keyring.Keyring
+	sequence  uint64
 }
 
-func NewTxBuilder(config *Config) (*TxBuilder, error) {
+func NewTxBuilder(config *Config, rpcClient *http.HTTP) (*TxBuilder, error) {
 	encCfg := encoding.MakeConfig(app.ModuleBasics)
 
 	keyRing, err := config.GetKeyring()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get keyring: %w", err)
+	}
+
+	// keyring에서 키 정보 가져오기
+	keyInfo, err := keyRing.Key(config.keyName)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get key %s: %w", config.keyName, err)
+	}
+
+	fromAddress, err := keyInfo.GetAddress()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get address from key: %w", err)
 	}
 
 	clientCtx := client.Context{}.
@@ -38,12 +52,17 @@ func NewTxBuilder(config *Config) (*TxBuilder, error) {
 		WithKeyring(keyRing).
 		WithChainID(config.chainID).
 		WithAccountRetriever(authtypes.AccountRetriever{}).
-		WithNodeURI(config.rpcEndpoint)
+		WithNodeURI(config.rpcEndpoint).
+		WithClient(rpcClient).
+		WithFromAddress(fromAddress).
+		WithFromName(config.keyName).
+		WithBroadcastMode("sync")
 
 	return &TxBuilder{
 		clientCtx: clientCtx,
 		config:    config,
 		keyring:   keyRing,
+		sequence:  3, // 고정값이 아니라 불러오기
 	}, nil
 }
 
@@ -54,7 +73,12 @@ func (tb *TxBuilder) BuildOracleTx(ctx context.Context, oracleData types.OracleD
 	// 	Data:      oracleData.Data,
 	// 	Nonce:     oracleData.Nonce,
 	// }
-	// msgs = append(msgs, msg)
+	msg := banktypes.NewMsgSend(
+		tb.clientCtx.GetFromAddress(),
+		tb.clientCtx.GetFromAddress(),
+		sdk.NewCoins(sdk.NewCoin("aguru", sdk.NewInt(10))),
+	)
+	msgs = append(msgs, msg)
 
 	if len(msgs) == 0 {
 		return nil, fmt.Errorf("no messages to send")
@@ -73,7 +97,8 @@ func (tb *TxBuilder) BuildOracleTx(ctx context.Context, oracleData types.OracleD
 		WithGas(tb.config.gasLimit).
 		WithGasAdjustment(1.2).
 		WithGasPrices(sdk.NewDecCoins(gasPrice).String()).
-		WithSignMode(signing.SignMode_SIGN_MODE_DIRECT)
+		WithSignMode(signing.SignMode_SIGN_MODE_DIRECT).
+		WithSequence(tb.sequence)
 
 	txBuilder, err := factory.BuildUnsignedTx(msgs...)
 	if err != nil {
@@ -103,4 +128,8 @@ func (tb *TxBuilder) BroadcastTx(ctx context.Context, txBytes []byte) (*sdk.TxRe
 	}
 
 	return res, nil
+}
+
+func (tb *TxBuilder) incSequence() {
+	tb.sequence++
 }
