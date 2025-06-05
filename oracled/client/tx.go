@@ -5,13 +5,13 @@ import (
 	"fmt"
 	"sync/atomic"
 
+	oracletypes "github.com/GPTx-global/guru/x/oracle/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/tx/signing"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/tendermint/tendermint/rpc/client/http"
 
 	"github.com/GPTx-global/guru/app"
@@ -74,16 +74,18 @@ func NewTxBuilder(config *Config, rpcClient *http.HTTP) (*TxBuilder, error) {
 
 func (tb *TxBuilder) BuildOracleTx(ctx context.Context, oracleData types.OracleData) ([]byte, error) {
 	msgs := make([]sdk.Msg, 0, 1)
-	// msg := &oracletypes.MsgSubmitOracleData{
-	// 	RequestId: oracleData.RequestID,
-	// 	Data:      oracleData.Data,
-	// 	Nonce:     oracleData.Nonce,
-	// }
-	msg := banktypes.NewMsgSend(
-		tb.clientCtx.GetFromAddress(),
-		tb.clientCtx.GetFromAddress(),
-		sdk.NewCoins(sdk.NewCoin("aguru", sdk.NewInt(10))),
-	)
+	msg := &oracletypes.MsgSubmitOracleData{
+		FromAddress: tb.clientCtx.GetFromAddress().String(),
+		DataSet: &oracletypes.SubmitDataSet{
+			Provider:  "",
+			Signature: "", // quorum 검증용 시그니처
+		},
+	}
+	// msg := banktypes.NewMsgSend(
+	// 	tb.clientCtx.GetFromAddress(),
+	// 	tb.clientCtx.GetFromAddress(),
+	// 	sdk.NewCoins(sdk.NewCoin("aguru", sdk.NewInt(10))),
+	// )
 	msgs = append(msgs, msg)
 
 	if len(msgs) == 0 {

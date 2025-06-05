@@ -8,6 +8,8 @@ import (
 	"time"
 
 	"github.com/GPTx-global/guru/oracled/types"
+	"github.com/cosmos/cosmos-sdk/codec"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	coretypes "github.com/tendermint/tendermint/rpc/core/types"
 	tmtypes "github.com/tendermint/tendermint/types"
 )
@@ -62,13 +64,9 @@ func (s *Scheduler) eventToJob(event coretypes.ResultEvent) (*types.Job, error) 
 	job := new(types.Job)
 
 	switch event.Data.(type) {
-	case tmtypes.EventDataNewBlock:
-		// TODO: nonce 비교 확인 해야 함
-		id := event.Events["alpha.OracleId"][0]
-		s.activeJobsMux.Lock()
-		job = s.activeJobs[id]
-		s.activeJobsMux.Unlock()
 	case tmtypes.EventDataTx:
+		evt := event.Data.(tmtypes.EventDataTx)
+		var tx sdk.Tx
 		// TODO: register만 고려하고 있음, update 추가 해야 함
 		// job.ID = event.Events["register_oracle_request_doc.request_id"][0]
 		job.ID = event.Events["alpha.OracleId"][0]
@@ -77,6 +75,12 @@ func (s *Scheduler) eventToJob(event coretypes.ResultEvent) (*types.Job, error) 
 		job.Nonce = 0
 		delay, _ := strconv.Atoi(event.Events["register_oracle_request_doc.period"][0])
 		job.Delay = time.Duration(delay) * time.Second
+	case tmtypes.EventDataNewBlock:
+		// TODO: nonce 비교 확인 해야 함
+		id := event.Events["alpha.OracleId"][0]
+		s.activeJobsMux.Lock()
+		job = s.activeJobs[id]
+		s.activeJobsMux.Unlock()
 	default:
 		job = nil
 	}
