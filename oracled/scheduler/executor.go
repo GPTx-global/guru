@@ -32,21 +32,21 @@ func (e *Executor) ExecuteJob(job *types.Job) (*types.OracleData, error) {
 
 	rawData, err := e.fetchRawData(job.URL)
 	if err != nil {
-		return nil, fmt.Errorf("failed to fetch raw data for job %s: %w", job.ID, err)
+		return nil, fmt.Errorf("failed to fetch raw data for job %d: %w", job.ID, err)
 	}
 
 	if err := e.validateResponse(rawData); err != nil {
-		return nil, fmt.Errorf("invalid response for job %s: %w", job.ID, err)
+		return nil, fmt.Errorf("invalid response for job %d: %w", job.ID, err)
 	}
 
 	parsedData, err := e.parseJSON(rawData)
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse JSON for job %s: %w", job.ID, err)
+		return nil, fmt.Errorf("failed to parse JSON for job %d: %w", job.ID, err)
 	}
 
 	extractedValue, err := e.extractDataByPath(parsedData, job.Path)
 	if err != nil {
-		return nil, fmt.Errorf("failed to extract data for job %s: %w", job.ID, err)
+		return nil, fmt.Errorf("failed to extract data for job %d: %w", job.ID, err)
 	}
 
 	oracleData := &types.OracleData{
