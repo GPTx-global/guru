@@ -3,15 +3,16 @@ package types
 import "time"
 
 type Job struct {
-	ID    string
-	URL   string
-	Path  string
-	Nonce uint64
-	Delay time.Duration
+	ID          uint64        // Oracle Request ID
+	URL         string        // Data source URL
+	Path        string        // JSON path for data extraction
+	Nonce       uint64        // Current nonce
+	Delay       time.Duration // Update interval
+	MessageType string        // "register" or "update"
 }
 
 type OracleData struct {
-	RequestID string
+	RequestID uint64
 	Data      string
 	Nonce     uint64
 }

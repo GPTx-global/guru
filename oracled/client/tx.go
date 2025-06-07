@@ -74,11 +74,15 @@ func NewTxBuilder(config *Config, rpcClient *http.HTTP) (*TxBuilder, error) {
 
 func (tb *TxBuilder) BuildOracleTx(ctx context.Context, oracleData types.OracleData) ([]byte, error) {
 	msgs := make([]sdk.Msg, 0, 1)
+	fmt.Printf("oracleData: %+v\n", oracleData)
 	msg := &oracletypes.MsgSubmitOracleData{
 		FromAddress: tb.clientCtx.GetFromAddress().String(),
 		DataSet: &oracletypes.SubmitDataSet{
-			Provider:  "",
-			Signature: "", // quorum 검증용 시그니처
+			RequestId: oracleData.RequestID,
+			RawData:   oracleData.Data,
+			Nonce:     oracleData.Nonce,
+			Provider:  tb.clientCtx.GetFromAddress().String(),
+			Signature: "test", // quorum 검증용 시그니처
 		},
 	}
 	// msg := banktypes.NewMsgSend(

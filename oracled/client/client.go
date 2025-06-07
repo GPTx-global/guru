@@ -142,7 +142,7 @@ func (c *Client) serveOracle(ctx context.Context) {
 }
 
 func (c *Client) processTransaction(ctx context.Context, oracleResult types.OracleData) {
-	fmt.Printf("Processing oracle result: %s\n", oracleResult.RequestID)
+	fmt.Printf("Processing oracle result: %d\n", oracleResult.RequestID)
 
 	txBytes, err := c.txBuilder.BuildOracleTx(ctx, oracleResult)
 	if err != nil {
