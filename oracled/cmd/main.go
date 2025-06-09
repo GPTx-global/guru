@@ -34,6 +34,8 @@ func main() {
 	sigCh := make(chan os.Signal, 1)
 	signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM)
 	<-sigCh
+	// control + c 누르면 err 없이 종료
+	<-ctx.Done()
 	fmt.Println("\n----- Guru Oracle Daemon stopped -----")
 	cancel()
 }

@@ -24,6 +24,7 @@ type TxBuilder struct {
 	config    *Config
 	keyring   keyring.Keyring
 	sequence  atomic.Uint64
+	accNum    uint64
 }
 
 func NewTxBuilder(config *Config, rpcClient *http.HTTP) (*TxBuilder, error) {
@@ -58,7 +59,7 @@ func NewTxBuilder(config *Config, rpcClient *http.HTTP) (*TxBuilder, error) {
 		WithFromName(config.keyName).
 		WithBroadcastMode("sync")
 
-	_, seq, err := clientCtx.AccountRetriever.GetAccountNumberSequence(clientCtx, fromAddress)
+	num, seq, err := clientCtx.AccountRetriever.GetAccountNumberSequence(clientCtx, fromAddress)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get account number sequence: %w", err)
 	}
@@ -68,15 +69,17 @@ func NewTxBuilder(config *Config, rpcClient *http.HTTP) (*TxBuilder, error) {
 	tb.config = config
 	tb.keyring = keyRing
 	tb.sequence.Store(seq)
+	tb.accNum = num
 
 	return tb, nil
 }
 
 func (tb *TxBuilder) BuildOracleTx(ctx context.Context, oracleData types.OracleData) ([]byte, error) {
 	msgs := make([]sdk.Msg, 0, 1)
+	fmt.Printf("tb.clientCtx.GetFromAddress(): %+v\n", tb.clientCtx.GetFromAddress())
 	fmt.Printf("oracleData: %+v\n", oracleData)
 	msg := &oracletypes.MsgSubmitOracleData{
-		FromAddress: tb.clientCtx.GetFromAddress().String(),
+		AuthorityAddress: tb.clientCtx.GetFromAddress().String(),
 		DataSet: &oracletypes.SubmitDataSet{
 			RequestId: oracleData.RequestID,
 			RawData:   oracleData.Data,
@@ -109,8 +112,9 @@ func (tb *TxBuilder) BuildOracleTx(ctx context.Context, oracleData types.OracleD
 		WithGas(tb.config.gasLimit).
 		WithGasAdjustment(1.2).
 		WithGasPrices(sdk.NewDecCoins(gasPrice).String()).
-		WithSignMode(signing.SignMode_SIGN_MODE_DIRECT).
-		WithSequence(tb.sequence.Load())
+		WithAccountNumber(tb.accNum).
+		WithSequence(tb.sequence.Load()).
+		WithSignMode(signing.SignMode_SIGN_MODE_DIRECT)
 
 	txBuilder, err := factory.BuildUnsignedTx(msgs...)
 	if err != nil {
@@ -141,7 +145,6 @@ func (tb *TxBuilder) BroadcastTx(ctx context.Context, txBytes []byte) (*sdk.TxRe
 
 	return res, nil
 }
-
 func (tb *TxBuilder) incSequence() {
 	tb.sequence.Add(1)
 }
