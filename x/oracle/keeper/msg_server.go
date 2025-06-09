@@ -91,6 +91,24 @@ func (k Keeper) UpdateOracleRequestDoc(c context.Context, doc *types.MsgUpdateOr
 		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, err.Error())
 	}
 
+	// Emit event for updating oracle request document
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			types.EventTypeUpdateOracleRequestDoc,
+			sdk.NewAttribute(types.AttributeKeyRequestId, fmt.Sprint(doc.RequestDoc.RequestId)),
+			sdk.NewAttribute(types.AttributeKeyOracleType, string(doc.RequestDoc.OracleType)),
+			sdk.NewAttribute(types.AttributeKeyName, doc.RequestDoc.Name),
+			sdk.NewAttribute(types.AttributeKeyDescription, doc.RequestDoc.Description),
+			sdk.NewAttribute(types.AttributeKeyPeriod, fmt.Sprint(doc.RequestDoc.Period)),
+			sdk.NewAttribute(types.AttributeKeyAccountList, strings.Join(doc.RequestDoc.AccountList, ",")),
+			sdk.NewAttribute(types.AttributeKeyEndpoints, fmt.Sprintf("%v", doc.RequestDoc.Endpoints)),
+			sdk.NewAttribute(types.AttributeKeyAggregationRule, string(doc.RequestDoc.AggregationRule)),
+			sdk.NewAttribute(types.AttributeKeyStatus, string(doc.RequestDoc.Status)),
+			sdk.NewAttribute(types.AttributeKeyNonce, fmt.Sprint(doc.RequestDoc.Nonce)),
+			sdk.NewAttribute(types.AttributeKeyCreator, doc.RequestDoc.Creator),
+		),
+	)
+
 	return &types.MsgUpdateOracleRequestDocResponse{
 		RequestId: doc.RequestDoc.RequestId,
 	}, nil
