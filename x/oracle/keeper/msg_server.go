@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"context"
+	"strings"
 
 	"fmt"
 
@@ -59,9 +60,8 @@ func (k Keeper) RegisterOracleRequestDoc(c context.Context, doc *types.MsgRegist
 			sdk.NewAttribute(types.AttributeKeyName, oracleRequestDoc.Name),
 			sdk.NewAttribute(types.AttributeKeyDescription, oracleRequestDoc.Description),
 			sdk.NewAttribute(types.AttributeKeyPeriod, fmt.Sprint(oracleRequestDoc.Period)),
-			// sdk.NewAttribute(types.AttributeKeyAccountList, oracleRequestDoc.AccountList[0]),
-			// sdk.NewAttribute(types.AttributeKeyURLs, oracleRequestDoc.Urls[0]),
-			sdk.NewAttribute(types.AttributeKeyEndpoints, oracleRequestDoc.Endpoints[0].Url),
+			sdk.NewAttribute(types.AttributeKeyAccountList, strings.Join(oracleRequestDoc.AccountList, ",")),
+			sdk.NewAttribute(types.AttributeKeyEndpoints, fmt.Sprintf("%v", oracleRequestDoc.Endpoints)),
 			sdk.NewAttribute(types.AttributeKeyAggregationRule, string(oracleRequestDoc.AggregationRule)),
 			sdk.NewAttribute(types.AttributeKeyStatus, string(oracleRequestDoc.Status)),
 			sdk.NewAttribute(types.AttributeKeyCreator, oracleRequestDoc.Creator),
