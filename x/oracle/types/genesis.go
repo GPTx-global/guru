@@ -20,7 +20,7 @@ func DefaultGenesisState() *GenesisState {
 	return &GenesisState{
 		Params:            DefaultParams(),
 		OracleRequestDocs: []OracleRequestDoc{},
-		ModeratorAddress:  "",
+		ModeratorAddress:  "guru1h9y8h0rh6tqxrj045fyvarnnyyxdg07693zkft", // This is a test address
 	}
 }
 

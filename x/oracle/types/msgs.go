@@ -199,8 +199,20 @@ func (msg MsgUpdateModeratorAddress) GetSignBytes() []byte {
 
 // ValidateBasic implements the sdk.Msg interface
 func (msg MsgUpdateModeratorAddress) ValidateBasic() error {
+	if msg.ModeratorAddress == "" {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "moderator address cannot be empty")
+	}
+	if msg.NewModeratorAddress == "" {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "new moderator address cannot be empty")
+	}
+	if msg.ModeratorAddress == msg.NewModeratorAddress {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "moderator address and new moderator address cannot be the same")
+	}
 	if _, err := sdk.AccAddressFromBech32(msg.ModeratorAddress); err != nil {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid moderator address (%s)", err)
+	}
+	if _, err := sdk.AccAddressFromBech32(msg.NewModeratorAddress); err != nil {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid new moderator address (%s)", err)
 	}
 	return nil
 }

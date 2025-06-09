@@ -62,8 +62,18 @@ func TestSetAndGetOracleRequestDoc(t *testing.T) {
 
 	// Create test document
 	doc := types.OracleRequestDoc{
-		RequestId: 1,
-		// Add other required fields
+		RequestId:   1,
+		Name:        "Test Name",
+		Description: "Test Description",
+		OracleType:  types.OracleType_ORACLE_TYPE_CRYPTO,
+		Status:      types.RequestStatus_REQUEST_STATUS_ENABLED,
+		AccountList: []string{"guru1h9y8h0rh6tqxrj045fyvarnnyyxdg07693zkft"},
+		Quorum:      1,
+		Period:      1,
+		Endpoints: []*types.OracleEndpoint{
+			{Url: "https://api.coinbase.com/v2/prices/BTC-USD/spot", ParseRule: "data.amount"},
+		},
+		AggregationRule: types.AggregationRule_AGGREGATION_RULE_AVG,
 	}
 
 	// Store document
@@ -73,6 +83,15 @@ func TestSetAndGetOracleRequestDoc(t *testing.T) {
 	retrievedDoc, err := keeper.GetOracleRequestDoc(ctx, 1)
 	require.NoError(t, err)
 	assert.Equal(t, doc.RequestId, retrievedDoc.RequestId)
+	assert.Equal(t, doc.Name, retrievedDoc.Name)
+	assert.Equal(t, doc.Description, retrievedDoc.Description)
+	assert.Equal(t, doc.OracleType, retrievedDoc.OracleType)
+	assert.Equal(t, doc.Status, retrievedDoc.Status)
+	assert.Equal(t, doc.AccountList, retrievedDoc.AccountList)
+	assert.Equal(t, doc.Quorum, retrievedDoc.Quorum)
+	assert.Equal(t, doc.Period, retrievedDoc.Period)
+	assert.Equal(t, doc.Endpoints, retrievedDoc.Endpoints)
+	assert.Equal(t, doc.AggregationRule, retrievedDoc.AggregationRule)
 
 	// Test retrieval of non-existent document
 	_, err = keeper.GetOracleRequestDoc(ctx, 999)
@@ -88,7 +107,7 @@ func TestSetAndGetModeratorAddress(t *testing.T) {
 	assert.Equal(t, "", initialAddress)
 
 	// Set address
-	testAddress := "cosmos1testaddress"
+	testAddress := "guru1h9y8h0rh6tqxrj045fyvarnnyyxdg07693zkft"
 	keeper.SetModeratorAddress(ctx, testAddress)
 
 	// Verify the set address
