@@ -84,8 +84,11 @@ func (s *Scheduler) eventToJob(event coretypes.ResultEvent) (*types.Job, error) 
 		for _, msg := range msgs {
 			switch oracleMsg := msg.(type) {
 			case *oracletypes.MsgRegisterOracleRequestDoc:
+				// 이벤트로 값 가져오기
 				// Register Oracle Request 메시지 처리
-				job.ID = oracleMsg.RequestDoc.RequestId
+				// job.ID = oracleMsg.RequestDoc.RequestId
+				reqID, _ := strconv.ParseUint(event.Events["register_oracle_request_doc.request_id"][0], 10, 64)
+				job.ID = reqID
 				job.URL = oracleMsg.RequestDoc.Endpoints[0].Url
 				job.Path = oracleMsg.RequestDoc.Endpoints[0].ParseRule
 				job.Nonce = 0
@@ -112,19 +115,41 @@ func (s *Scheduler) eventToJob(event coretypes.ResultEvent) (*types.Job, error) 
 		}
 
 	case tmtypes.EventDataNewBlock:
-		if oracleIds, exists := event.Events["alpha.OracleId"]; exists && len(oracleIds) > 0 {
-			if parsedID, err := strconv.ParseUint(oracleIds[0], 10, 64); err == nil {
-				job.ID = parsedID
-			}
-			job.URL = "https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT" // 기본값
-			job.Path = "price"
-			job.Nonce = 0
-			if periods, exists := event.Events["register_oracle_request_doc.period"]; exists && len(periods) > 0 {
-				if delay, err := strconv.Atoi(periods[0]); err == nil {
-					job.Delay = time.Duration(delay) * time.Second
-				}
-			}
+		reqID, err := strconv.ParseUint(event.Events["complete_oracle_data_set.request_id"][0], 10, 64)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse request ID: %w", err)
 		}
+
+		nonce, err := strconv.ParseUint(event.Events["complete_oracle_data_set.nonce"][0], 10, 64)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse nonce: %w", err)
+		}
+
+		job := &types.Job{
+			ID:    reqID,
+			Nonce: nonce,
+		}
+
+		_, ok := s.activeJobs[job.ID]
+		if ok {
+			return job, nil
+		} else {
+			return nil, fmt.Errorf("job not found: %d", reqID)
+		}
+
+		// if oracleIds, exists := event.Events["alpha.OracleId"]; exists && len(oracleIds) > 0 {
+		// 	if parsedID, err := strconv.ParseUint(oracleIds[0], 10, 64); err == nil {
+		// 		job.ID = parsedID
+		// 	}
+		// 	job.URL = "https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT" // 기본값
+		// 	job.Path = "price"
+		// 	job.Nonce = 0
+		// 	if periods, exists := event.Events["register_oracle_request_doc.period"]; exists && len(periods) > 0 {
+		// 		if delay, err := strconv.Atoi(periods[0]); err == nil {
+		// 			job.Delay = time.Duration(delay) * time.Second
+		// 		}
+		// 	}
+		// }
 	default:
 		return nil, fmt.Errorf("unsupported event data type: %T", event.Data)
 	}
@@ -133,14 +158,31 @@ func (s *Scheduler) eventToJob(event coretypes.ResultEvent) (*types.Job, error) 
 }
 
 func (s *Scheduler) processJob(ctx context.Context, job *types.Job) {
+	job.Nonce++
 	fmt.Printf("Processing job: %d, Nonce: %d\n", job.ID, job.Nonce)
 	s.activeJobsMux.Lock()
-	if existingJob, exists := s.activeJobs[job.ID]; exists {
-		// 기존 job 업데이트: nonce 증가
-		existingJob.Nonce++
-		job = existingJob
-	}
+
+	// existingJob, ok := s.activeJobs[job.ID]
+	// if !ok {
+	// 	s.activeJobs[job.ID] = job
+	// 	job.Delay = 0
+	// } else {
+	// 	// if 
+	// 	existingJob.Nonce++
+	// 	job = existingJob
+	// }
+
+	// if _, ok := s.activeJobs[job.ID]; !ok {
+	// 	s.activeJobs[job.ID] = job
+	// } else {
+	// 	// 기존 job 업데이트: nonce 증가
+	// 	existingJob.Nonce++
+	// 	job = existingJob
+	// }
+	// s.activeJobs[job.ID] = job
+
 	s.activeJobs[job.ID] = job
+
 	s.activeJobsMux.Unlock()
 
 	executor := NewExecutor(ctx)

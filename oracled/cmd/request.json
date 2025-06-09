@@ -1,11 +1,10 @@
 {
-    "request_id": 1,
     "oracle_type": 1,
     "name": "BTC/USD Price Oracle",
     "description": "BTC/USD Price Oracle",
     "period": 10,
     "account_list": [
-        "guru1v2kz4dpsjuj22ppwypnyxgjf9uglf79lw22879"
+        "guru1xkps9hdrqqra2xmdt2d26ezsm3szm6jnz56kdq"
     ],
     "quorum": 1,
     "endpoints": [
