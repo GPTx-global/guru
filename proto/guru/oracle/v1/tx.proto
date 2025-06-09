@@ -27,12 +27,12 @@ service Msg {
 
 // MsgRegisterOracleRequestDoc represents a message to register a new oracle request document
 message MsgRegisterOracleRequestDoc {
-  option (cosmos.msg.v1.signer) = "from_address";
+  option (cosmos.msg.v1.signer) = "moderator_address";
 
   option (gogoproto.equal)           = false;
   option (gogoproto.goproto_getters) = false;
 
-  string from_address = 1
+  string moderator_address = 1
       [(cosmos_proto.scalar) = "cosmos.AddressString"];
 
   // The oracle request document to be registered
@@ -47,12 +47,12 @@ message MsgRegisterOracleRequestDocResponse {
 
 // MsgUpdateOracleRequestDoc represents a message to update an existing oracle request document
 message MsgUpdateOracleRequestDoc {
-  option (cosmos.msg.v1.signer) = "from_address";
+  option (cosmos.msg.v1.signer) = "moderator_address";
 
   option (gogoproto.equal)           = false;
   option (gogoproto.goproto_getters) = false;
 
-  string from_address = 1
+  string moderator_address = 1
       [(cosmos_proto.scalar) = "cosmos.AddressString"];
 
   // The updated oracle request document
@@ -69,12 +69,12 @@ message MsgUpdateOracleRequestDocResponse {
 
 // MsgSubmitOracleData represents a message to submit oracle data
 message MsgSubmitOracleData {
-  option (cosmos.msg.v1.signer) = "from_address";
+  option (cosmos.msg.v1.signer) = "authority_address";
 
   option (gogoproto.equal)           = false;
   option (gogoproto.goproto_getters) = false;
 
-  string from_address = 1
+  string authority_address = 1
       [(cosmos_proto.scalar) = "cosmos.AddressString"];
 
   // The oracle data set to be submitted, containing the raw data and metadata
@@ -86,14 +86,14 @@ message MsgSubmitOracleDataResponse {}
 
 // MsgUpdateModeratorAddress represents a message to update the moderator address
 message MsgUpdateModeratorAddress {
-  option (cosmos.msg.v1.signer) = "from_address";
+  option (cosmos.msg.v1.signer) = "moderator_address";
 
   option (gogoproto.equal)           = false;
   option (gogoproto.goproto_getters) = false;
 
-  string from_address = 1
+  string moderator_address = 1
       [(cosmos_proto.scalar) = "cosmos.AddressString"];
-  string moderator_address = 2
+  string new_moderator_address = 2
       [(cosmos_proto.scalar) = "cosmos.AddressString"];
 }
 

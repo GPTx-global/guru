@@ -22,7 +22,7 @@ func (k Keeper) RegisterOracleRequestDoc(c context.Context, doc *types.MsgRegist
 	if moderatorAddress == "" {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "moderator address is not set")
 	}
-	if moderatorAddress != doc.FromAddress {
+	if moderatorAddress != doc.ModeratorAddress {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "moderator address is not authorized")
 	}
 
@@ -82,7 +82,7 @@ func (k Keeper) UpdateOracleRequestDoc(c context.Context, doc *types.MsgUpdateOr
 	if moderatorAddress == "" {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "moderator address is not set")
 	}
-	if moderatorAddress != doc.FromAddress {
+	if moderatorAddress != doc.ModeratorAddress {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "moderator address is not authorized")
 	}
 
@@ -117,7 +117,7 @@ func (k Keeper) SubmitOracleData(c context.Context, msg *types.MsgSubmitOracleDa
 	}
 
 	accountList := requestDoc.AccountList
-	fromAddress := msg.FromAddress
+	fromAddress := msg.AuthorityAddress
 
 	isAuthorized := k.checkAccountAuthorized(accountList, fromAddress)
 	if !isAuthorized {
@@ -151,13 +151,13 @@ func (k Keeper) UpdateModeratorAddress(c context.Context, msg *types.MsgUpdateMo
 
 	currentModeratorAddress := k.GetModeratorAddress(ctx)
 
-	if currentModeratorAddress != msg.FromAddress {
+	if currentModeratorAddress != msg.ModeratorAddress {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "from address is different from current moderator address")
 	}
 	if currentModeratorAddress == "" {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "moderator address is not set")
 	}
-	if currentModeratorAddress == msg.ModeratorAddress {
+	if currentModeratorAddress == msg.NewModeratorAddress {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "new moderator address is same as current moderator address")
 	}
 

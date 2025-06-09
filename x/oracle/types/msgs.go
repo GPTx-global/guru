@@ -7,12 +7,12 @@ import (
 
 // NewMsgRegisterOracleRequestDoc creates a new MsgRegisterOracleRequestDoc instance
 func NewMsgRegisterOracleRequestDoc(
-	fromAddress string,
+	moderatorAddress string,
 	requestDoc OracleRequestDoc,
 ) *MsgRegisterOracleRequestDoc {
 	return &MsgRegisterOracleRequestDoc{
-		FromAddress: fromAddress,
-		RequestDoc:  requestDoc,
+		ModeratorAddress: moderatorAddress,
+		RequestDoc:       requestDoc,
 	}
 }
 
@@ -28,11 +28,11 @@ func (msg MsgRegisterOracleRequestDoc) Type() string {
 
 // GetSigners implements the sdk.Msg interface
 func (msg MsgRegisterOracleRequestDoc) GetSigners() []sdk.AccAddress {
-	fromAddress, err := sdk.AccAddressFromBech32(msg.FromAddress)
+	moderatorAddress, err := sdk.AccAddressFromBech32(msg.ModeratorAddress)
 	if err != nil {
 		panic(err)
 	}
-	return []sdk.AccAddress{fromAddress}
+	return []sdk.AccAddress{moderatorAddress}
 }
 
 // GetSignBytes implements the sdk.Msg interface
@@ -43,7 +43,7 @@ func (msg MsgRegisterOracleRequestDoc) GetSignBytes() []byte {
 
 // ValidateBasic implements the sdk.Msg interface
 func (msg MsgRegisterOracleRequestDoc) ValidateBasic() error {
-	if _, err := sdk.AccAddressFromBech32(msg.FromAddress); err != nil {
+	if _, err := sdk.AccAddressFromBech32(msg.ModeratorAddress); err != nil {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid from address(Moderator) (%s)", err)
 	}
 	if err := msg.RequestDoc.Validate(); err != nil {
@@ -54,14 +54,14 @@ func (msg MsgRegisterOracleRequestDoc) ValidateBasic() error {
 
 // NewMsgUpdateOracleRequestDoc creates a new MsgUpdateOracleRequestDoc instance
 func NewMsgUpdateOracleRequestDoc(
-	fromAddress string,
+	moderatorAddress string,
 	requestDoc OracleRequestDoc,
 	reason string,
 ) *MsgUpdateOracleRequestDoc {
 	return &MsgUpdateOracleRequestDoc{
-		FromAddress: fromAddress,
-		RequestDoc:  requestDoc,
-		Reason:      reason,
+		ModeratorAddress: moderatorAddress,
+		RequestDoc:       requestDoc,
+		Reason:           reason,
 	}
 }
 
@@ -77,11 +77,11 @@ func (msg MsgUpdateOracleRequestDoc) Type() string {
 
 // GetSigners implements the sdk.Msg interface
 func (msg MsgUpdateOracleRequestDoc) GetSigners() []sdk.AccAddress {
-	fromAddress, err := sdk.AccAddressFromBech32(msg.FromAddress)
+	moderatorAddress, err := sdk.AccAddressFromBech32(msg.ModeratorAddress)
 	if err != nil {
 		panic(err)
 	}
-	return []sdk.AccAddress{fromAddress}
+	return []sdk.AccAddress{moderatorAddress}
 }
 
 // GetSignBytes implements the sdk.Msg interface
@@ -92,7 +92,7 @@ func (msg MsgUpdateOracleRequestDoc) GetSignBytes() []byte {
 
 // ValidateBasic implements the sdk.Msg interface
 func (msg MsgUpdateOracleRequestDoc) ValidateBasic() error {
-	if _, err := sdk.AccAddressFromBech32(msg.FromAddress); err != nil {
+	if _, err := sdk.AccAddressFromBech32(msg.ModeratorAddress); err != nil {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid from address(Moderator) (%s)", err)
 	}
 	// if err := msg.RequestDoc.Validate(); err != nil {
@@ -108,10 +108,10 @@ func NewMsgSubmitOracleData(
 	rawData string,
 	provider string,
 	signature string,
-	fromAddress string,
+	authorityAddress string,
 ) *MsgSubmitOracleData {
 	return &MsgSubmitOracleData{
-		FromAddress: fromAddress,
+		AuthorityAddress: authorityAddress,
 		DataSet: &SubmitDataSet{
 			RequestId: requestId,
 			Nonce:     nonce,
@@ -134,11 +134,11 @@ func (msg MsgSubmitOracleData) Type() string {
 
 // GetSigners implements the sdk.Msg interface
 func (msg MsgSubmitOracleData) GetSigners() []sdk.AccAddress {
-	provider, err := sdk.AccAddressFromBech32(msg.DataSet.Provider)
+	authorityAddress, err := sdk.AccAddressFromBech32(msg.AuthorityAddress)
 	if err != nil {
 		panic(err)
 	}
-	return []sdk.AccAddress{provider}
+	return []sdk.AccAddress{authorityAddress}
 }
 
 // GetSignBytes implements the sdk.Msg interface
@@ -165,10 +165,10 @@ func (msg MsgSubmitOracleData) ValidateBasic() error {
 }
 
 // NewMsgUpdateModeratorAddress creates a new MsgUpdateModeratorAddress instance
-func NewMsgUpdateModeratorAddress(fromAddress string, moderatorAddress string) *MsgUpdateModeratorAddress {
+func NewMsgUpdateModeratorAddress(moderatorAddress string, newModeratorAddress string) *MsgUpdateModeratorAddress {
 	return &MsgUpdateModeratorAddress{
-		FromAddress:      fromAddress,
-		ModeratorAddress: moderatorAddress,
+		ModeratorAddress:    moderatorAddress,
+		NewModeratorAddress: newModeratorAddress,
 	}
 }
 
@@ -184,11 +184,11 @@ func (msg MsgUpdateModeratorAddress) Type() string {
 
 // GetSigners implements the sdk.Msg interface
 func (msg MsgUpdateModeratorAddress) GetSigners() []sdk.AccAddress {
-	FromAddress, err := sdk.AccAddressFromBech32(msg.FromAddress)
+	moderatorAddress, err := sdk.AccAddressFromBech32(msg.ModeratorAddress)
 	if err != nil {
 		panic(err)
 	}
-	return []sdk.AccAddress{FromAddress}
+	return []sdk.AccAddress{moderatorAddress}
 }
 
 // GetSignBytes implements the sdk.Msg interface
