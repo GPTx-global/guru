@@ -3,6 +3,7 @@ package scheduler
 import (
 	"context"
 	"fmt"
+	"runtime"
 	"strconv"
 	"sync"
 	"time"
@@ -30,6 +31,9 @@ type Scheduler struct {
 	failedEvents    []coretypes.ResultEvent
 	failedEventsMux sync.Mutex
 	lastHealthCheck time.Time
+
+	// 성능 최적화를 위한 워커 풀
+	workerPool *JobWorkerPool
 }
 
 func NewScheduler() *Scheduler {
@@ -40,25 +44,31 @@ func NewScheduler() *Scheduler {
 		eventCh:         nil,
 		activeJobs:      make(map[uint64]*types.Job),
 		activeJobsMux:   sync.Mutex{},
-		resultCh:        make(chan types.OracleData, 64),
+		resultCh:        make(chan types.OracleData, 256), // 버퍼 크기 증가
 		txDecoder:       encodingConfig.TxConfig.TxDecoder(),
 		cdc:             encodingConfig.Codec,
 		failedEvents:    make([]coretypes.ResultEvent, 0),
 		lastHealthCheck: time.Now(),
+		workerPool:      nil, // Start()에서 초기화
 	}
 
-	fmt.Printf("[  END  ] NewScheduler: SUCCESS - resultCh buffer size=64\n")
+	fmt.Printf("[  END  ] NewScheduler: SUCCESS - resultCh buffer size=256\n")
 	return s
 }
 
 func (s *Scheduler) Start(ctx context.Context) {
 	fmt.Printf("[ START ] Start\n")
 
+	// 워커 풀 초기화 및 시작 (CPU 코어 수 * 4개의 워커)
+	maxWorkers := runtime.NumCPU() * 4 // 동시 처리 가능한 최대 job 수 제한
+	s.workerPool = NewJobWorkerPool(maxWorkers, s)
+	s.workerPool.Start(ctx)
+
 	go s.eventProcessor(ctx)
 	go s.failedEventRetryProcessor(ctx) // 실패한 이벤트 재처리 고루틴
 	go s.healthMonitor(ctx)             // 헬스 모니터링 고루틴
 
-	fmt.Printf("[  END  ] Start: SUCCESS\n")
+	fmt.Printf("[  END  ] Start: SUCCESS - WorkerPool with %d workers\n", maxWorkers)
 }
 
 func (s *Scheduler) eventProcessor(ctx context.Context) {
@@ -67,21 +77,33 @@ func (s *Scheduler) eventProcessor(ctx context.Context) {
 	for {
 		select {
 		case event := <-s.eventCh:
-			fmt.Printf("[ EVENT ] eventProcessor: Received event\n")
+			fmt.Printf("[ EVENT ] eventProcessor: Received event - Type: %T\n", event.Data)
+			fmt.Printf("[ EVENT ] eventProcessor: Event query: %s\n", event.Query)
+			fmt.Printf("[ EVENT ] eventProcessor: Event events: %+v\n", event.Events)
 
 			// 이벤트 처리를 재시도 로직으로 래핑
 			err := retry.Do(ctx, retry.DefaultRetryConfig(),
 				func() error {
 					job, err := s.eventToJob(event)
 					if err != nil {
+						fmt.Printf("[  ERROR] eventProcessor: Failed to convert event to job: %v\n", err)
 						return fmt.Errorf("failed to convert event to job: %w", err)
 					}
 
 					if job == nil {
+						fmt.Printf("[  INFO ] eventProcessor: Event converted to nil job (not an error)\n")
 						return nil // job이 nil인 경우는 에러가 아님
 					}
 
-					go s.processJobWithRetry(ctx, job)
+					fmt.Printf("[  INFO ] eventProcessor: Successfully converted event to job - ID: %d, Nonce: %d\n", job.ID, job.Nonce)
+
+					// 워커 풀에 job 제출 (고루틴 무제한 생성 방지)
+					fmt.Printf("[  INFO ] eventProcessor: Submitting job to worker pool\n")
+					if !s.workerPool.SubmitJob(job) {
+						fmt.Printf("[  WARN ] eventProcessor: Worker pool queue full\n")
+						return fmt.Errorf("worker pool queue full")
+					}
+					fmt.Printf("[  INFO ] eventProcessor: Successfully submitted job to worker pool\n")
 					return nil
 				},
 				func(err error) bool {
@@ -93,6 +115,8 @@ func (s *Scheduler) eventProcessor(ctx context.Context) {
 			if err != nil {
 				fmt.Printf("[  WARN ] eventProcessor: Failed to process event after retries: %v\n", err)
 				s.addFailedEvent(event) // 실패한 이벤트를 별도로 저장
+			} else {
+				fmt.Printf("[SUCCESS] eventProcessor: Event processed successfully\n")
 			}
 
 		case <-ctx.Done():
@@ -105,10 +129,13 @@ func (s *Scheduler) eventProcessor(ctx context.Context) {
 func (s *Scheduler) processJobWithRetry(ctx context.Context, job *types.Job) {
 	fmt.Printf("[ START ] processJobWithRetry - ID: %d, Nonce: %d, Status: %s\n",
 		job.ID, job.Nonce, job.Status)
+	fmt.Printf("[  INFO ] processJobWithRetry: Job details - URL: %s, Path: %s, Delay: %v\n",
+		job.URL, job.Path, job.Delay)
 
 	// Job 처리를 재시도 로직으로 래핑
 	err := retry.Do(ctx, retry.DefaultRetryConfig(),
 		func() error {
+			fmt.Printf("[  INFO ] processJobWithRetry: Attempting to process job %d\n", job.ID)
 			return s.processJob(ctx, job)
 		},
 		func(err error) bool {
@@ -120,6 +147,8 @@ func (s *Scheduler) processJobWithRetry(ctx context.Context, job *types.Job) {
 	if err != nil {
 		fmt.Printf("[  WARN ] processJobWithRetry: Failed to process job %d after retries: %v\n",
 			job.ID, err)
+	} else {
+		fmt.Printf("[SUCCESS] processJobWithRetry: Job %d processed successfully\n", job.ID)
 	}
 
 	fmt.Printf("[  END  ] processJobWithRetry\n")
@@ -170,7 +199,11 @@ func (s *Scheduler) retryFailedEvents(ctx context.Context) {
 		}
 
 		if job != nil {
-			go s.processJobWithRetry(ctx, job)
+			// 워커 풀에 job 제출
+			if !s.workerPool.SubmitJob(job) {
+				fmt.Printf("[  WARN ] retryFailedEvents: Worker pool queue full, re-adding to failed events\n")
+				s.addFailedEvent(event)
+			}
 		}
 	}
 }
@@ -238,9 +271,11 @@ func (s *Scheduler) addFailedEvent(event coretypes.ResultEvent) {
 
 func (s *Scheduler) eventToJob(event coretypes.ResultEvent) (*types.Job, error) {
 	fmt.Printf("[ START ] eventToJob\n")
+	fmt.Printf("[  INFO ] eventToJob: Event data type: %T\n", event.Data)
 
 	switch eventData := event.Data.(type) {
 	case tmtypes.EventDataTx:
+		fmt.Printf("[  INFO ] eventToJob: Processing Tx event\n")
 		// 트랜잭션 바이트 데이터를 디코딩
 		tx, err := s.txDecoder(eventData.Tx)
 		if err != nil {
@@ -250,19 +285,41 @@ func (s *Scheduler) eventToJob(event coretypes.ResultEvent) (*types.Job, error) 
 
 		// 트랜잭션 내의 모든 메시지를 확인
 		msgs := tx.GetMsgs()
+		fmt.Printf("[  INFO ] eventToJob: Transaction has %d messages\n", len(msgs))
 
-		for _, msg := range msgs {
+		for i, msg := range msgs {
+			fmt.Printf("[  INFO ] eventToJob: Processing message %d/%d - Type: %T\n", i+1, len(msgs), msg)
+
 			switch oracleMsg := msg.(type) {
 			case *oracletypes.MsgRegisterOracleRequestDoc:
+				fmt.Printf("[  INFO ] eventToJob: Found MsgRegisterOracleRequestDoc\n")
+
 				// Register Oracle Request 메시지 처리 - 첫 번째 등록
-				reqID, _ := strconv.ParseUint(event.Events["register_oracle_request_doc.request_id"][0], 10, 64)
+				if len(event.Events["register_oracle_request_doc.request_id"]) == 0 {
+					fmt.Printf("[  ERROR] eventToJob: request_id not found in event\n")
+					return nil, fmt.Errorf("request_id not found in event")
+				}
+
+				reqID, err := strconv.ParseUint(event.Events["register_oracle_request_doc.request_id"][0], 10, 64)
+				if err != nil {
+					fmt.Printf("[  ERROR] eventToJob: Failed to parse request_id: %v\n", err)
+					return nil, fmt.Errorf("failed to parse request_id: %w", err)
+				}
+
+				fmt.Printf("[  INFO ] eventToJob: Parsed request_id: %d\n", reqID)
 
 				s.activeJobsMux.Lock()
 				// 이미 존재하는 job인지 확인
 				if _, exists := s.activeJobs[reqID]; exists {
 					s.activeJobsMux.Unlock()
-					fmt.Printf("[  END  ] eventToJob: ERROR - job already exists: %d\n", reqID)
+					fmt.Printf("[  WARN ] eventToJob: Job already exists: %d\n", reqID)
 					return nil, fmt.Errorf("job already exists: %d", reqID)
+				}
+
+				if len(oracleMsg.RequestDoc.Endpoints) == 0 {
+					s.activeJobsMux.Unlock()
+					fmt.Printf("[  ERROR] eventToJob: No endpoints in RequestDoc\n")
+					return nil, fmt.Errorf("no endpoints in RequestDoc")
 				}
 
 				job := &types.Job{
@@ -278,13 +335,15 @@ func (s *Scheduler) eventToJob(event coretypes.ResultEvent) (*types.Job, error) 
 				s.activeJobs[reqID] = job
 				s.activeJobsMux.Unlock()
 
-				fmt.Printf("[SUCCESS] eventToJob: Registered new job - ID: %d\n", job.ID)
+				fmt.Printf("[SUCCESS] eventToJob: Registered new job - ID: %d, URL: %s, Path: %s, Delay: %v\n",
+					job.ID, job.URL, job.Path, job.Delay)
 
 				// 첫 번째 실행을 위해 job 반환
 				fmt.Printf("[  END  ] eventToJob: SUCCESS - new job created\n")
 				return job, nil
 
 			case *oracletypes.MsgUpdateOracleRequestDoc:
+				fmt.Printf("[  INFO ] eventToJob: Found MsgUpdateOracleRequestDoc\n")
 				// Update Oracle Request 메시지 처리
 				reqID := oracleMsg.RequestDoc.RequestId
 
@@ -302,23 +361,35 @@ func (s *Scheduler) eventToJob(event coretypes.ResultEvent) (*types.Job, error) 
 					return existingJob, nil
 				}
 				s.activeJobsMux.Unlock()
-				fmt.Printf("[  END  ] eventToJob: ERROR - job not found for update: %d\n", reqID)
+				fmt.Printf("[  WARN ] eventToJob: Job not found for update: %d\n", reqID)
 				return nil, fmt.Errorf("job not found for update: %d", reqID)
+
+			default:
+				fmt.Printf("[  INFO ] eventToJob: Ignoring message type: %T\n", msg)
 			}
 		}
 
 	case tmtypes.EventDataNewBlock:
+		fmt.Printf("[  INFO ] eventToJob: Processing NewBlock event\n")
+
+		if len(event.Events["complete_oracle_data_set.request_id"]) == 0 {
+			fmt.Printf("[  ERROR] eventToJob: complete_oracle_data_set.request_id not found in NewBlock event\n")
+			return nil, fmt.Errorf("complete_oracle_data_set.request_id not found in NewBlock event")
+		}
+
 		reqID, err := strconv.ParseUint(event.Events["complete_oracle_data_set.request_id"][0], 10, 64)
 		if err != nil {
-			fmt.Printf("[  END  ] eventToJob: ERROR - failed to parse request ID: %v\n", err)
+			fmt.Printf("[  ERROR] eventToJob: Failed to parse request ID from NewBlock: %v\n", err)
 			return nil, fmt.Errorf("failed to parse request ID: %w", err)
 		}
+
+		fmt.Printf("[  INFO ] eventToJob: NewBlock event for request_id: %d\n", reqID)
 
 		s.activeJobsMux.Lock()
 		existingJob, exists := s.activeJobs[reqID]
 		if !exists {
 			s.activeJobsMux.Unlock()
-			fmt.Printf("[  END  ] eventToJob: ERROR - job not found in activeJobs: %d\n", reqID)
+			fmt.Printf("[  WARN ] eventToJob: Job not found in activeJobs for NewBlock: %d\n", reqID)
 			return nil, fmt.Errorf("job not found in activeJobs: %d", reqID)
 		}
 
@@ -334,33 +405,35 @@ func (s *Scheduler) eventToJob(event coretypes.ResultEvent) (*types.Job, error) 
 		return existingJob, nil
 
 	default:
-		fmt.Printf("[  END  ] eventToJob: ERROR - unsupported event data type: %T\n", event.Data)
+		fmt.Printf("[  WARN ] eventToJob: Unsupported event data type: %T\n", event.Data)
 		return nil, fmt.Errorf("unsupported event data type: %T", event.Data)
 	}
 
-	fmt.Printf("[  END  ] eventToJob: ERROR - no matching event type\n")
+	fmt.Printf("[  WARN ] eventToJob: No matching message found in transaction\n")
 	return nil, nil
 }
 
 func (s *Scheduler) processJob(ctx context.Context, job *types.Job) error {
 	fmt.Printf("[ START ] processJob - ID: %d, Nonce: %d, Status: %s\n", job.ID, job.Nonce, job.Status)
-
-	// MsgRegisterOracleRequestDoc의 경우 이미 activeJobs에 추가되었으므로
-	// processJob에서는 실행만 진행
-	// EventDataNewBlock의 경우도 nonce가 이미 증가되었으므로 실행만 진행
+	fmt.Printf("[  INFO ] processJob: Creating executor for job\n")
 
 	executor := NewExecutor(ctx)
 
+	fmt.Printf("[  INFO ] processJob: Executing job %d\n", job.ID)
 	oracleData, err := executor.ExecuteJob(job)
 	if err != nil {
 		fmt.Printf("[  END  ] processJob: ERROR - failed to execute job %d: %v\n", job.ID, err)
 		return fmt.Errorf("failed to execute job %d: %w", job.ID, err)
 	}
 
+	fmt.Printf("[  INFO ] processJob: Job executed successfully, sending to result channel\n")
+	fmt.Printf("[  INFO ] processJob: Oracle data - RequestID: %d, Data: %s, Nonce: %d\n",
+		oracleData.RequestID, oracleData.Data, oracleData.Nonce)
+
 	// 결과 채널에 전송 (논블로킹)
 	select {
 	case s.resultCh <- *oracleData:
-		fmt.Printf("[SUCCESS] processJob: Oracle data created - RequestID: %d\n", oracleData.RequestID)
+		fmt.Printf("[SUCCESS] processJob: Oracle data sent to result channel - RequestID: %d\n", oracleData.RequestID)
 		fmt.Printf("[  END  ] processJob: SUCCESS\n")
 		return nil
 	default:
