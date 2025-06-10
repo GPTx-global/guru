@@ -158,6 +158,11 @@ func (s *Scheduler) eventToJob(event coretypes.ResultEvent) (*types.Job, error) 
 }
 
 func (s *Scheduler) processJob(ctx context.Context, job *types.Job) {
+	// job에 address list를 추가하고 해당 주소에 포함되는지 확인
+	// if !strings.Contains(event.Events[prefix+".account_list"][0], c.txBuilder.clientCtx.GetFromAddress().String()) {}
+	
+	
+
 	job.Nonce++
 	fmt.Printf("Processing job: %d, Nonce: %d\n", job.ID, job.Nonce)
 	s.activeJobsMux.Lock()

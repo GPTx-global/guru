@@ -163,20 +163,6 @@ func (am AppModule) RegisterServices(cfg module.Configurator) {
 }
 
 func (am AppModule) BeginBlock(ctx sdk.Context, req abci.RequestBeginBlock) {
-	if req.Header.Height%5 != 0 {
-		return
-	}
-	ctx.EventManager().EmitEvents(
-		sdk.Events{
-			sdk.NewEvent("alpha"),
-			sdk.NewEvent(
-				"alpha",
-				sdk.NewAttribute("OracleGruopId", "0000"),
-				sdk.NewAttribute("OracleId", "0000"),
-				sdk.NewAttribute("OracleNonce", "0000"),
-			),
-		},
-	)
 }
 
 func (am AppModule) EndBlock(_ sdk.Context, _ abci.RequestEndBlock) []abci.ValidatorUpdate {
