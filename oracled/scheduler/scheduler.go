@@ -19,7 +19,7 @@ import (
 
 type Scheduler struct {
 	eventCh       <-chan coretypes.ResultEvent
-	activeJobs    map[uint64]*types.Job // RequestID가 uint64이므로 key도 uint64로 변경
+	activeJobs    map[uint64]*types.Job
 	activeJobsMux sync.Mutex
 	resultCh      chan types.OracleData
 	txDecoder     sdk.TxDecoder
@@ -46,7 +46,6 @@ func NewScheduler() *Scheduler {
 func (s *Scheduler) Start(ctx context.Context) {
 	fmt.Printf("[ START ] Start\n")
 
-	// fmt.Printf("[INFO    ] Start: Starting eventProcessor goroutine\n")
 	go s.eventProcessor(ctx)
 
 	fmt.Printf("[  END  ] Start: SUCCESS\n")
@@ -65,7 +64,6 @@ func (s *Scheduler) eventProcessor(ctx context.Context) {
 				continue
 			}
 
-			// fmt.Printf("[INFO    ] eventProcessor: Starting processJob for ID: %d\n", job.ID)
 			go s.processJob(ctx, job)
 		case <-ctx.Done():
 			fmt.Printf("[  END  ] eventProcessor: SUCCESS - context cancelled\n")
@@ -79,7 +77,6 @@ func (s *Scheduler) eventToJob(event coretypes.ResultEvent) (*types.Job, error) 
 
 	switch eventData := event.Data.(type) {
 	case tmtypes.EventDataTx:
-		// fmt.Printf("[INFO    ] eventToJob: Processing EventDataTx\n")
 		// 트랜잭션 바이트 데이터를 디코딩
 		tx, err := s.txDecoder(eventData.Tx)
 		if err != nil {
@@ -89,12 +86,10 @@ func (s *Scheduler) eventToJob(event coretypes.ResultEvent) (*types.Job, error) 
 
 		// 트랜잭션 내의 모든 메시지를 확인
 		msgs := tx.GetMsgs()
-		// fmt.Printf("[INFO    ] eventToJob: Processing %d messages\n", len(msgs))
 
 		for _, msg := range msgs {
 			switch oracleMsg := msg.(type) {
 			case *oracletypes.MsgRegisterOracleRequestDoc:
-				// fmt.Printf("[INFO    ] eventToJob: Processing MsgRegisterOracleRequestDoc\n")
 				// Register Oracle Request 메시지 처리 - 첫 번째 등록
 				reqID, _ := strconv.ParseUint(event.Events["register_oracle_request_doc.request_id"][0], 10, 64)
 
@@ -112,7 +107,7 @@ func (s *Scheduler) eventToJob(event coretypes.ResultEvent) (*types.Job, error) 
 					Path:        oracleMsg.RequestDoc.Endpoints[0].ParseRule,
 					Nonce:       1,
 					Delay:       time.Duration(oracleMsg.RequestDoc.Period) * time.Second,
-					MessageType: "register",
+					Status:      event.Events["register_oracle_request_doc.status"][0],
 				}
 
 				// activeJobs에 추가
@@ -126,7 +121,6 @@ func (s *Scheduler) eventToJob(event coretypes.ResultEvent) (*types.Job, error) 
 				return job, nil
 
 			case *oracletypes.MsgUpdateOracleRequestDoc:
-				// fmt.Printf("[INFO    ] eventToJob: Processing MsgUpdateOracleRequestDoc\n")
 				// Update Oracle Request 메시지 처리
 				reqID := oracleMsg.RequestDoc.RequestId
 
@@ -136,7 +130,6 @@ func (s *Scheduler) eventToJob(event coretypes.ResultEvent) (*types.Job, error) 
 					existingJob.URL = oracleMsg.RequestDoc.Endpoints[0].Url
 					existingJob.Path = oracleMsg.RequestDoc.Endpoints[0].ParseRule
 					existingJob.Delay = time.Duration(oracleMsg.RequestDoc.Period) * time.Second
-					existingJob.MessageType = "update"
 					s.activeJobsMux.Unlock()
 
 					fmt.Printf("[SUCCESS] eventToJob: Updated existing job - ID: %d, URL: %s, Path: %s\n",
@@ -151,7 +144,6 @@ func (s *Scheduler) eventToJob(event coretypes.ResultEvent) (*types.Job, error) 
 		}
 
 	case tmtypes.EventDataNewBlock:
-		// fmt.Printf("[INFO    ] eventToJob: Processing EventDataNewBlock\n")
 		reqID, err := strconv.ParseUint(event.Events["complete_oracle_data_set.request_id"][0], 10, 64)
 		if err != nil {
 			fmt.Printf("[  END  ] eventToJob: ERROR - failed to parse request ID: %v\n", err)
@@ -187,24 +179,20 @@ func (s *Scheduler) eventToJob(event coretypes.ResultEvent) (*types.Job, error) 
 }
 
 func (s *Scheduler) processJob(ctx context.Context, job *types.Job) {
-	fmt.Printf("[ START ] processJob - ID: %d, Nonce: %d, Type: %s\n",
-		job.ID, job.Nonce, job.MessageType)
+	fmt.Printf("[ START ] processJob - ID: %d, Nonce: %d, Status: %s\n", job.ID, job.Nonce, job.Status)
 
 	// MsgRegisterOracleRequestDoc의 경우 이미 activeJobs에 추가되었으므로
 	// processJob에서는 실행만 진행
 	// EventDataNewBlock의 경우도 nonce가 이미 증가되었으므로 실행만 진행
 
-	// fmt.Printf("[INFO    ] processJob: Creating executor\n")
 	executor := NewExecutor(ctx)
 
-	// fmt.Printf("[INFO    ] processJob: Executing job\n")
 	oracleData, err := executor.ExecuteJob(job)
 	if err != nil {
 		fmt.Printf("[  END  ] processJob: ERROR - failed to execute job %d: %v\n", job.ID, err)
 		return
 	}
 
-	// fmt.Printf("[INFO    ] processJob: Job executed successfully, sending to resultCh\n")
 	fmt.Printf("[SUCCESS] processJob: Oracle data created - RequestID: %d\n", oracleData.RequestID)
 	s.resultCh <- *oracleData
 
@@ -212,11 +200,9 @@ func (s *Scheduler) processJob(ctx context.Context, job *types.Job) {
 }
 
 func (s *Scheduler) SetEventChannel(ch <-chan coretypes.ResultEvent) {
-	// fmt.Printf("[INFO    ] SetEventChannel: Setting eventCh\n")
 	s.eventCh = ch
 }
 
 func (s *Scheduler) GetResultChannel() <-chan types.OracleData {
-	// fmt.Printf("[INFO    ] GetResultChannel: Returning resultCh\n")
 	return s.resultCh
 }

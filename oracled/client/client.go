@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/tendermint/tendermint/rpc/client/http"
 	coretypes "github.com/tendermint/tendermint/rpc/core/types"
@@ -44,7 +45,6 @@ func (c *Client) Start(ctx context.Context) error {
 		return errors.New("failed to connect to rpc: " + err.Error())
 	}
 
-	// fmt.Printf("[INFO    ] Start: Starting monitor and serveOracle goroutines\n")
 	go c.monitor(ctx)
 	go c.serveOracle(ctx)
 
@@ -108,7 +108,6 @@ func (c *Client) monitor(ctx context.Context) error {
 
 	// Oracle 작업 등록 트랜잭션
 	queryRegisterOracle := "tm.event='Tx' AND message.action='/guru.oracle.v1.MsgRegisterOracleRequestDoc'"
-	// fmt.Printf("[INFO    ] monitor: Subscribing to register oracle events\n")
 	registerCh, err := c.rpcClient.Subscribe(ctx, "register_oracle_subscribe", queryRegisterOracle)
 	if err != nil {
 		fmt.Printf("[  END  ] monitor: ERROR - failed to subscribe register events: %v\n", err)
@@ -117,7 +116,6 @@ func (c *Client) monitor(ctx context.Context) error {
 
 	// Oracle 작업 수정 트랜잭션
 	queryUpdateOracle := "tm.event='Tx' AND message.action='/guru.oracle.v1.MsgUpdateOracleRequestDoc'"
-	// fmt.Printf("[INFO    ] monitor: Subscribing to update oracle events\n")
 	updateCh, err := c.rpcClient.Subscribe(ctx, "update_oracle_subscribe", queryUpdateOracle)
 	if err != nil {
 		fmt.Printf("[  END  ] monitor: ERROR - failed to subscribe update events: %v\n", err)
@@ -126,14 +124,11 @@ func (c *Client) monitor(ctx context.Context) error {
 
 	// Oracle 사용 완료 이벤트
 	queryCompleteOracle := fmt.Sprintf("tm.event='NewBlock' AND %s EXISTS", "complete_oracle_data_set.request_id")
-	// fmt.Printf("[INFO    ] monitor: Subscribing to complete oracle events\n")
 	completeCh, err := c.rpcClient.Subscribe(ctx, "complete_oracle_subscribe", queryCompleteOracle)
 	if err != nil {
 		fmt.Printf("[  END  ] monitor: ERROR - failed to subscribe complete events: %v\n", err)
 		return errors.New("failed to subscribe to oracle complete events: " + err.Error())
 	}
-
-	// fmt.Printf("[INFO    ] monitor: All subscriptions successful, starting event loop\n")
 
 	for {
 		select {
@@ -161,7 +156,14 @@ func (c *Client) checkEvent(prefix string, event coretypes.ResultEvent) {
 		return
 	}
 
-	// fmt.Printf("[INFO    ] checkEvent: Sending event to eventCh\n")
+	if prefix == "register_oracle_request_doc" {
+		requestIDs := event.Events["register_oracle_request_doc.account_list"][0]
+		if !strings.Contains(requestIDs, c.txBuilder.clientCtx.GetFromAddress().String()) {
+			fmt.Printf("[  END  ] checkEvent: SKIP - requestID not found\n")
+			return
+		}
+	}
+
 	c.eventCh <- event
 
 	fmt.Printf("[  END  ] checkEvent: SUCCESS\n")
@@ -191,7 +193,6 @@ func (c *Client) processTransaction(ctx context.Context, oracleResult types.Orac
 		fmt.Printf("[  END  ] processTransaction: ERROR - failed to build tx: %v\n", err)
 		return
 	}
-	// fmt.Printf("[INFO    ] processTransaction: Transaction built successfully\n")
 
 	resp, err := c.txBuilder.BroadcastTx(ctx, txBytes)
 	if err != nil {
@@ -205,11 +206,9 @@ func (c *Client) processTransaction(ctx context.Context, oracleResult types.Orac
 }
 
 func (c *Client) GetEventChannel() <-chan coretypes.ResultEvent {
-	// fmt.Printf("[INFO    ] GetEventChannel: Returning eventCh\n")
 	return c.eventCh
 }
 
 func (c *Client) SetResultChannel(ch <-chan types.OracleData) {
-	// fmt.Printf("[INFO    ] SetResultChannel: Setting resultCh\n")
 	c.resultCh = ch
 }

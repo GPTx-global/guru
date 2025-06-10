@@ -33,32 +33,26 @@ func (e *Executor) ExecuteJob(job *types.Job) (*types.OracleData, error) {
 	fmt.Printf("[ START ] ExecuteJob - ID: %d, Nonce: %d\n", job.ID, job.Nonce)
 
 	if 1 < job.Nonce {
-		// fmt.Printf("[INFO] ExecuteJob: Waiting %v before execution (nonce > 0)\n", job.Delay)
 		time.Sleep(job.Delay)
 	}
 
-	// fmt.Printf("[INFO] ExecuteJob: Fetching raw data from URL\n")
 	rawData, err := e.fetchRawData(job.URL)
 	if err != nil {
 		fmt.Printf("[  END  ] ExecuteJob: ERROR - failed to fetch raw data for job %d: %v\n", job.ID, err)
 		return nil, fmt.Errorf("failed to fetch raw data for job %d: %w", job.ID, err)
 	}
-	// fmt.Printf("[INFO] ExecuteJob: Raw data fetched successfully (%d bytes)\n", len(rawData))
 
-	// fmt.Printf("[INFO] ExecuteJob: Validating response\n")
 	if err := e.validateResponse(rawData); err != nil {
 		fmt.Printf("[  END  ] ExecuteJob: ERROR - invalid response for job %d: %v\n", job.ID, err)
 		return nil, fmt.Errorf("invalid response for job %d: %w", job.ID, err)
 	}
 
-	// fmt.Printf("[INFO] ExecuteJob: Parsing JSON data\n")
 	parsedData, err := e.parseJSON(rawData)
 	if err != nil {
 		fmt.Printf("[  END  ] ExecuteJob: ERROR - failed to parse JSON for job %d: %v\n", job.ID, err)
 		return nil, fmt.Errorf("failed to parse JSON for job %d: %w", job.ID, err)
 	}
 
-	// fmt.Printf("[INFO] ExecuteJob: Extracting data by path: %s\n", job.Path)
 	extractedValue, err := e.extractDataByPath(parsedData, job.Path)
 	if err != nil {
 		fmt.Printf("[  END  ] ExecuteJob: ERROR - failed to extract data for job %d: %v\n", job.ID, err)
@@ -88,7 +82,6 @@ func (e *Executor) fetchRawData(url string) ([]byte, error) {
 
 	req.Header.Set("User-Agent", "Oracle-Daemon/1.0")
 	req.Header.Set("Accept", "application/json")
-	// fmt.Printf("[INFO] fetchRawData: Request headers set\n")
 
 	resp, err := e.client.Do(req)
 	if err != nil {
@@ -96,8 +89,6 @@ func (e *Executor) fetchRawData(url string) ([]byte, error) {
 		return nil, fmt.Errorf("failed to do request: %w", err)
 	}
 	defer resp.Body.Close()
-
-	// fmt.Printf("[INFO] fetchRawData: Response received - Status: %d %s\n", resp.StatusCode, resp.Status)
 
 	if resp.StatusCode != http.StatusOK {
 		fmt.Printf("[  END  ] fetchRawData: ERROR - HTTP %d: %s\n",
@@ -143,7 +134,6 @@ func (e *Executor) parseJSON(data []byte) (map[string]interface{}, error) {
 		return nil, fmt.Errorf("failed to unmarshal JSON: %w", err)
 	}
 
-	// fmt.Printf("[INFO] parseJSON: JSON parsed successfully with %d top-level keys\n", len(result))
 	fmt.Printf("[  END  ] parseJSON: SUCCESS\n")
 	return result, nil
 }
@@ -158,17 +148,14 @@ func (e *Executor) extractDataByPath(data map[string]interface{}, path string) (
 
 	// Split path by dots to navigate nested objects
 	pathParts := strings.Split(path, ".")
-	// fmt.Printf("[INFO] extractDataByPath: Navigating %d path parts: %v\n", len(pathParts), pathParts)
 
 	current := interface{}(data)
 	for _, part := range pathParts {
-		// fmt.Printf("[INFO] extractDataByPath: Processing part %d: %s\n", i+1, part)
 
 		switch v := current.(type) {
 		case map[string]interface{}:
 			if val, exists := v[part]; exists {
 				current = val
-				// fmt.Printf("[INFO] extractDataByPath: Found key '%s'\n", part)
 			} else {
 				fmt.Printf("[  END  ] extractDataByPath: ERROR - key '%s' not found\n", part)
 				return "", fmt.Errorf("key '%s' not found", part)

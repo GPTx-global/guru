@@ -38,7 +38,6 @@ func NewTxBuilder(config *Config, rpcClient *http.HTTP) (*TxBuilder, error) {
 		fmt.Printf("[  END  ] NewTxBuilder: ERROR - failed to get keyring: %v\n", err)
 		return nil, fmt.Errorf("failed to get keyring: %w", err)
 	}
-	// fmt.Printf("[INFO    ] NewTxBuilder: Keyring created successfully\n")
 
 	keyInfo, err := keyRing.Key(config.keyName)
 	if err != nil {
@@ -46,14 +45,12 @@ func NewTxBuilder(config *Config, rpcClient *http.HTTP) (*TxBuilder, error) {
 			config.keyName, err)
 		return nil, fmt.Errorf("failed to get key %s: %w", config.keyName, err)
 	}
-	// fmt.Printf("[INFO    ] NewTxBuilder: Key info retrieved for %s\n", config.keyName)
 
 	fromAddress, err := keyInfo.GetAddress()
 	if err != nil {
 		fmt.Printf("[  END  ] NewTxBuilder: ERROR - failed to get address from key: %v\n", err)
 		return nil, fmt.Errorf("failed to get address from key: %w", err)
 	}
-	// fmt.Printf("[INFO    ] NewTxBuilder: Address retrieved: %s\n", fromAddress.String())
 
 	clientCtx := client.Context{}.
 		WithCodec(encCfg.Codec).
@@ -74,7 +71,6 @@ func NewTxBuilder(config *Config, rpcClient *http.HTTP) (*TxBuilder, error) {
 		fmt.Printf("[  END  ] NewTxBuilder: ERROR - failed to get account number sequence: %v\n", err)
 		return nil, fmt.Errorf("failed to get account number sequence: %w", err)
 	}
-	// fmt.Printf("[INFO    ] NewTxBuilder: Account info - Number: %d, Sequence: %d\n", num, seq)
 
 	tb := new(TxBuilder)
 	tb.clientCtx = clientCtx
@@ -92,9 +88,6 @@ func (tb *TxBuilder) BuildOracleTx(ctx context.Context, oracleData types.OracleD
 		oracleData.RequestID, oracleData.Nonce)
 
 	msgs := make([]sdk.Msg, 0, 1)
-	// fmt.Printf("[INFO    ] BuildOracleTx: From Address: %s\n", tb.clientCtx.GetFromAddress())
-	// fmt.Printf("[INFO    ] BuildOracleTx: Oracle Data - RequestID: %d, Data: %s, Nonce: %d\n",
-	//	oracleData.RequestID, oracleData.Data, oracleData.Nonce)
 
 	msg := &oracletypes.MsgSubmitOracleData{
 		AuthorityAddress: tb.clientCtx.GetFromAddress().String(),
@@ -107,7 +100,6 @@ func (tb *TxBuilder) BuildOracleTx(ctx context.Context, oracleData types.OracleD
 		},
 	}
 	msgs = append(msgs, msg)
-	// fmt.Printf("[INFO    ] BuildOracleTx: MsgSubmitOracleData created\n")
 
 	if len(msgs) == 0 {
 		fmt.Printf("[  END  ] BuildOracleTx: ERROR - no messages to send\n")
@@ -119,7 +111,6 @@ func (tb *TxBuilder) BuildOracleTx(ctx context.Context, oracleData types.OracleD
 		fmt.Printf("[  END  ] BuildOracleTx: ERROR - invalid gas price: %v\n", err)
 		return nil, fmt.Errorf("invalid gas price: %w", err)
 	}
-	// fmt.Printf("[INFO    ] BuildOracleTx: Gas price parsed: %s\n", gasPrice.String())
 
 	factory := tx.Factory{}.
 		WithTxConfig(tb.clientCtx.TxConfig).
@@ -133,21 +124,16 @@ func (tb *TxBuilder) BuildOracleTx(ctx context.Context, oracleData types.OracleD
 		WithSequence(tb.sequence.Load()).
 		WithSignMode(signing.SignMode_SIGN_MODE_DIRECT)
 
-	// fmt.Printf("[INFO    ] BuildOracleTx: Transaction factory configured - AccNum: %d, Sequence: %d\n",
-	//	tb.accNum, tb.sequence.Load())
-
 	txBuilder, err := factory.BuildUnsignedTx(msgs...)
 	if err != nil {
 		fmt.Printf("[  END  ] BuildOracleTx: ERROR - failed to build tx: %v\n", err)
 		return nil, fmt.Errorf("failed to build tx: %w", err)
 	}
-	// fmt.Printf("[INFO    ] BuildOracleTx: Unsigned transaction built\n")
 
 	if err := tx.Sign(factory, tb.config.keyName, txBuilder, true); err != nil {
 		fmt.Printf("[  END  ] BuildOracleTx: ERROR - failed to sign tx: %v\n", err)
 		return nil, fmt.Errorf("failed to sign tx: %w", err)
 	}
-	// fmt.Printf("[INFO    ] BuildOracleTx: Transaction signed with key: %s\n", tb.config.keyName)
 
 	txBytes, err := tb.clientCtx.TxConfig.TxEncoder()(txBuilder.GetTx())
 	if err != nil {
@@ -167,7 +153,6 @@ func (tb *TxBuilder) BroadcastTx(ctx context.Context, txBytes []byte) (*sdk.TxRe
 		fmt.Printf("[  END  ] BroadcastTx: ERROR - failed to broadcast: %v\n", err)
 		return nil, fmt.Errorf("failed to broadcast tx: %w", err)
 	}
-	// fmt.Printf("[INFO    ] BroadcastTx: Transaction broadcasted\n")
 
 	if res.Code != 0 {
 		fmt.Printf("[  END  ] BroadcastTx: ERROR - tx failed with code %d: %s\n",
@@ -181,5 +166,4 @@ func (tb *TxBuilder) BroadcastTx(ctx context.Context, txBytes []byte) (*sdk.TxRe
 
 func (tb *TxBuilder) incSequence() {
 	tb.sequence.Add(1)
-	// fmt.Printf("[INFO    ] incSequence: Sequence incremented %d -> %d\n", oldSeq, newSeq)
 }
