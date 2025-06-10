@@ -27,8 +27,8 @@ func LoadConfig() *Config {
 		chainID:     "guru_3110-1",
 		keyringDir:  "../",
 		keyName:     "node1",
-		gasPrice:    "20000000000aguru", // 20 gwei
-		gasLimit:    200000,
+		gasPrice:    "630000000aguru",
+		gasLimit:    30000,
 	}
 
 	fmt.Printf("[  END  ] LoadConfig: SUCCESS\n")
