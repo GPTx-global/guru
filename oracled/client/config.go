@@ -19,7 +19,9 @@ type Config struct {
 }
 
 func LoadConfig() *Config {
-	return &Config{
+	fmt.Printf("[ START ] LoadConfig\n")
+
+	config := &Config{
 		// rpcEndpoint: "http://192.168.48.131:26657",
 		rpcEndpoint: "http://localhost:26657",
 		chainID:     "guru_3110-1",
@@ -28,9 +30,15 @@ func LoadConfig() *Config {
 		gasPrice:    "20000000000aguru", // 20 gwei
 		gasLimit:    200000,
 	}
+
+	fmt.Printf("[  END  ] LoadConfig: SUCCESS\n")
+
+	return config
 }
 
 func (c *Config) GetKeyring() (keyring.Keyring, error) {
+	fmt.Printf("[ START ] GetKeyring - KeyName: %s\n", c.keyName)
+
 	encCfg := encoding.MakeConfig(app.ModuleBasics)
 
 	// 테스트 환경용
@@ -44,8 +52,10 @@ func (c *Config) GetKeyring() (keyring.Keyring, error) {
 	)
 
 	if err != nil {
+		fmt.Printf("[  END  ] GetKeyring: ERROR - failed to create keyring: %v\n", err)
 		return nil, fmt.Errorf("failed to create keyring: %w", err)
 	}
 
+	fmt.Printf("[  END  ] GetKeyring: SUCCESS\n")
 	return kr, nil
 }
