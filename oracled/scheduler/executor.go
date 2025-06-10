@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"strconv"
 	"strings"
 	"time"
 
@@ -19,33 +18,50 @@ type Executor struct {
 }
 
 func NewExecutor(ctx context.Context) *Executor {
-	return &Executor{
+	fmt.Printf("[ START ] NewExecutor\n")
+
+	e := &Executor{
 		client: &http.Client{},
 		ctx:    ctx,
 	}
+
+	fmt.Printf("[  END  ] NewExecutor: SUCCESS\n")
+	return e
 }
 
 func (e *Executor) ExecuteJob(job *types.Job) (*types.OracleData, error) {
-	if 0 < job.Nonce {
+	fmt.Printf("[ START ] ExecuteJob - ID: %d, Nonce: %d\n", job.ID, job.Nonce)
+
+	if 1 < job.Nonce {
+		// fmt.Printf("[INFO] ExecuteJob: Waiting %v before execution (nonce > 0)\n", job.Delay)
 		time.Sleep(job.Delay)
 	}
 
+	// fmt.Printf("[INFO] ExecuteJob: Fetching raw data from URL\n")
 	rawData, err := e.fetchRawData(job.URL)
 	if err != nil {
+		fmt.Printf("[  END  ] ExecuteJob: ERROR - failed to fetch raw data for job %d: %v\n", job.ID, err)
 		return nil, fmt.Errorf("failed to fetch raw data for job %d: %w", job.ID, err)
 	}
+	// fmt.Printf("[INFO] ExecuteJob: Raw data fetched successfully (%d bytes)\n", len(rawData))
 
+	// fmt.Printf("[INFO] ExecuteJob: Validating response\n")
 	if err := e.validateResponse(rawData); err != nil {
+		fmt.Printf("[  END  ] ExecuteJob: ERROR - invalid response for job %d: %v\n", job.ID, err)
 		return nil, fmt.Errorf("invalid response for job %d: %w", job.ID, err)
 	}
 
+	// fmt.Printf("[INFO] ExecuteJob: Parsing JSON data\n")
 	parsedData, err := e.parseJSON(rawData)
 	if err != nil {
+		fmt.Printf("[  END  ] ExecuteJob: ERROR - failed to parse JSON for job %d: %v\n", job.ID, err)
 		return nil, fmt.Errorf("failed to parse JSON for job %d: %w", job.ID, err)
 	}
 
+	// fmt.Printf("[INFO] ExecuteJob: Extracting data by path: %s\n", job.Path)
 	extractedValue, err := e.extractDataByPath(parsedData, job.Path)
 	if err != nil {
+		fmt.Printf("[  END  ] ExecuteJob: ERROR - failed to extract data for job %d: %v\n", job.ID, err)
 		return nil, fmt.Errorf("failed to extract data for job %d: %w", job.ID, err)
 	}
 
@@ -55,130 +71,117 @@ func (e *Executor) ExecuteJob(job *types.Job) (*types.OracleData, error) {
 		Nonce:     job.Nonce,
 	}
 
+	fmt.Printf("[SUCCESS] ExecuteJob: Oracle data created - RequestID: %d, Data: %s, Nonce: %d\n",
+		oracleData.RequestID, oracleData.Data, oracleData.Nonce)
+	fmt.Printf("[  END  ] ExecuteJob: SUCCESS\n")
 	return oracleData, nil
 }
 
 func (e *Executor) fetchRawData(url string) ([]byte, error) {
+	fmt.Printf("[ START ] fetchRawData\n")
+
 	req, err := http.NewRequestWithContext(e.ctx, "GET", url, nil)
 	if err != nil {
+		fmt.Printf("[  END  ] fetchRawData: ERROR - failed to create request: %v\n", err)
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
 
 	req.Header.Set("User-Agent", "Oracle-Daemon/1.0")
 	req.Header.Set("Accept", "application/json")
+	// fmt.Printf("[INFO] fetchRawData: Request headers set\n")
 
 	resp, err := e.client.Do(req)
 	if err != nil {
+		fmt.Printf("[  END  ] fetchRawData: ERROR - failed to do request: %v\n", err)
 		return nil, fmt.Errorf("failed to do request: %w", err)
 	}
 	defer resp.Body.Close()
 
+	// fmt.Printf("[INFO] fetchRawData: Response received - Status: %d %s\n", resp.StatusCode, resp.Status)
+
 	if resp.StatusCode != http.StatusOK {
+		fmt.Printf("[  END  ] fetchRawData: ERROR - HTTP %d: %s\n",
+			resp.StatusCode, resp.Status)
 		return nil, fmt.Errorf("HTTP %d: %s", resp.StatusCode, resp.Status)
 	}
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
+		fmt.Printf("[  END  ] fetchRawData: ERROR - failed to read response body: %v\n", err)
 		return nil, fmt.Errorf("failed to read response body: %w", err)
 	}
 
+	fmt.Printf("[  END  ] fetchRawData: SUCCESS - %d bytes fetched\n", len(body))
 	return body, nil
 }
 
 func (e *Executor) validateResponse(data []byte) error {
+	fmt.Printf("[ START ] validateResponse - Size: %d bytes\n", len(data))
+
 	if len(data) == 0 {
-		return fmt.Errorf("empty response body")
+		fmt.Printf("[  END  ] validateResponse: ERROR - empty response\n")
+		return fmt.Errorf("empty response")
 	}
 
+	// Basic JSON validation
 	var temp interface{}
 	if err := json.Unmarshal(data, &temp); err != nil {
-		return fmt.Errorf("invalid JSON format: %w", err)
+		fmt.Printf("[  END  ] validateResponse: ERROR - invalid JSON: %v\n", err)
+		return fmt.Errorf("invalid JSON: %w", err)
 	}
 
+	fmt.Printf("[  END  ] validateResponse: SUCCESS\n")
 	return nil
 }
 
 func (e *Executor) parseJSON(data []byte) (map[string]interface{}, error) {
+	fmt.Printf("[ START ] parseJSON\n")
+
 	var result map[string]interface{}
 	if err := json.Unmarshal(data, &result); err != nil {
+		fmt.Printf("[  END  ] parseJSON: ERROR - failed to unmarshal JSON: %v\n", err)
 		return nil, fmt.Errorf("failed to unmarshal JSON: %w", err)
 	}
 
+	// fmt.Printf("[INFO] parseJSON: JSON parsed successfully with %d top-level keys\n", len(result))
+	fmt.Printf("[  END  ] parseJSON: SUCCESS\n")
 	return result, nil
 }
 
 func (e *Executor) extractDataByPath(data map[string]interface{}, path string) (string, error) {
+	fmt.Printf("[ START ] extractDataByPath - Path: %s\n", path)
+
 	if path == "" {
-		jsonBytes, err := json.Marshal(data)
-		if err != nil {
-			return "", err
-		}
-		return string(jsonBytes), nil
+		fmt.Printf("[  END  ] extractDataByPath: ERROR - empty path\n")
+		return "", fmt.Errorf("empty path")
 	}
 
-	// 점(.)으로 경로를 분할하여 중첩된 구조 탐색
+	// Split path by dots to navigate nested objects
 	pathParts := strings.Split(path, ".")
+	// fmt.Printf("[INFO] extractDataByPath: Navigating %d path parts: %v\n", len(pathParts), pathParts)
 
-	// 현재 데이터를 interface{}로 시작
-	var currentData interface{} = data
+	current := interface{}(data)
+	for _, part := range pathParts {
+		// fmt.Printf("[INFO] extractDataByPath: Processing part %d: %s\n", i+1, part)
 
-	// 각 경로 부분을 순차적으로 탐색
-	for i, part := range pathParts {
-		switch current := currentData.(type) {
+		switch v := current.(type) {
 		case map[string]interface{}:
-			// 맵에서 키 찾기
-			value, exists := current[part]
-			if !exists {
-				return "", fmt.Errorf("path '%s' not found at level %d (key: '%s')", path, i, part)
+			if val, exists := v[part]; exists {
+				current = val
+				// fmt.Printf("[INFO] extractDataByPath: Found key '%s'\n", part)
+			} else {
+				fmt.Printf("[  END  ] extractDataByPath: ERROR - key '%s' not found\n", part)
+				return "", fmt.Errorf("key '%s' not found", part)
 			}
-			currentData = value
-
-		case []interface{}:
-			// 배열 인덱스 처리 (숫자인 경우)
-			index, err := strconv.Atoi(part)
-			if err != nil {
-				return "", fmt.Errorf("path '%s' at level %d: expected array index but got '%s'", path, i, part)
-			}
-			if index < 0 || index >= len(current) {
-				return "", fmt.Errorf("path '%s' at level %d: array index %d out of bounds (length: %d)", path, i, index, len(current))
-			}
-			currentData = current[index]
-
 		default:
-			// 더 이상 탐색할 수 없는 타입
-			return "", fmt.Errorf("path '%s' at level %d: cannot traverse further, current type: %T", path, i, current)
+			fmt.Printf("[  END  ] extractDataByPath: ERROR - invalid path at '%s'\n", part)
+			return "", fmt.Errorf("invalid path at '%s'", part)
 		}
 	}
 
-	// 최종 값을 문자열로 변환
-	return e.convertToString(currentData)
-}
-
-// convertToString은 다양한 타입의 값을 문자열로 변환합니다
-func (e *Executor) convertToString(value interface{}) (string, error) {
-	switch v := value.(type) {
-	case string:
-		return v, nil
-	case float64:
-		return fmt.Sprintf("%.8f", v), nil
-	case float32:
-		return fmt.Sprintf("%.8f", v), nil
-	case int:
-		return fmt.Sprintf("%d", v), nil
-	case int64:
-		return fmt.Sprintf("%d", v), nil
-	case int32:
-		return fmt.Sprintf("%d", v), nil
-	case bool:
-		return fmt.Sprintf("%t", v), nil
-	case nil:
-		return "", nil
-	default:
-		// 복잡한 객체는 JSON으로 직렬화
-		jsonBytes, err := json.Marshal(v)
-		if err != nil {
-			return "", fmt.Errorf("failed to convert value to string: %w", err)
-		}
-		return string(jsonBytes), nil
-	}
+	// Convert final value to string
+	result := fmt.Sprintf("%v", current)
+	fmt.Printf("[SUCCESS] extractDataByPath: Extracted value: %s\n", result)
+	fmt.Printf("[  END  ] extractDataByPath: SUCCESS\n")
+	return result, nil
 }
