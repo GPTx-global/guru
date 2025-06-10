@@ -26,9 +26,14 @@ func NewExecutor(ctx context.Context) *Executor {
 		client: &http.Client{
 			Timeout: 30 * time.Second,
 			Transport: &http.Transport{
-				MaxIdleConns:        100,
-				MaxIdleConnsPerHost: 10,
+				MaxIdleConns:        1000, // 전체 연결 수 대폭 증가
+				MaxIdleConnsPerHost: 100,  // 호스트당 연결 수 10배 증가
 				IdleConnTimeout:     90 * time.Second,
+				// 성능 최적화 설정 추가
+				MaxConnsPerHost:    200,       // 호스트당 최대 연결 수
+				DisableCompression: false,     // gzip 압축 유지
+				WriteBufferSize:    32 * 1024, // 32KB 쓰기 버퍼
+				ReadBufferSize:     32 * 1024, // 32KB 읽기 버퍼
 			},
 		},
 		ctx:                ctx,

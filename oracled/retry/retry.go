@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"math"
+	"sync"
 	"time"
 )
 
@@ -173,6 +174,7 @@ type CircuitBreaker struct {
 	failures     int
 	lastFailTime time.Time
 	state        CircuitState
+	mu           sync.RWMutex // 동시성 안전성을 위한 뮤텍스 추가
 }
 
 // CircuitState 회로 상태
@@ -193,13 +195,21 @@ func NewCircuitBreaker(maxFailures int, resetTimeout time.Duration) *CircuitBrea
 	}
 }
 
-// Execute 회로 차단기로 함수 실행
+// Execute 회로 차단기로 함수 실행 (동시성 안전)
 func (cb *CircuitBreaker) Execute(fn RetryableFunc) error {
-	fmt.Printf("[ START ] CircuitBreaker.Execute - State: %v, Failures: %d\n", cb.state, cb.failures)
+	cb.mu.RLock()
+	currentState := cb.state
+	currentFailures := cb.failures
+	lastFailTime := cb.lastFailTime
+	cb.mu.RUnlock()
 
-	if cb.state == StateOpen {
-		if time.Since(cb.lastFailTime) > cb.resetTimeout {
+	fmt.Printf("[ START ] CircuitBreaker.Execute - State: %v, Failures: %d\n", currentState, currentFailures)
+
+	if currentState == StateOpen {
+		if time.Since(lastFailTime) > cb.resetTimeout {
+			cb.mu.Lock()
 			cb.state = StateHalfOpen
+			cb.mu.Unlock()
 			fmt.Printf("[ STATE ] CircuitBreaker: Open -> HalfOpen\n")
 		} else {
 			fmt.Printf("[  END  ] CircuitBreaker.Execute: BLOCKED - circuit is open\n")
@@ -210,6 +220,7 @@ func (cb *CircuitBreaker) Execute(fn RetryableFunc) error {
 	err := fn()
 
 	if err != nil {
+		cb.mu.Lock()
 		cb.failures++
 		cb.lastFailTime = time.Now()
 
@@ -217,24 +228,29 @@ func (cb *CircuitBreaker) Execute(fn RetryableFunc) error {
 			cb.state = StateOpen
 			fmt.Printf("[ STATE ] CircuitBreaker: -> Open (failures: %d)\n", cb.failures)
 		}
+		cb.mu.Unlock()
 
 		fmt.Printf("[  END  ] CircuitBreaker.Execute: ERROR - %v\n", err)
 		return err
 	}
 
 	// 성공 시 상태 리셋
+	cb.mu.Lock()
 	if cb.state == StateHalfOpen {
 		cb.state = StateClosed
 		fmt.Printf("[ STATE ] CircuitBreaker: HalfOpen -> Closed\n")
 	}
 	cb.failures = 0
+	cb.mu.Unlock()
 
 	fmt.Printf("[  END  ] CircuitBreaker.Execute: SUCCESS\n")
 	return nil
 }
 
-// GetState 현재 회로 상태 반환
+// GetState 현재 회로 상태 반환 (동시성 안전)
 func (cb *CircuitBreaker) GetState() CircuitState {
+	cb.mu.RLock()
+	defer cb.mu.RUnlock()
 	return cb.state
 }
 

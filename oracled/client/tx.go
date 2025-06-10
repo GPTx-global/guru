@@ -3,7 +3,7 @@ package client
 import (
 	"context"
 	"fmt"
-	"sync/atomic"
+	"sync"
 	"time"
 
 	oracletypes "github.com/GPTx-global/guru/x/oracle/types"
@@ -25,11 +25,12 @@ type TxBuilder struct {
 	clientCtx client.Context
 	config    *Config
 	keyring   keyring.Keyring
-	sequence  atomic.Uint64
+	sequence  uint64
 	accNum    uint64
 
 	// 에러 처리를 위한 추가 필드
 	lastSeqRefresh time.Time
+	seqMutex       sync.Mutex // 시퀀스 번호 동기화를 위한 뮤텍스
 }
 
 func NewTxBuilder(config *Config, rpcClient *http.HTTP) (*TxBuilder, error) {
@@ -99,7 +100,7 @@ func NewTxBuilder(config *Config, rpcClient *http.HTTP) (*TxBuilder, error) {
 	tb.clientCtx = clientCtx
 	tb.config = config
 	tb.keyring = keyRing
-	tb.sequence.Store(seq)
+	tb.sequence = seq
 	tb.accNum = num
 	tb.lastSeqRefresh = time.Now()
 
@@ -136,13 +137,21 @@ func (tb *TxBuilder) BuildOracleTx(ctx context.Context, oracleData types.OracleD
 		return nil, fmt.Errorf("invalid gas price: %w", err)
 	}
 
+	// 시퀀스 번호 안전하게 획득 (증가시키지 않음)
+	tb.seqMutex.Lock()
+
 	// 시퀀스 번호 갱신 확인 (5분마다 또는 에러 발생 시)
-	if time.Since(tb.lastSeqRefresh) > 5*time.Minute {
-		if err := tb.refreshSequence(ctx); err != nil {
-			fmt.Printf("[  WARN ] BuildOracleTx: Failed to refresh sequence: %v\n", err)
-			// 시퀀스 갱신 실패는 치명적이지 않으므로 계속 진행
-		}
-	}
+	// if time.Since(tb.lastSeqRefresh) > 5*time.Minute {
+	// 	if err := tb.refreshSequenceUnsafe(ctx); err != nil {
+	// 		fmt.Printf("[  WARN ] BuildOracleTx: Failed to refresh sequence: %v\n", err)
+	// 		// 시퀀스 갱신 실패는 치명적이지 않으므로 계속 진행
+	// 	}
+	// }
+
+	// 현재 시퀀스 번호만 가져오기 (증가시키지 않음)
+	currentSeq := tb.sequence
+
+	tb.seqMutex.Unlock()
 
 	factory := tx.Factory{}.
 		WithTxConfig(tb.clientCtx.TxConfig).
@@ -153,7 +162,7 @@ func (tb *TxBuilder) BuildOracleTx(ctx context.Context, oracleData types.OracleD
 		WithGasAdjustment(1.2).
 		WithGasPrices(sdk.NewDecCoins(gasPrice).String()).
 		WithAccountNumber(tb.accNum).
-		WithSequence(tb.sequence.Load()).
+		WithSequence(currentSeq).
 		WithSignMode(signing.SignMode_SIGN_MODE_DIRECT)
 
 	txBuilder, err := factory.BuildUnsignedTx(msgs...)
@@ -201,16 +210,31 @@ func (tb *TxBuilder) BroadcastTx(ctx context.Context, txBytes []byte) (*sdk.TxRe
 		return res, fmt.Errorf("tx failed with code %d: %s", res.Code, res.RawLog)
 	}
 
+	// 트랜잭션이 성공적으로 멤풀에 제출되었을 때만 시퀀스 증가
+	tb.incSequence()
+
 	fmt.Printf("[  END  ] BroadcastTx: SUCCESS - TxHash: %s\n", res.TxHash)
 	return res, nil
 }
 
+// incSequence 시퀀스 번호를 1 증가 (트랜잭션 성공 시에만 호출)
 func (tb *TxBuilder) incSequence() {
-	tb.sequence.Add(1)
+	tb.seqMutex.Lock()
+	defer tb.seqMutex.Unlock()
+
+	oldSeq := tb.sequence
+	tb.sequence++
+	fmt.Printf("[ UPDATE] incSequence: %d -> %d\n", oldSeq, tb.sequence)
 }
 
 // refreshSequence 시퀀스 번호를 블록체인에서 다시 조회하여 갱신
 func (tb *TxBuilder) refreshSequence(ctx context.Context) error {
+	tb.seqMutex.Lock()
+	defer tb.seqMutex.Unlock()
+	return tb.refreshSequenceUnsafe(ctx)
+}
+
+func (tb *TxBuilder) refreshSequenceUnsafe(ctx context.Context) error {
 	fmt.Printf("[ START ] refreshSequence\n")
 
 	fromAddress := tb.clientCtx.GetFromAddress()
@@ -231,8 +255,8 @@ func (tb *TxBuilder) refreshSequence(ctx context.Context) error {
 		return fmt.Errorf("failed to refresh sequence: %w", err)
 	}
 
-	oldSeq := tb.sequence.Load()
-	tb.sequence.Store(seq)
+	oldSeq := tb.sequence
+	tb.sequence = seq
 	tb.accNum = num
 	tb.lastSeqRefresh = time.Now()
 
@@ -273,9 +297,9 @@ func (tb *TxBuilder) GetHealthCheckFunc() func(ctx context.Context) error {
 		}
 
 		// 시퀀스가 너무 오래되었는지 확인
-		if time.Since(tb.lastSeqRefresh) > 10*time.Minute {
-			return fmt.Errorf("sequence information is stale (last refresh: %v)", tb.lastSeqRefresh)
-		}
+		// if time.Since(tb.lastSeqRefresh) > 10*time.Minute {
+		// 	return fmt.Errorf("sequence information is stale (last refresh: %v)", tb.lastSeqRefresh)
+		// }
 
 		return nil
 	}

@@ -188,7 +188,12 @@ health_check() {
     
     # Check for error patterns in log
     if [ -f "/tmp/oracled.out" ]; then
-        local error_count=$(tail -n 50 /tmp/oracled.out 2>/dev/null | grep -c "ERROR\|FATAL\|panic" || echo "0")
+        local error_count=$(tail -n 50 /tmp/oracled.out 2>/dev/null | grep -c "ERROR\|FATAL\|panic" 2>/dev/null || echo "0")
+        # Ensure error_count is a valid integer
+        error_count=$(echo "$error_count" | tr -d '\n\r' | sed 's/[^0-9]//g')
+        if [ -z "$error_count" ]; then
+            error_count=0
+        fi
         if [ "$error_count" -gt 10 ]; then
             log_message "WARN" "High error count detected in daemon log: $error_count errors in last 50 lines"
             health_status=1
