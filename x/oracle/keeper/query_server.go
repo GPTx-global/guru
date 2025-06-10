@@ -74,3 +74,11 @@ func (k Keeper) OracleSubmitData(ctx context.Context, req *types.QueryOracleSubm
 		SubmitDatas: submitDatas,
 	}, nil
 }
+
+func (k Keeper) PredefinedOracles(ctx context.Context, req *types.QueryPredefinedOraclesRequest) (*types.QueryPredefinedOraclesResponse, error) {
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	predefinedOracles := k.GetPredefinedOracles(sdkCtx)
+	return &types.QueryPredefinedOraclesResponse{
+		PredefinedOracles: predefinedOracles,
+	}, nil
+}

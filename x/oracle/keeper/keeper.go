@@ -280,3 +280,72 @@ func (k Keeper) validateSubmitData(data types.SubmitDataSet) error {
 	}
 	return nil
 }
+
+// SetPredefinedOracle stores a predefined oracle in the state store
+// predefinedOracle: predefined oracle to store
+func (k Keeper) SetPredefinedOracle(ctx sdk.Context, predefinedOracle types.PredefinedOracle) {
+	store := ctx.KVStore(k.storeKey)
+	bz := k.cdc.MustMarshal(&predefinedOracle)
+	store.Set(types.GetPredefinedOracleKey(uint32(predefinedOracle.Type)), bz)
+}
+
+// GetPredefinedOracle retrieves a predefined oracle by request ID from the state store
+// requestId: ID of the request to retrieve
+// Returns: retrieved predefined oracle and error (error if oracle doesn't exist)
+func (k Keeper) GetPredefinedOracle(ctx sdk.Context, predefinedOracleId types.PredefinedOracleType) (*types.PredefinedOracle, error) {
+	store := ctx.KVStore(k.storeKey)
+	bz := store.Get(types.GetPredefinedOracleKey(uint32(predefinedOracleId)))
+	if len(bz) == 0 {
+		return nil, fmt.Errorf("not exist PredefinedOracle(predefined_oracle_id: %d)", predefinedOracleId)
+	}
+
+	var predefinedOracle types.PredefinedOracle
+	k.cdc.MustUnmarshal(bz, &predefinedOracle)
+	return &predefinedOracle, nil
+}
+
+// DelPredefinedOracle deletes a predefined oracle from the state store
+// predefinedOracleId: ID of the predefined oracle to delete
+func (k Keeper) DelPredefinedOracle(ctx sdk.Context, predefinedOracleId types.PredefinedOracleType) {
+	store := ctx.KVStore(k.storeKey)
+	store.Delete(types.GetPredefinedOracleKey(uint32(predefinedOracleId)))
+}
+
+// GetPredefinedOracles retrieves all predefined oracles from the state store
+// Returns: list of predefined oracles
+func (k Keeper) GetPredefinedOracles(ctx sdk.Context) []*types.PredefinedOracle {
+	store := ctx.KVStore(k.storeKey)
+	iterator := sdk.KVStorePrefixIterator(store, types.KeyPredefinedOracle)
+	defer iterator.Close()
+
+	var predefinedOracles []*types.PredefinedOracle
+	for ; iterator.Valid(); iterator.Next() {
+		var predefinedOracle types.PredefinedOracle
+		k.cdc.MustUnmarshal(iterator.Value(), &predefinedOracle)
+		predefinedOracles = append(predefinedOracles, &predefinedOracle)
+	}
+	return predefinedOracles
+}
+
+// PredefinedOracle queries predefined oracle data by type
+func (k Keeper) GetPredefinedOracleData(ctx sdk.Context, oracleType types.PredefinedOracleType) (*types.QueryOracleDataResponse, error) {
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	predefinedOracle, err := k.GetPredefinedOracle(sdkCtx, oracleType)
+	if err != nil {
+		return nil, err
+	}
+
+	doc, err := k.GetOracleRequestDoc(sdkCtx, predefinedOracle.RequestId)
+	if err != nil {
+		return nil, err
+	}
+
+	dataset, err := k.GetDataSet(sdkCtx, doc.RequestId, doc.Nonce)
+	if err != nil {
+		return nil, err
+	}
+
+	return &types.QueryOracleDataResponse{
+		DataSet: dataset,
+	}, nil
+}

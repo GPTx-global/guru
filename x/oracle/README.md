@@ -2,7 +2,168 @@
 
 ## Overview
 
-The Oracle module is designed to handle oracle data requests and submissions in the Guru blockchain. It provides functionality for registering, updating, and managing oracle request documents, as well as submitting and querying oracle data.
+The oracle module is responsible for managing oracle data in the blockchain. It provides functionality for registering, updating, and managing oracle request documents, as well as submitting and aggregating oracle data.
+
+## Features
+
+- Oracle Request Document Management
+  - Register new oracle request documents
+  - Update existing oracle request documents
+  - Query oracle request documents
+  - Delete oracle request documents
+
+- Oracle Data Management
+  - Submit oracle data
+  - Aggregate oracle data based on different rules (AVG, MIN, MAX, MEDIAN)
+  - Query oracle data
+
+- Moderator Management
+  - Update moderator address
+  - Validate moderator permissions
+
+- Predefined Oracle Management
+  - Update predefined oracle settings
+  - Delete predefined oracles
+
+## Messages
+
+### Register Oracle Request Document
+```go
+MsgRegisterOracleRequestDoc
+- ModeratorAddress: string
+- RequestDoc: OracleRequestDoc
+```
+
+### Update Oracle Request Document
+```go
+MsgUpdateOracleRequestDoc
+- ModeratorAddress: string
+- RequestDoc: OracleRequestDoc
+- Reason: string
+```
+
+### Submit Oracle Data
+```go
+MsgSubmitOracleData
+- AuthorityAddress: string
+- DataSet: SubmitDataSet
+```
+
+### Update Moderator Address
+```go
+MsgUpdateModeratorAddress
+- ModeratorAddress: string
+- NewModeratorAddress: string
+```
+
+### Update Predefined Oracle
+```go
+MsgUpdatePredefinedOracle
+- ModeratorAddress: string
+- PredefinedOracle: PredefinedOracle
+```
+
+### Delete Predefined Oracle
+```go
+MsgDeletePredefinedOracle
+- ModeratorAddress: string
+- Type: string
+```
+
+## Queries
+
+### Oracle Request Document
+```go
+QueryOracleRequestDocRequest
+- RequestId: uint64
+```
+
+### Oracle Data
+```go
+QueryOracleDataRequest
+- RequestId: uint64
+- Nonce: uint64
+```
+
+## Events
+
+### Register Oracle Request Document
+```go
+EventTypeRegisterOracleRequestDoc
+- AttributeKeyRequestId
+- AttributeKeyOracleType
+- AttributeKeyName
+- AttributeKeyDescription
+- AttributeKeyPeriod
+- AttributeKeyAccountList
+- AttributeKeyEndpoints
+- AttributeKeyAggregationRule
+- AttributeKeyStatus
+- AttributeKeyCreator
+```
+
+### Update Oracle Request Document
+```go
+EventTypeUpdateOracleRequestDoc
+- AttributeKeyRequestId
+- AttributeKeyOracleType
+- AttributeKeyName
+- AttributeKeyDescription
+- AttributeKeyPeriod
+- AttributeKeyAccountList
+- AttributeKeyEndpoints
+- AttributeKeyAggregationRule
+- AttributeKeyStatus
+- AttributeKeyNonce
+- AttributeKeyCreator
+```
+
+### Submit Oracle Data
+```go
+EventTypeSubmitOracleData
+- AttributeKeyRequestId
+- AttributeKeyNonce
+- AttributeKeyRawData
+- AttributeKeyFromAddress
+```
+
+### Update Moderator Address
+```go
+EventTypeUpdateModeratorAddress
+- AttributeKeyModeratorAddress
+```
+
+## Aggregation Rules
+
+The module supports the following aggregation rules:
+
+- AGGREGATION_RULE_AVG: Calculate the average of all submitted values
+- AGGREGATION_RULE_MIN: Use the minimum value from all submissions
+- AGGREGATION_RULE_MAX: Use the maximum value from all submissions
+- AGGREGATION_RULE_MEDIAN: Calculate the median of all submitted values
+
+## Authorization
+
+- Only the moderator can register and update oracle request documents
+- Only authorized accounts can submit oracle data
+- Only the current moderator can update the moderator address
+- Only the moderator can update or delete predefined oracles
+
+## State
+
+The module maintains the following state:
+
+- Oracle Request Documents
+- Oracle Data Sets
+- Moderator Address
+- Predefined Oracles
+- Oracle Request Document Count
+
+## Hooks
+
+The module provides hooks for external modules to react to oracle events:
+
+- AfterOracleEnd: Called after an oracle data set is completed
 
 ## Genesis State
 
@@ -18,6 +179,7 @@ The Oracle module's genesis state contains the following parameters:
       "slash_fraction_downtime": "0.01"
     },
     "oracle_request_docs": [],
+    "predefined_oracles": [],
     "moderator_address": "guru1..."
   }
 }
@@ -52,6 +214,7 @@ jq '.app_state.oracle = {
     "slash_fraction_downtime": "0.01"
   },
   "oracle_request_docs": [],
+  "predefined_oracles": [],
   "moderator_address": "guru1..."
 }' genesis.json > new-genesis.json
 
@@ -92,6 +255,21 @@ Update the moderator address for the oracle module.
 ```bash
 gurud tx oracle update-moderator-address [moderator-address]
 ```
+
+### Update Predefined Oracle
+
+Update a predefined oracle.
+```bash
+gurud tx oracle update-predefined-oracle 6 "Currency KRW" 2
+```
+
+### Delete Predefined Oracle
+
+Delete a predefined oracle.
+```bash
+gurud tx oracle delete-predefined-oracle 2
+```
+
 
 ## Queries
 
@@ -142,6 +320,15 @@ Query the current moderator address.
 ```bash
 gurud query oracle moderator-address
 ```
+
+### Predefined Oracles
+
+Query  all Predefined Oracles.
+
+```bash
+gurud q oracle predefined-oracles
+```
+
 
 ## CLI Examples
 

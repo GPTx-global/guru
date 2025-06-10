@@ -27,6 +27,7 @@ const (
 	prefixOracleRequestDocCount
 	prefixOracleData
 	prefixOracleDataSet
+	prefixPredefinedOracle
 )
 
 // KV Store key prefixes
@@ -37,16 +38,12 @@ var (
 	KeyOracleRequestDocCount = []byte{prefixOracleRequestDocCount}
 	KeyOracleData            = []byte{prefixOracleData}
 	KeyOracleDataSet         = []byte{prefixOracleDataSet}
+	KeyPredefinedOracle      = []byte{prefixPredefinedOracle}
 )
 
-func IDToBytes(id uint64) []byte {
-	bz := make([]byte, 8)
-	binary.BigEndian.PutUint64(bz, id)
-	return bz
-}
-
-func StringToBytes(str string) []byte {
-	return []byte(str)
+// GetPredefinedOracleKey returns the key for storing PredefinedOracle
+func GetPredefinedOracleKey(predefinedOracleId uint32) []byte {
+	return append(KeyPredefinedOracle, IDToBytes32(predefinedOracleId)...)
 }
 
 // GetOracleRequestDocKey returns the key for storing OracleRequsetDoc
@@ -84,4 +81,20 @@ func GetSubmitDataKeyByProvider(request_id uint64, nonce uint64, provider string
 // GetDataSetKey returns the key for storing a DataSet
 func GetDataSetKey(request_id uint64, nonce uint64) []byte {
 	return append(KeyOracleDataSet, IDToBytes(request_id)...)
+}
+
+func IDToBytes(id uint64) []byte {
+	bz := make([]byte, 8)
+	binary.BigEndian.PutUint64(bz, id)
+	return bz
+}
+
+func IDToBytes32(id uint32) []byte {
+	bz := make([]byte, 4)
+	binary.BigEndian.PutUint32(bz, id)
+	return bz
+}
+
+func StringToBytes(str string) []byte {
+	return []byte(str)
 }

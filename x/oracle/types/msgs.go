@@ -216,3 +216,87 @@ func (msg MsgUpdateModeratorAddress) ValidateBasic() error {
 	}
 	return nil
 }
+
+func NewMsgUpdatePredefinedOracle(moderatorAddress string, predefinedOracle PredefinedOracle) *MsgUpdatePredefinedOracle {
+	return &MsgUpdatePredefinedOracle{
+		ModeratorAddress: moderatorAddress,
+		PredefinedOracle: predefinedOracle,
+	}
+}
+
+func (msg MsgUpdatePredefinedOracle) Route() string {
+	return RouterKey
+}
+
+func (msg MsgUpdatePredefinedOracle) Type() string {
+	return "update_predefined_oracle"
+}
+
+func (msg MsgUpdatePredefinedOracle) GetSigners() []sdk.AccAddress {
+	moderatorAddress, err := sdk.AccAddressFromBech32(msg.ModeratorAddress)
+	if err != nil {
+		panic(err)
+	}
+	return []sdk.AccAddress{moderatorAddress}
+}
+
+func (msg MsgUpdatePredefinedOracle) GetSignBytes() []byte {
+	bz := ModuleCdc.MustMarshalJSON(&msg)
+	return sdk.MustSortJSON(bz)
+}
+
+func (msg MsgUpdatePredefinedOracle) ValidateBasic() error {
+	if msg.ModeratorAddress == "" {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "moderator address cannot be empty")
+	}
+	if _, err := sdk.AccAddressFromBech32(msg.ModeratorAddress); err != nil {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid moderator address (%s)", err)
+	}
+	if msg.PredefinedOracle.RequestId == 0 {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "request ID cannot be empty")
+	}
+	if msg.PredefinedOracle.Name == "" {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "name cannot be empty")
+	}
+	if msg.PredefinedOracle.Type == PredefinedOracleType(0) {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "predefined oracle type cannot be empty")
+	}
+	return nil
+}
+
+func NewMsgDeletePredefinedOracle(moderatorAddress string, predefinedOracleType PredefinedOracleType) *MsgDeletePredefinedOracle {
+	return &MsgDeletePredefinedOracle{
+		ModeratorAddress: moderatorAddress,
+		Type:             predefinedOracleType,
+	}
+}
+
+func (msg MsgDeletePredefinedOracle) Route() string {
+	return RouterKey
+}
+
+func (msg MsgDeletePredefinedOracle) GetSigners() []sdk.AccAddress {
+	moderatorAddress, err := sdk.AccAddressFromBech32(msg.ModeratorAddress)
+	if err != nil {
+		panic(err)
+	}
+	return []sdk.AccAddress{moderatorAddress}
+}
+
+func (msg MsgDeletePredefinedOracle) GetSignBytes() []byte {
+	bz := ModuleCdc.MustMarshalJSON(&msg)
+	return sdk.MustSortJSON(bz)
+}
+
+func (msg MsgDeletePredefinedOracle) ValidateBasic() error {
+	if msg.ModeratorAddress == "" {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "moderator address cannot be empty")
+	}
+	if _, err := sdk.AccAddressFromBech32(msg.ModeratorAddress); err != nil {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid moderator address (%s)", err)
+	}
+	// if msg.Type == PredefinedOracleType_PREDEFINED_ORACLE_TYPE_UNSPECIFIED {
+	// 	return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "predefined oracle type cannot be empty")
+	// }
+	return nil
+}

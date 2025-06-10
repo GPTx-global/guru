@@ -23,6 +23,12 @@ service Msg {
 
   // UpdateModeratorAddress defines a method for updating the moderator address
   rpc UpdateModeratorAddress(MsgUpdateModeratorAddress) returns (MsgUpdateModeratorAddressResponse);
+
+  // UpdatePredefinedOracle defines a method for updating a predefined oracle
+  rpc UpdatePredefinedOracle(MsgUpdatePredefinedOracle) returns (MsgUpdatePredefinedOracleResponse);
+
+  // DeletePredefinedOracle defines a method for deleting a predefined oracle
+  rpc DeletePredefinedOracle(MsgDeletePredefinedOracle) returns (MsgDeletePredefinedOracleResponse);
 }
 
 // MsgRegisterOracleRequestDoc represents a message to register a new oracle request document
@@ -99,3 +105,37 @@ message MsgUpdateModeratorAddress {
 
 // MsgUpdateModeratorAddressResponse defines the Msg/UpdateModeratorAddress response type
 message MsgUpdateModeratorAddressResponse {} 
+
+// MsgUpdatePredefinedOracle represents a message to update a predefined oracle
+message MsgUpdatePredefinedOracle {
+  option (cosmos.msg.v1.signer) = "moderator_address";
+
+  option (gogoproto.equal)           = false;
+  option (gogoproto.goproto_getters) = false;
+
+  string moderator_address = 1
+      [(cosmos_proto.scalar) = "cosmos.AddressString"];
+
+  // The updated predefined oracle
+  PredefinedOracle predefined_oracle = 2 [(gogoproto.nullable) = false];
+}
+
+// MsgUpdatePredefinedOracleResponse defines the Msg/UpdatePredefinedOracle response type
+message MsgUpdatePredefinedOracleResponse {}
+
+// MsgDeletePredefinedOracle represents a message to delete a predefined oracle
+message MsgDeletePredefinedOracle {
+  option (cosmos.msg.v1.signer) = "moderator_address";
+
+  option (gogoproto.equal)           = false;
+  option (gogoproto.goproto_getters) = false;
+
+  string moderator_address = 1
+      [(cosmos_proto.scalar) = "cosmos.AddressString"];
+
+  // The predefined oracle type to be deleted
+  PredefinedOracleType type = 2;
+}
+
+// MsgDeletePredefinedOracleResponse defines the Msg/DeletePredefinedOracle response type
+message MsgDeletePredefinedOracleResponse {}

@@ -358,6 +358,160 @@ func (m *MsgUpdateModeratorAddressResponse) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_MsgUpdateModeratorAddressResponse proto.InternalMessageInfo
 
+// MsgUpdatePredefinedOracle represents a message to update a predefined oracle
+type MsgUpdatePredefinedOracle struct {
+	ModeratorAddress string `protobuf:"bytes,1,opt,name=moderator_address,json=moderatorAddress,proto3" json:"moderator_address,omitempty"`
+	// The updated predefined oracle
+	PredefinedOracle PredefinedOracle `protobuf:"bytes,2,opt,name=predefined_oracle,json=predefinedOracle,proto3" json:"predefined_oracle"`
+}
+
+func (m *MsgUpdatePredefinedOracle) Reset()         { *m = MsgUpdatePredefinedOracle{} }
+func (m *MsgUpdatePredefinedOracle) String() string { return proto.CompactTextString(m) }
+func (*MsgUpdatePredefinedOracle) ProtoMessage()    {}
+func (*MsgUpdatePredefinedOracle) Descriptor() ([]byte, []int) {
+	return fileDescriptor_febdd1f478235f42, []int{8}
+}
+func (m *MsgUpdatePredefinedOracle) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgUpdatePredefinedOracle) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgUpdatePredefinedOracle.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgUpdatePredefinedOracle) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgUpdatePredefinedOracle.Merge(m, src)
+}
+func (m *MsgUpdatePredefinedOracle) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgUpdatePredefinedOracle) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgUpdatePredefinedOracle.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgUpdatePredefinedOracle proto.InternalMessageInfo
+
+// MsgUpdatePredefinedOracleResponse defines the Msg/UpdatePredefinedOracle response type
+type MsgUpdatePredefinedOracleResponse struct {
+}
+
+func (m *MsgUpdatePredefinedOracleResponse) Reset()         { *m = MsgUpdatePredefinedOracleResponse{} }
+func (m *MsgUpdatePredefinedOracleResponse) String() string { return proto.CompactTextString(m) }
+func (*MsgUpdatePredefinedOracleResponse) ProtoMessage()    {}
+func (*MsgUpdatePredefinedOracleResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_febdd1f478235f42, []int{9}
+}
+func (m *MsgUpdatePredefinedOracleResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgUpdatePredefinedOracleResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgUpdatePredefinedOracleResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgUpdatePredefinedOracleResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgUpdatePredefinedOracleResponse.Merge(m, src)
+}
+func (m *MsgUpdatePredefinedOracleResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgUpdatePredefinedOracleResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgUpdatePredefinedOracleResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgUpdatePredefinedOracleResponse proto.InternalMessageInfo
+
+// MsgDeletePredefinedOracle represents a message to delete a predefined oracle
+type MsgDeletePredefinedOracle struct {
+	ModeratorAddress string `protobuf:"bytes,1,opt,name=moderator_address,json=moderatorAddress,proto3" json:"moderator_address,omitempty"`
+	// The predefined oracle type to be deleted
+	Type PredefinedOracleType `protobuf:"varint,2,opt,name=type,proto3,enum=guru.oracle.v1.PredefinedOracleType" json:"type,omitempty"`
+}
+
+func (m *MsgDeletePredefinedOracle) Reset()         { *m = MsgDeletePredefinedOracle{} }
+func (m *MsgDeletePredefinedOracle) String() string { return proto.CompactTextString(m) }
+func (*MsgDeletePredefinedOracle) ProtoMessage()    {}
+func (*MsgDeletePredefinedOracle) Descriptor() ([]byte, []int) {
+	return fileDescriptor_febdd1f478235f42, []int{10}
+}
+func (m *MsgDeletePredefinedOracle) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgDeletePredefinedOracle) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgDeletePredefinedOracle.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgDeletePredefinedOracle) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgDeletePredefinedOracle.Merge(m, src)
+}
+func (m *MsgDeletePredefinedOracle) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgDeletePredefinedOracle) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgDeletePredefinedOracle.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgDeletePredefinedOracle proto.InternalMessageInfo
+
+// MsgDeletePredefinedOracleResponse defines the Msg/DeletePredefinedOracle response type
+type MsgDeletePredefinedOracleResponse struct {
+}
+
+func (m *MsgDeletePredefinedOracleResponse) Reset()         { *m = MsgDeletePredefinedOracleResponse{} }
+func (m *MsgDeletePredefinedOracleResponse) String() string { return proto.CompactTextString(m) }
+func (*MsgDeletePredefinedOracleResponse) ProtoMessage()    {}
+func (*MsgDeletePredefinedOracleResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_febdd1f478235f42, []int{11}
+}
+func (m *MsgDeletePredefinedOracleResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgDeletePredefinedOracleResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgDeletePredefinedOracleResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgDeletePredefinedOracleResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgDeletePredefinedOracleResponse.Merge(m, src)
+}
+func (m *MsgDeletePredefinedOracleResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgDeletePredefinedOracleResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgDeletePredefinedOracleResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgDeletePredefinedOracleResponse proto.InternalMessageInfo
+
 func init() {
 	proto.RegisterType((*MsgRegisterOracleRequestDoc)(nil), "guru.oracle.v1.MsgRegisterOracleRequestDoc")
 	proto.RegisterType((*MsgRegisterOracleRequestDocResponse)(nil), "guru.oracle.v1.MsgRegisterOracleRequestDocResponse")
@@ -367,49 +521,60 @@ func init() {
 	proto.RegisterType((*MsgSubmitOracleDataResponse)(nil), "guru.oracle.v1.MsgSubmitOracleDataResponse")
 	proto.RegisterType((*MsgUpdateModeratorAddress)(nil), "guru.oracle.v1.MsgUpdateModeratorAddress")
 	proto.RegisterType((*MsgUpdateModeratorAddressResponse)(nil), "guru.oracle.v1.MsgUpdateModeratorAddressResponse")
+	proto.RegisterType((*MsgUpdatePredefinedOracle)(nil), "guru.oracle.v1.MsgUpdatePredefinedOracle")
+	proto.RegisterType((*MsgUpdatePredefinedOracleResponse)(nil), "guru.oracle.v1.MsgUpdatePredefinedOracleResponse")
+	proto.RegisterType((*MsgDeletePredefinedOracle)(nil), "guru.oracle.v1.MsgDeletePredefinedOracle")
+	proto.RegisterType((*MsgDeletePredefinedOracleResponse)(nil), "guru.oracle.v1.MsgDeletePredefinedOracleResponse")
 }
 
 func init() { proto.RegisterFile("guru/oracle/v1/tx.proto", fileDescriptor_febdd1f478235f42) }
 
 var fileDescriptor_febdd1f478235f42 = []byte{
-	// 591 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xcc, 0x55, 0x3f, 0x6f, 0xd3, 0x4e,
-	0x18, 0xb6, 0x9b, 0xaa, 0xbf, 0x5f, 0xaf, 0x12, 0x2a, 0x6e, 0x69, 0xd3, 0x54, 0x71, 0x42, 0xb2,
-	0x94, 0x56, 0xb5, 0x95, 0x76, 0x41, 0x6c, 0x44, 0x41, 0x15, 0x12, 0x11, 0xc8, 0x81, 0x85, 0xc5,
-	0x3a, 0xdb, 0xa7, 0xab, 0xa5, 0xd8, 0x17, 0xee, 0xce, 0x69, 0x2a, 0x31, 0x31, 0x31, 0xf2, 0x11,
-	0xfa, 0x11, 0x18, 0x10, 0x9f, 0xa1, 0x0b, 0x52, 0xc4, 0x04, 0x0b, 0x42, 0xc9, 0x00, 0x1f, 0x03,
-	0xd9, 0xe7, 0x44, 0xe5, 0x1c, 0x27, 0x41, 0x62, 0x60, 0xf3, 0xbd, 0xef, 0xf3, 0xfe, 0x79, 0x9e,
-	0xf7, 0x3d, 0x1f, 0xd8, 0xc5, 0x11, 0x8d, 0x4c, 0x42, 0xa1, 0xdb, 0x45, 0x66, 0xbf, 0x61, 0xf2,
-	0x81, 0xd1, 0xa3, 0x84, 0x13, 0xed, 0x56, 0xec, 0x30, 0x84, 0xc3, 0xe8, 0x37, 0x4a, 0xbb, 0x2e,
-	0x61, 0x01, 0x61, 0x66, 0xc0, 0x70, 0x8c, 0x0b, 0x18, 0x16, 0xc0, 0xd2, 0x9e, 0x70, 0xd8, 0xc9,
-	0xc9, 0x14, 0x87, 0xd4, 0xb5, 0x8d, 0x09, 0x26, 0xc2, 0x1e, 0x7f, 0xa5, 0xd6, 0x7d, 0xa9, 0x64,
-	0x5a, 0x43, 0x38, 0xf5, 0xb4, 0x8c, 0x03, 0x59, 0xec, 0x74, 0x10, 0x87, 0x0d, 0xd3, 0x25, 0x7e,
-	0x28, 0xfc, 0xb5, 0x4f, 0x2a, 0xd8, 0x6f, 0x33, 0x6c, 0x21, 0xec, 0x33, 0x8e, 0xe8, 0xd3, 0x24,
-	0xd6, 0x42, 0xaf, 0x22, 0xc4, 0x78, 0x8b, 0xb8, 0xda, 0x23, 0x70, 0x3b, 0x20, 0x1e, 0xa2, 0x90,
-	0x13, 0x6a, 0x43, 0xcf, 0xa3, 0x88, 0xb1, 0xa2, 0x5a, 0x55, 0x0f, 0xd6, 0x9b, 0xc5, 0xcf, 0x1f,
-	0x8e, 0xb7, 0xd3, 0xfe, 0x1e, 0x0a, 0x4f, 0x87, 0x53, 0x3f, 0xc4, 0xd6, 0xe6, 0x34, 0x24, 0xb5,
-	0x6b, 0x67, 0x60, 0x83, 0x8a, 0xa4, 0xb6, 0x47, 0xdc, 0xe2, 0x4a, 0x55, 0x3d, 0xd8, 0x38, 0xa9,
-	0x1a, 0xbf, 0x6b, 0x62, 0xc8, 0xd5, 0x9b, 0xab, 0xd7, 0xdf, 0x2a, 0x8a, 0x05, 0xe8, 0xd4, 0xf2,
-	0x40, 0x7f, 0x7b, 0x55, 0x51, 0x7e, 0x5e, 0x55, 0x94, 0x37, 0x3f, 0xde, 0x1f, 0x66, 0x5b, 0xab,
-	0xb5, 0x40, 0x7d, 0x0e, 0x1d, 0x0b, 0xb1, 0x1e, 0x09, 0x19, 0xd2, 0xca, 0x60, 0x92, 0xd4, 0xf6,
-	0xbd, 0x84, 0xcf, 0xaa, 0xb5, 0x9e, 0x5a, 0x1e, 0x7b, 0xb5, 0xb1, 0x0a, 0xf6, 0xda, 0x0c, 0xbf,
-	0xe8, 0x79, 0x90, 0xa3, 0x7f, 0x5d, 0x13, 0x6d, 0x07, 0xac, 0x51, 0x04, 0x19, 0x09, 0x8b, 0x85,
-	0xb8, 0x09, 0x2b, 0x3d, 0x2d, 0xd4, 0xaa, 0x09, 0xee, 0xe6, 0x92, 0x5c, 0x56, 0xa9, 0x8f, 0x2a,
-	0xd8, 0x6a, 0x33, 0xdc, 0x89, 0x9c, 0xc0, 0xe7, 0x22, 0x49, 0x0b, 0x72, 0x18, 0x6b, 0x04, 0x23,
-	0x7e, 0x4e, 0xa8, 0xcf, 0x2f, 0x97, 0xd7, 0x68, 0x1a, 0x32, 0xd1, 0xe8, 0x3e, 0xf8, 0xdf, 0x83,
-	0x1c, 0xda, 0x0c, 0xf1, 0x54, 0xa0, 0xb2, 0x2c, 0x90, 0x28, 0x1d, 0x17, 0xed, 0x20, 0x6e, 0xfd,
-	0xe7, 0x89, 0x0f, 0x89, 0x7c, 0xa6, 0x97, 0x5a, 0x39, 0xd9, 0x7b, 0xb9, 0xef, 0x09, 0xed, 0xda,
-	0xf0, 0xe6, 0x06, 0xb4, 0xe5, 0xd1, 0xfd, 0xa5, 0x0d, 0x78, 0x02, 0xee, 0x84, 0xe8, 0xc2, 0xce,
-	0xa6, 0x5a, 0x59, 0x90, 0x6a, 0x2b, 0x44, 0x17, 0x72, 0x53, 0x0b, 0xc7, 0x5d, 0xbf, 0x31, 0x6e,
-	0x39, 0x78, 0xc2, 0xfb, 0xe4, 0x6b, 0x01, 0x14, 0xda, 0x0c, 0x6b, 0xaf, 0x41, 0x31, 0xf7, 0x9f,
-	0x70, 0x24, 0x8f, 0x60, 0xce, 0x8d, 0x2b, 0x9d, 0xfe, 0x01, 0x78, 0xba, 0x74, 0x7d, 0xb0, 0x93,
-	0x73, 0xf7, 0xee, 0xcd, 0x48, 0x37, 0x1b, 0x5a, 0x6a, 0x2c, 0x0d, 0x9d, 0xd6, 0xf5, 0xc0, 0x66,
-	0x66, 0x93, 0xeb, 0x33, 0xd2, 0xc8, 0xa0, 0xd2, 0xd1, 0x12, 0xa0, 0x2c, 0xbb, 0xcc, 0x5e, 0xe5,
-	0xb3, 0x93, 0xa1, 0x73, 0xd8, 0xe5, 0xcd, 0xb6, 0xd9, 0xba, 0x1e, 0xe9, 0xea, 0x70, 0xa4, 0xab,
-	0xdf, 0x47, 0xba, 0xfa, 0x6e, 0xac, 0x2b, 0xc3, 0xb1, 0xae, 0x7c, 0x19, 0xeb, 0xca, 0xcb, 0x43,
-	0xec, 0xf3, 0xf3, 0xc8, 0x31, 0x5c, 0x12, 0x98, 0x67, 0xcf, 0x9e, 0x0f, 0x8e, 0x71, 0x97, 0x38,
-	0xb0, 0x6b, 0x26, 0x2f, 0xcb, 0x60, 0xf2, 0xb6, 0xf0, 0xcb, 0x1e, 0x62, 0xce, 0x5a, 0xf2, 0x70,
-	0x9c, 0xfe, 0x0a, 0x00, 0x00, 0xff, 0xff, 0xfa, 0xd8, 0x40, 0x93, 0xea, 0x06, 0x00, 0x00,
+	// 695 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xcc, 0x56, 0x4f, 0x4f, 0xd4, 0x4e,
+	0x18, 0xde, 0x02, 0x3f, 0x7e, 0x32, 0x24, 0x04, 0x16, 0x84, 0x65, 0x09, 0x05, 0x17, 0x0f, 0x08,
+	0x61, 0x9b, 0x85, 0x0b, 0xf1, 0xe6, 0x66, 0x0d, 0x31, 0x71, 0x23, 0xe9, 0xe2, 0xc5, 0x4b, 0x33,
+	0xdb, 0x19, 0x87, 0x26, 0xdb, 0x4e, 0x9d, 0x99, 0xf2, 0x27, 0xf1, 0xe4, 0xc9, 0xa3, 0x1f, 0x81,
+	0x8f, 0xe0, 0xc1, 0x78, 0xf2, 0x03, 0xe0, 0xc1, 0x84, 0x78, 0xd1, 0x93, 0x31, 0xec, 0x41, 0x3f,
+	0x86, 0x69, 0xa7, 0x5b, 0x71, 0xda, 0xee, 0x2e, 0x09, 0x26, 0xde, 0xda, 0xf7, 0xdf, 0xf3, 0x3e,
+	0xcf, 0xbc, 0xf3, 0x66, 0xc0, 0x02, 0x09, 0x58, 0x60, 0x50, 0x06, 0xed, 0x0e, 0x36, 0x8e, 0x6a,
+	0x86, 0x38, 0xa9, 0xfa, 0x8c, 0x0a, 0x5a, 0x9c, 0x0a, 0x1d, 0x55, 0xe9, 0xa8, 0x1e, 0xd5, 0xca,
+	0x0b, 0x36, 0xe5, 0x2e, 0xe5, 0x86, 0xcb, 0x49, 0x18, 0xe7, 0x72, 0x22, 0x03, 0xcb, 0x8b, 0xd2,
+	0x61, 0x45, 0x7f, 0x86, 0xfc, 0x89, 0x5d, 0x73, 0x84, 0x12, 0x2a, 0xed, 0xe1, 0x57, 0x6c, 0x5d,
+	0x52, 0x20, 0x63, 0x0c, 0xe9, 0xd4, 0x63, 0x98, 0x36, 0xe4, 0xa1, 0xb3, 0x8d, 0x05, 0xac, 0x19,
+	0x36, 0x75, 0x3c, 0xe9, 0xaf, 0x7c, 0xd2, 0xc0, 0x52, 0x93, 0x13, 0x13, 0x13, 0x87, 0x0b, 0xcc,
+	0x9e, 0x44, 0xb9, 0x26, 0x7e, 0x11, 0x60, 0x2e, 0x1a, 0xd4, 0x2e, 0x3e, 0x04, 0x33, 0x2e, 0x45,
+	0x98, 0x41, 0x41, 0x99, 0x05, 0x11, 0x62, 0x98, 0xf3, 0x92, 0xb6, 0xaa, 0xad, 0x4f, 0xd4, 0x4b,
+	0x9f, 0xdf, 0x6d, 0xcd, 0xc5, 0xfd, 0x3d, 0x90, 0x9e, 0x96, 0x60, 0x8e, 0x47, 0xcc, 0xe9, 0x24,
+	0x25, 0xb6, 0x17, 0xf7, 0xc0, 0x24, 0x93, 0x45, 0x2d, 0x44, 0xed, 0xd2, 0xc8, 0xaa, 0xb6, 0x3e,
+	0xb9, 0xbd, 0x5a, 0xfd, 0x53, 0x93, 0xaa, 0x8a, 0x5e, 0x1f, 0x3b, 0xff, 0xb6, 0x52, 0x30, 0x01,
+	0x4b, 0x2c, 0xf7, 0xf5, 0xd7, 0x67, 0x2b, 0x85, 0x9f, 0x67, 0x2b, 0x85, 0x57, 0x3f, 0xde, 0x6e,
+	0xa4, 0x5b, 0xab, 0x34, 0xc0, 0x5a, 0x1f, 0x3a, 0x26, 0xe6, 0x3e, 0xf5, 0x38, 0x2e, 0x2e, 0x83,
+	0x5e, 0x51, 0xcb, 0x41, 0x11, 0x9f, 0x31, 0x73, 0x22, 0xb6, 0x3c, 0x42, 0x95, 0xae, 0x06, 0x16,
+	0x9b, 0x9c, 0x3c, 0xf5, 0x11, 0x14, 0xf8, 0x5f, 0xd7, 0xa4, 0x38, 0x0f, 0xc6, 0x19, 0x86, 0x9c,
+	0x7a, 0xa5, 0xd1, 0xb0, 0x09, 0x33, 0xfe, 0x1b, 0xa8, 0x55, 0x1d, 0xdc, 0xc9, 0x25, 0x39, 0xac,
+	0x52, 0xef, 0x35, 0x30, 0xdb, 0xe4, 0xa4, 0x15, 0xb4, 0x5d, 0x47, 0xc8, 0x22, 0x0d, 0x28, 0x60,
+	0xa8, 0x11, 0x0c, 0xc4, 0x21, 0x65, 0x8e, 0x38, 0x1d, 0x5e, 0xa3, 0x24, 0xa5, 0xa7, 0xd1, 0x2e,
+	0xb8, 0x85, 0xa0, 0x80, 0x16, 0xc7, 0x22, 0x16, 0x68, 0x59, 0x15, 0x48, 0x42, 0x87, 0xa0, 0x2d,
+	0x2c, 0xcc, 0xff, 0x91, 0xfc, 0x50, 0xc8, 0xa7, 0x7a, 0xa9, 0x2c, 0x47, 0x73, 0xaf, 0xf6, 0xdd,
+	0xa3, 0x5d, 0xb9, 0xb8, 0x3a, 0x01, 0x4d, 0xf5, 0xe8, 0x6e, 0x68, 0x02, 0x1e, 0x83, 0xdb, 0x1e,
+	0x3e, 0xb6, 0xd2, 0xa5, 0x46, 0x06, 0x94, 0x9a, 0xf5, 0xf0, 0xb1, 0xda, 0xd4, 0xc0, 0xe3, 0x5e,
+	0xbb, 0x72, 0xdc, 0x6a, 0x72, 0xc2, 0xfb, 0xcb, 0x55, 0xde, 0xfb, 0x0c, 0x23, 0xfc, 0xdc, 0xf1,
+	0x30, 0x92, 0x0a, 0xdd, 0x14, 0xef, 0x16, 0x98, 0xf1, 0x93, 0xd2, 0x96, 0x3c, 0xca, 0xbc, 0xf9,
+	0x57, 0x7b, 0x88, 0xe7, 0x7f, 0xda, 0x57, 0xec, 0xd7, 0xa2, 0xaf, 0x16, 0x4d, 0xe8, 0x7f, 0x90,
+	0xf4, 0x1b, 0xb8, 0x83, 0xff, 0x1e, 0xfd, 0x5d, 0x30, 0x26, 0x4e, 0x7d, 0xc9, 0x78, 0x6a, 0xfb,
+	0xee, 0x20, 0xc6, 0x07, 0xa7, 0x3e, 0x36, 0xa3, 0x8c, 0x21, 0x39, 0x66, 0x77, 0xdf, 0xe3, 0xb8,
+	0xfd, 0xf1, 0x3f, 0x30, 0xda, 0xe4, 0xa4, 0xf8, 0x12, 0x94, 0x72, 0xd7, 0xfe, 0xa6, 0xda, 0x54,
+	0x9f, 0xa5, 0x5a, 0xde, 0xb9, 0x46, 0x70, 0xb2, 0x57, 0x8e, 0xc0, 0x7c, 0xce, 0x7a, 0xbd, 0x97,
+	0x51, 0x2e, 0x3b, 0xb4, 0x5c, 0x1b, 0x3a, 0x34, 0xc1, 0x45, 0x60, 0x3a, 0xb5, 0xac, 0xd6, 0x32,
+	0xca, 0xa8, 0x41, 0xe5, 0xcd, 0x21, 0x82, 0xd2, 0xec, 0x52, 0xab, 0x23, 0x9f, 0x9d, 0x1a, 0xda,
+	0x87, 0x5d, 0xde, 0xf5, 0xfd, 0x8d, 0x9b, 0x9a, 0xdd, 0x7c, 0x5c, 0x35, 0xb4, 0x0f, 0x6e, 0xde,
+	0x4c, 0x85, 0xb8, 0x39, 0x77, 0x26, 0x0b, 0x37, 0x3b, 0x34, 0x13, 0xb7, 0xff, 0x2c, 0xd7, 0x1b,
+	0xe7, 0x97, 0xba, 0x76, 0x71, 0xa9, 0x6b, 0xdf, 0x2f, 0x75, 0xed, 0x4d, 0x57, 0x2f, 0x5c, 0x74,
+	0xf5, 0xc2, 0xd7, 0xae, 0x5e, 0x78, 0xb6, 0x41, 0x1c, 0x71, 0x18, 0xb4, 0xab, 0x36, 0x75, 0x8d,
+	0xbd, 0xfd, 0x83, 0x93, 0x2d, 0xd2, 0xa1, 0x6d, 0xd8, 0x31, 0xa2, 0xc7, 0xd2, 0x49, 0xef, 0xb9,
+	0x14, 0xde, 0x2a, 0xde, 0x1e, 0x8f, 0xde, 0x42, 0x3b, 0xbf, 0x02, 0x00, 0x00, 0xff, 0xff, 0x66,
+	0x24, 0xe1, 0xf6, 0xbd, 0x09, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -432,6 +597,10 @@ type MsgClient interface {
 	SubmitOracleData(ctx context.Context, in *MsgSubmitOracleData, opts ...grpc.CallOption) (*MsgSubmitOracleDataResponse, error)
 	// UpdateModeratorAddress defines a method for updating the moderator address
 	UpdateModeratorAddress(ctx context.Context, in *MsgUpdateModeratorAddress, opts ...grpc.CallOption) (*MsgUpdateModeratorAddressResponse, error)
+	// UpdatePredefinedOracle defines a method for updating a predefined oracle
+	UpdatePredefinedOracle(ctx context.Context, in *MsgUpdatePredefinedOracle, opts ...grpc.CallOption) (*MsgUpdatePredefinedOracleResponse, error)
+	// DeletePredefinedOracle defines a method for deleting a predefined oracle
+	DeletePredefinedOracle(ctx context.Context, in *MsgDeletePredefinedOracle, opts ...grpc.CallOption) (*MsgDeletePredefinedOracleResponse, error)
 }
 
 type msgClient struct {
@@ -478,6 +647,24 @@ func (c *msgClient) UpdateModeratorAddress(ctx context.Context, in *MsgUpdateMod
 	return out, nil
 }
 
+func (c *msgClient) UpdatePredefinedOracle(ctx context.Context, in *MsgUpdatePredefinedOracle, opts ...grpc.CallOption) (*MsgUpdatePredefinedOracleResponse, error) {
+	out := new(MsgUpdatePredefinedOracleResponse)
+	err := c.cc.Invoke(ctx, "/guru.oracle.v1.Msg/UpdatePredefinedOracle", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *msgClient) DeletePredefinedOracle(ctx context.Context, in *MsgDeletePredefinedOracle, opts ...grpc.CallOption) (*MsgDeletePredefinedOracleResponse, error) {
+	out := new(MsgDeletePredefinedOracleResponse)
+	err := c.cc.Invoke(ctx, "/guru.oracle.v1.Msg/DeletePredefinedOracle", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // MsgServer is the server API for Msg service.
 type MsgServer interface {
 	// RegisterOracleRequestDoc defines a method for registering a new oracle request document
@@ -488,6 +675,10 @@ type MsgServer interface {
 	SubmitOracleData(context.Context, *MsgSubmitOracleData) (*MsgSubmitOracleDataResponse, error)
 	// UpdateModeratorAddress defines a method for updating the moderator address
 	UpdateModeratorAddress(context.Context, *MsgUpdateModeratorAddress) (*MsgUpdateModeratorAddressResponse, error)
+	// UpdatePredefinedOracle defines a method for updating a predefined oracle
+	UpdatePredefinedOracle(context.Context, *MsgUpdatePredefinedOracle) (*MsgUpdatePredefinedOracleResponse, error)
+	// DeletePredefinedOracle defines a method for deleting a predefined oracle
+	DeletePredefinedOracle(context.Context, *MsgDeletePredefinedOracle) (*MsgDeletePredefinedOracleResponse, error)
 }
 
 // UnimplementedMsgServer can be embedded to have forward compatible implementations.
@@ -505,6 +696,12 @@ func (*UnimplementedMsgServer) SubmitOracleData(ctx context.Context, req *MsgSub
 }
 func (*UnimplementedMsgServer) UpdateModeratorAddress(ctx context.Context, req *MsgUpdateModeratorAddress) (*MsgUpdateModeratorAddressResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateModeratorAddress not implemented")
+}
+func (*UnimplementedMsgServer) UpdatePredefinedOracle(ctx context.Context, req *MsgUpdatePredefinedOracle) (*MsgUpdatePredefinedOracleResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdatePredefinedOracle not implemented")
+}
+func (*UnimplementedMsgServer) DeletePredefinedOracle(ctx context.Context, req *MsgDeletePredefinedOracle) (*MsgDeletePredefinedOracleResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeletePredefinedOracle not implemented")
 }
 
 func RegisterMsgServer(s grpc1.Server, srv MsgServer) {
@@ -583,6 +780,42 @@ func _Msg_UpdateModeratorAddress_Handler(srv interface{}, ctx context.Context, d
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Msg_UpdatePredefinedOracle_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MsgUpdatePredefinedOracle)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MsgServer).UpdatePredefinedOracle(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/guru.oracle.v1.Msg/UpdatePredefinedOracle",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MsgServer).UpdatePredefinedOracle(ctx, req.(*MsgUpdatePredefinedOracle))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Msg_DeletePredefinedOracle_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MsgDeletePredefinedOracle)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MsgServer).DeletePredefinedOracle(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/guru.oracle.v1.Msg/DeletePredefinedOracle",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MsgServer).DeletePredefinedOracle(ctx, req.(*MsgDeletePredefinedOracle))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 var _Msg_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "guru.oracle.v1.Msg",
 	HandlerType: (*MsgServer)(nil),
@@ -602,6 +835,14 @@ var _Msg_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "UpdateModeratorAddress",
 			Handler:    _Msg_UpdateModeratorAddress_Handler,
+		},
+		{
+			MethodName: "UpdatePredefinedOracle",
+			Handler:    _Msg_UpdatePredefinedOracle_Handler,
+		},
+		{
+			MethodName: "DeletePredefinedOracle",
+			Handler:    _Msg_DeletePredefinedOracle_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
@@ -876,6 +1117,127 @@ func (m *MsgUpdateModeratorAddressResponse) MarshalToSizedBuffer(dAtA []byte) (i
 	return len(dAtA) - i, nil
 }
 
+func (m *MsgUpdatePredefinedOracle) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgUpdatePredefinedOracle) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgUpdatePredefinedOracle) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	{
+		size, err := m.PredefinedOracle.MarshalToSizedBuffer(dAtA[:i])
+		if err != nil {
+			return 0, err
+		}
+		i -= size
+		i = encodeVarintTx(dAtA, i, uint64(size))
+	}
+	i--
+	dAtA[i] = 0x12
+	if len(m.ModeratorAddress) > 0 {
+		i -= len(m.ModeratorAddress)
+		copy(dAtA[i:], m.ModeratorAddress)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.ModeratorAddress)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *MsgUpdatePredefinedOracleResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgUpdatePredefinedOracleResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgUpdatePredefinedOracleResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	return len(dAtA) - i, nil
+}
+
+func (m *MsgDeletePredefinedOracle) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgDeletePredefinedOracle) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgDeletePredefinedOracle) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.Type != 0 {
+		i = encodeVarintTx(dAtA, i, uint64(m.Type))
+		i--
+		dAtA[i] = 0x10
+	}
+	if len(m.ModeratorAddress) > 0 {
+		i -= len(m.ModeratorAddress)
+		copy(dAtA[i:], m.ModeratorAddress)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.ModeratorAddress)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *MsgDeletePredefinedOracleResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgDeletePredefinedOracleResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgDeletePredefinedOracleResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	return len(dAtA) - i, nil
+}
+
 func encodeVarintTx(dAtA []byte, offset int, v uint64) int {
 	offset -= sovTx(v)
 	base := offset
@@ -989,6 +1351,55 @@ func (m *MsgUpdateModeratorAddress) Size() (n int) {
 }
 
 func (m *MsgUpdateModeratorAddressResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	return n
+}
+
+func (m *MsgUpdatePredefinedOracle) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.ModeratorAddress)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	l = m.PredefinedOracle.Size()
+	n += 1 + l + sovTx(uint64(l))
+	return n
+}
+
+func (m *MsgUpdatePredefinedOracleResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	return n
+}
+
+func (m *MsgDeletePredefinedOracle) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.ModeratorAddress)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	if m.Type != 0 {
+		n += 1 + sovTx(uint64(m.Type))
+	}
+	return n
+}
+
+func (m *MsgDeletePredefinedOracleResponse) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -1712,6 +2123,322 @@ func (m *MsgUpdateModeratorAddressResponse) Unmarshal(dAtA []byte) error {
 		}
 		if fieldNum <= 0 {
 			return fmt.Errorf("proto: MsgUpdateModeratorAddressResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTx(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTx
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgUpdatePredefinedOracle) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTx
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgUpdatePredefinedOracle: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgUpdatePredefinedOracle: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ModeratorAddress", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.ModeratorAddress = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field PredefinedOracle", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := m.PredefinedOracle.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTx(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTx
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgUpdatePredefinedOracleResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTx
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgUpdatePredefinedOracleResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgUpdatePredefinedOracleResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTx(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTx
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgDeletePredefinedOracle) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTx
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgDeletePredefinedOracle: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgDeletePredefinedOracle: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ModeratorAddress", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.ModeratorAddress = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Type", wireType)
+			}
+			m.Type = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.Type |= PredefinedOracleType(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTx(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTx
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgDeletePredefinedOracleResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTx
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgDeletePredefinedOracleResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgDeletePredefinedOracleResponse: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		default:

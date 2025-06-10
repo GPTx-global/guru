@@ -164,6 +164,7 @@ func (k Keeper) SubmitOracleData(c context.Context, msg *types.MsgSubmitOracleDa
 
 }
 
+// UpdateModeratorAddress defines a method for updating the moderator address
 func (k Keeper) UpdateModeratorAddress(c context.Context, msg *types.MsgUpdateModeratorAddress) (*types.MsgUpdateModeratorAddressResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 
@@ -189,4 +190,35 @@ func (k Keeper) UpdateModeratorAddress(c context.Context, msg *types.MsgUpdateMo
 	)
 
 	return &types.MsgUpdateModeratorAddressResponse{}, nil
+}
+
+// UpdatePredefinedOracle defines a method for updating a predefined oracle
+func (k Keeper) UpdatePredefinedOracle(c context.Context, msg *types.MsgUpdatePredefinedOracle) (*types.MsgUpdatePredefinedOracleResponse, error) {
+	ctx := sdk.UnwrapSDKContext(c)
+
+	moderatorAddress := k.GetModeratorAddress(ctx)
+
+	if moderatorAddress != msg.ModeratorAddress {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "moderator address is not authorized")
+	}
+
+	predefinedOracle := msg.PredefinedOracle
+
+	k.SetPredefinedOracle(ctx, predefinedOracle)
+
+	return &types.MsgUpdatePredefinedOracleResponse{}, nil
+}
+
+func (k Keeper) DeletePredefinedOracle(c context.Context, msg *types.MsgDeletePredefinedOracle) (*types.MsgDeletePredefinedOracleResponse, error) {
+	ctx := sdk.UnwrapSDKContext(c)
+
+	moderatorAddress := k.GetModeratorAddress(ctx)
+
+	if moderatorAddress != msg.ModeratorAddress {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "moderator address is not authorized")
+	}
+
+	k.DelPredefinedOracle(ctx, msg.Type)
+
+	return &types.MsgDeletePredefinedOracleResponse{}, nil
 }

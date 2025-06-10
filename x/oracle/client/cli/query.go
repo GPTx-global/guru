@@ -31,6 +31,7 @@ func GetQueryCmd() *cobra.Command {
 		GetCmdQueryOracleSubmitData(),
 		GetCmdQueryOracleRequestDocs(),
 		GetCmdQueryModeratorAddress(),
+		GetCmdQueryPredefinedOracles(),
 	)
 
 	return cmd
@@ -66,7 +67,7 @@ func GetCmdQueryParams() *cobra.Command {
 func GetCmdQueryOracleRequestDoc() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "request-doc [request-id]",
-		Short: "Query an oracle request document by ID",
+		Short: "Query an oracle request document by Request ID",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientQueryContext(cmd)
@@ -100,7 +101,7 @@ func GetCmdQueryOracleRequestDoc() *cobra.Command {
 func GetCmdQueryOracleData() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "data [request-id]",
-		Short: "Query an oracle data by ID",
+		Short: "Query an oracle data by Request ID",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientQueryContext(cmd)
@@ -226,6 +227,31 @@ func GetCmdQueryModeratorAddress() *cobra.Command {
 
 			queryClient := types.NewQueryClient(clientCtx)
 			res, err := queryClient.ModeratorAddress(cmd.Context(), &types.QueryModeratorAddressRequest{})
+			if err != nil {
+				return err
+			}
+
+			return clientCtx.PrintProto(res)
+		},
+	}
+	flags.AddQueryFlagsToCmd(cmd)
+	return cmd
+}
+
+// GetCmdQueryPredefinedOracles implements the predefined oracles query command
+func GetCmdQueryPredefinedOracles() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "predefined-oracles",
+		Short: "Query the predefined oracles",
+		Args:  cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientQueryContext(cmd)
+			if err != nil {
+				return err
+			}
+
+			queryClient := types.NewQueryClient(clientCtx)
+			res, err := queryClient.PredefinedOracles(cmd.Context(), &types.QueryPredefinedOraclesRequest{})
 			if err != nil {
 				return err
 			}

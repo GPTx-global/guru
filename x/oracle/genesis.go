@@ -37,6 +37,12 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, data types.GenesisState) {
 		}
 		k.SetOracleRequestDoc(ctx, doc)
 	}
+
+	// Set predefined oracles
+	predefinedOracles := data.PredefinedOracles
+	for _, oracle := range predefinedOracles {
+		k.SetPredefinedOracle(ctx, oracle)
+	}
 }
 
 // ExportGenesis returns a GenesisState for a given context and keeper.
@@ -58,5 +64,16 @@ func ExportGenesis(ctx sdk.Context, keeper keeper.Keeper) types.GenesisState {
 		docs[i] = *doc
 	}
 
-	return types.NewGenesisState(params, docs, moderatorAddress)
+	// Get the current predefined oracles from the keeper
+	tmpOracles := keeper.GetPredefinedOracles(ctx)
+
+	// Initialize a new slice to hold the predefined oracles
+	predefinedOracles := make([]types.PredefinedOracle, len(tmpOracles))
+
+	// Copy the predefined oracles from the temporary slice to the new slice
+	for i, oracle := range tmpOracles {
+		predefinedOracles[i] = *oracle
+	}
+
+	return types.NewGenesisState(params, docs, moderatorAddress, predefinedOracles)
 }
