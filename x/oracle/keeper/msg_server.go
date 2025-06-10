@@ -204,6 +204,14 @@ func (k Keeper) UpdatePredefinedOracle(c context.Context, msg *types.MsgUpdatePr
 
 	predefinedOracle := msg.PredefinedOracle
 
+	doc, err := k.GetOracleRequestDoc(ctx, predefinedOracle.RequestId)
+	if err != nil {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "request document not found")
+	}
+	if doc == nil {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "request document not found")
+	}
+
 	k.SetPredefinedOracle(ctx, predefinedOracle)
 
 	return &types.MsgUpdatePredefinedOracleResponse{}, nil
