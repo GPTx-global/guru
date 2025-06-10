@@ -9,20 +9,30 @@ import (
 	"strings"
 	"time"
 
+	"github.com/GPTx-global/guru/oracled/retry"
 	"github.com/GPTx-global/guru/oracled/types"
 )
 
 type Executor struct {
-	client *http.Client
-	ctx    context.Context
+	client             *http.Client
+	ctx                context.Context
+	httpCircuitBreaker *retry.CircuitBreaker
 }
 
 func NewExecutor(ctx context.Context) *Executor {
 	fmt.Printf("[ START ] NewExecutor\n")
 
 	e := &Executor{
-		client: &http.Client{},
-		ctx:    ctx,
+		client: &http.Client{
+			Timeout: 30 * time.Second,
+			Transport: &http.Transport{
+				MaxIdleConns:        100,
+				MaxIdleConnsPerHost: 10,
+				IdleConnTimeout:     90 * time.Second,
+			},
+		},
+		ctx:                ctx,
+		httpCircuitBreaker: retry.NewCircuitBreaker(5, 2*time.Minute),
 	}
 
 	fmt.Printf("[  END  ] NewExecutor: SUCCESS\n")
@@ -33,10 +43,28 @@ func (e *Executor) ExecuteJob(job *types.Job) (*types.OracleData, error) {
 	fmt.Printf("[ START ] ExecuteJob - ID: %d, Nonce: %d\n", job.ID, job.Nonce)
 
 	if 1 < job.Nonce {
-		time.Sleep(job.Delay)
+		fmt.Printf("[ DELAY ] ExecuteJob: Waiting %v for nonce %d\n", job.Delay, job.Nonce)
+		select {
+		case <-time.After(job.Delay):
+		case <-e.ctx.Done():
+			return nil, fmt.Errorf("context cancelled during delay")
+		}
 	}
 
-	rawData, err := e.fetchRawData(job.URL)
+	var rawData []byte
+	err := retry.Do(e.ctx, retry.NetworkRetryConfig(),
+		func() error {
+			return e.httpCircuitBreaker.Execute(func() error {
+				var err error
+				rawData, err = e.fetchRawData(job.URL)
+				return err
+			})
+		},
+		func(err error) bool {
+			return e.isRetryableHTTPError(err)
+		},
+	)
+
 	if err != nil {
 		fmt.Printf("[  END  ] ExecuteJob: ERROR - failed to fetch raw data for job %d: %v\n", job.ID, err)
 		return nil, fmt.Errorf("failed to fetch raw data for job %d: %w", job.ID, err)
@@ -47,7 +75,18 @@ func (e *Executor) ExecuteJob(job *types.Job) (*types.OracleData, error) {
 		return nil, fmt.Errorf("invalid response for job %d: %w", job.ID, err)
 	}
 
-	parsedData, err := e.parseJSON(rawData)
+	var parsedData map[string]interface{}
+	err = retry.Do(e.ctx, retry.DefaultRetryConfig(),
+		func() error {
+			var err error
+			parsedData, err = e.parseJSON(rawData)
+			return err
+		},
+		func(err error) bool {
+			return false
+		},
+	)
+
 	if err != nil {
 		fmt.Printf("[  END  ] ExecuteJob: ERROR - failed to parse JSON for job %d: %v\n", job.ID, err)
 		return nil, fmt.Errorf("failed to parse JSON for job %d: %w", job.ID, err)
@@ -82,6 +121,7 @@ func (e *Executor) fetchRawData(url string) ([]byte, error) {
 
 	req.Header.Set("User-Agent", "Oracle-Daemon/1.0")
 	req.Header.Set("Accept", "application/json")
+	// Accept-Encoding 헤더를 제거하여 Go의 자동 gzip 압축 해제 기능 사용
 
 	resp, err := e.client.Do(req)
 	if err != nil {
@@ -90,10 +130,14 @@ func (e *Executor) fetchRawData(url string) ([]byte, error) {
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode != http.StatusOK {
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		fmt.Printf("[  END  ] fetchRawData: ERROR - HTTP %d: %s\n",
 			resp.StatusCode, resp.Status)
-		return nil, fmt.Errorf("HTTP %d: %s", resp.StatusCode, resp.Status)
+
+		if resp.StatusCode >= 400 && resp.StatusCode < 500 {
+			return nil, fmt.Errorf("client error HTTP %d: %s", resp.StatusCode, resp.Status)
+		}
+		return nil, fmt.Errorf("server error HTTP %d: %s", resp.StatusCode, resp.Status)
 	}
 
 	body, err := io.ReadAll(resp.Body)
@@ -114,7 +158,12 @@ func (e *Executor) validateResponse(data []byte) error {
 		return fmt.Errorf("empty response")
 	}
 
-	// Basic JSON validation
+	maxSize := 10 * 1024 * 1024 // 10MB
+	if len(data) > maxSize {
+		fmt.Printf("[  END  ] validateResponse: ERROR - response too large: %d bytes\n", len(data))
+		return fmt.Errorf("response too large: %d bytes (max: %d)", len(data), maxSize)
+	}
+
 	var temp interface{}
 	if err := json.Unmarshal(data, &temp); err != nil {
 		fmt.Printf("[  END  ] validateResponse: ERROR - invalid JSON: %v\n", err)
@@ -130,8 +179,23 @@ func (e *Executor) parseJSON(data []byte) (map[string]interface{}, error) {
 
 	var result map[string]interface{}
 	if err := json.Unmarshal(data, &result); err != nil {
-		fmt.Printf("[  END  ] parseJSON: ERROR - failed to unmarshal JSON: %v\n", err)
-		return nil, fmt.Errorf("failed to unmarshal JSON: %w", err)
+		var anyResult interface{}
+		if unmarshalErr := json.Unmarshal(data, &anyResult); unmarshalErr != nil {
+			fmt.Printf("[  END  ] parseJSON: ERROR - failed to unmarshal JSON: %v\n", err)
+			return nil, fmt.Errorf("failed to unmarshal JSON: %w", err)
+		}
+
+		if arr, ok := anyResult.([]interface{}); ok && len(arr) > 0 {
+			if obj, ok := arr[0].(map[string]interface{}); ok {
+				result = obj
+			} else {
+				fmt.Printf("[  END  ] parseJSON: ERROR - first array element is not an object\n")
+				return nil, fmt.Errorf("first array element is not an object")
+			}
+		} else {
+			fmt.Printf("[  END  ] parseJSON: ERROR - response is not a JSON object or array\n")
+			return nil, fmt.Errorf("response is not a JSON object or array")
+		}
 	}
 
 	fmt.Printf("[  END  ] parseJSON: SUCCESS\n")
@@ -146,29 +210,100 @@ func (e *Executor) extractDataByPath(data map[string]interface{}, path string) (
 		return "", fmt.Errorf("empty path")
 	}
 
-	// Split path by dots to navigate nested objects
 	pathParts := strings.Split(path, ".")
 
 	current := interface{}(data)
-	for _, part := range pathParts {
+	for i, part := range pathParts {
+		fmt.Printf("[ PATH  ] extractDataByPath: Processing part %d: %s\n", i+1, part)
 
 		switch v := current.(type) {
 		case map[string]interface{}:
 			if val, exists := v[part]; exists {
 				current = val
+				fmt.Printf("[ PATH  ] extractDataByPath: Found key '%s' with type %T\n", part, val)
 			} else {
 				fmt.Printf("[  END  ] extractDataByPath: ERROR - key '%s' not found\n", part)
-				return "", fmt.Errorf("key '%s' not found", part)
+				return "", fmt.Errorf("key '%s' not found in path %s", part, path)
+			}
+		case []interface{}:
+			if index, parseErr := parseArrayIndex(part); parseErr == nil {
+				if index >= 0 && index < len(v) {
+					current = v[index]
+					fmt.Printf("[ PATH  ] extractDataByPath: Accessed array index %d\n", index)
+				} else {
+					fmt.Printf("[  END  ] extractDataByPath: ERROR - array index %d out of bounds (length: %d)\n", index, len(v))
+					return "", fmt.Errorf("array index %d out of bounds", index)
+				}
+			} else {
+				fmt.Printf("[  END  ] extractDataByPath: ERROR - invalid array index '%s'\n", part)
+				return "", fmt.Errorf("invalid array index '%s'", part)
 			}
 		default:
-			fmt.Printf("[  END  ] extractDataByPath: ERROR - invalid path at '%s'\n", part)
-			return "", fmt.Errorf("invalid path at '%s'", part)
+			fmt.Printf("[  END  ] extractDataByPath: ERROR - cannot traverse '%s' in type %T\n", part, current)
+			return "", fmt.Errorf("cannot traverse '%s' in type %T", part, current)
 		}
 	}
 
-	// Convert final value to string
 	result := fmt.Sprintf("%v", current)
 	fmt.Printf("[SUCCESS] extractDataByPath: Extracted value: %s\n", result)
 	fmt.Printf("[  END  ] extractDataByPath: SUCCESS\n")
 	return result, nil
+}
+
+func (e *Executor) isRetryableHTTPError(err error) bool {
+	if err == nil {
+		return false
+	}
+
+	errStr := err.Error()
+
+	retryableErrors := []string{
+		"timeout",
+		"connection refused",
+		"connection reset",
+		"temporary failure",
+		"server error HTTP 5",
+		"no such host",
+		"network is unreachable",
+		"i/o timeout",
+		"context deadline exceeded",
+	}
+
+	for _, retryableErr := range retryableErrors {
+		if strings.Contains(errStr, retryableErr) {
+			return true
+		}
+	}
+
+	return false
+}
+
+func parseArrayIndex(s string) (int, error) {
+	if s == "" {
+		return -1, fmt.Errorf("empty string")
+	}
+
+	result := 0
+	for _, char := range s {
+		if char < '0' || char > '9' {
+			return -1, fmt.Errorf("invalid character: %c", char)
+		}
+		result = result*10 + int(char-'0')
+	}
+
+	return result, nil
+}
+
+func (e *Executor) GetHealthCheckFunc() func(ctx context.Context) error {
+	return func(ctx context.Context) error {
+		if e.client == nil {
+			return fmt.Errorf("http client is nil")
+		}
+
+		if e.httpCircuitBreaker.GetState() == retry.StateOpen {
+			return fmt.Errorf("http circuit breaker is open")
+		}
+
+		return nil
+	}
 }

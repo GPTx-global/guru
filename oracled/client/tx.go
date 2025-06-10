@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"sync/atomic"
+	"time"
 
 	oracletypes "github.com/GPTx-global/guru/x/oracle/types"
 	"github.com/cosmos/cosmos-sdk/client"
@@ -16,6 +17,7 @@ import (
 
 	"github.com/GPTx-global/guru/app"
 	"github.com/GPTx-global/guru/encoding"
+	"github.com/GPTx-global/guru/oracled/retry"
 	"github.com/GPTx-global/guru/oracled/types"
 )
 
@@ -25,6 +27,9 @@ type TxBuilder struct {
 	keyring   keyring.Keyring
 	sequence  atomic.Uint64
 	accNum    uint64
+
+	// 에러 처리를 위한 추가 필드
+	lastSeqRefresh time.Time
 }
 
 func NewTxBuilder(config *Config, rpcClient *http.HTTP) (*TxBuilder, error) {
@@ -33,10 +38,19 @@ func NewTxBuilder(config *Config, rpcClient *http.HTTP) (*TxBuilder, error) {
 
 	encCfg := encoding.MakeConfig(app.ModuleBasics)
 
-	keyRing, err := config.GetKeyring()
+	// 키링 생성을 재시도 로직으로 래핑
+	var keyRing keyring.Keyring
+	err := retry.Do(context.Background(), retry.DefaultRetryConfig(),
+		func() error {
+			var err error
+			keyRing, err = config.GetKeyring()
+			return err
+		},
+		retry.DefaultIsRetryable,
+	)
 	if err != nil {
 		fmt.Printf("[  END  ] NewTxBuilder: ERROR - failed to get keyring: %v\n", err)
-		return nil, fmt.Errorf("failed to get keyring: %w", err)
+		return nil, fmt.Errorf("failed to get keyring after retries: %w", err)
 	}
 
 	keyInfo, err := keyRing.Key(config.keyName)
@@ -66,10 +80,19 @@ func NewTxBuilder(config *Config, rpcClient *http.HTTP) (*TxBuilder, error) {
 		WithFromName(config.keyName).
 		WithBroadcastMode("sync")
 
-	num, seq, err := clientCtx.AccountRetriever.GetAccountNumberSequence(clientCtx, fromAddress)
+	// 계정 정보 조회를 재시도 로직으로 래핑
+	var num, seq uint64
+	err = retry.Do(context.Background(), retry.NetworkRetryConfig(),
+		func() error {
+			var err error
+			num, seq, err = clientCtx.AccountRetriever.GetAccountNumberSequence(clientCtx, fromAddress)
+			return err
+		},
+		retry.DefaultIsRetryable,
+	)
 	if err != nil {
 		fmt.Printf("[  END  ] NewTxBuilder: ERROR - failed to get account number sequence: %v\n", err)
-		return nil, fmt.Errorf("failed to get account number sequence: %w", err)
+		return nil, fmt.Errorf("failed to get account number sequence after retries: %w", err)
 	}
 
 	tb := new(TxBuilder)
@@ -78,6 +101,7 @@ func NewTxBuilder(config *Config, rpcClient *http.HTTP) (*TxBuilder, error) {
 	tb.keyring = keyRing
 	tb.sequence.Store(seq)
 	tb.accNum = num
+	tb.lastSeqRefresh = time.Now()
 
 	fmt.Printf("[  END  ] NewTxBuilder: SUCCESS\n")
 	return tb, nil
@@ -110,6 +134,14 @@ func (tb *TxBuilder) BuildOracleTx(ctx context.Context, oracleData types.OracleD
 	if err != nil {
 		fmt.Printf("[  END  ] BuildOracleTx: ERROR - invalid gas price: %v\n", err)
 		return nil, fmt.Errorf("invalid gas price: %w", err)
+	}
+
+	// 시퀀스 번호 갱신 확인 (5분마다 또는 에러 발생 시)
+	if time.Since(tb.lastSeqRefresh) > 5*time.Minute {
+		if err := tb.refreshSequence(ctx); err != nil {
+			fmt.Printf("[  WARN ] BuildOracleTx: Failed to refresh sequence: %v\n", err)
+			// 시퀀스 갱신 실패는 치명적이지 않으므로 계속 진행
+		}
 	}
 
 	factory := tx.Factory{}.
@@ -157,6 +189,15 @@ func (tb *TxBuilder) BroadcastTx(ctx context.Context, txBytes []byte) (*sdk.TxRe
 	if res.Code != 0 {
 		fmt.Printf("[  END  ] BroadcastTx: ERROR - tx failed with code %d: %s\n",
 			res.Code, res.RawLog)
+
+		// 시퀀스 에러인 경우 시퀀스 갱신 시도
+		if tb.isSequenceError(res.RawLog) {
+			fmt.Printf("[  WARN ] BroadcastTx: Sequence error detected, refreshing sequence\n")
+			if refreshErr := tb.refreshSequence(ctx); refreshErr != nil {
+				fmt.Printf("[  WARN ] BroadcastTx: Failed to refresh sequence: %v\n", refreshErr)
+			}
+		}
+
 		return res, fmt.Errorf("tx failed with code %d: %s", res.Code, res.RawLog)
 	}
 
@@ -166,4 +207,95 @@ func (tb *TxBuilder) BroadcastTx(ctx context.Context, txBytes []byte) (*sdk.TxRe
 
 func (tb *TxBuilder) incSequence() {
 	tb.sequence.Add(1)
+}
+
+// refreshSequence 시퀀스 번호를 블록체인에서 다시 조회하여 갱신
+func (tb *TxBuilder) refreshSequence(ctx context.Context) error {
+	fmt.Printf("[ START ] refreshSequence\n")
+
+	fromAddress := tb.clientCtx.GetFromAddress()
+
+	// 계정 정보 재조회를 재시도 로직으로 래핑
+	var num, seq uint64
+	err := retry.Do(ctx, retry.NetworkRetryConfig(),
+		func() error {
+			var err error
+			num, seq, err = tb.clientCtx.AccountRetriever.GetAccountNumberSequence(tb.clientCtx, fromAddress)
+			return err
+		},
+		retry.DefaultIsRetryable,
+	)
+
+	if err != nil {
+		fmt.Printf("[  END  ] refreshSequence: ERROR - %v\n", err)
+		return fmt.Errorf("failed to refresh sequence: %w", err)
+	}
+
+	oldSeq := tb.sequence.Load()
+	tb.sequence.Store(seq)
+	tb.accNum = num
+	tb.lastSeqRefresh = time.Now()
+
+	fmt.Printf("[ SUCCESS ] refreshSequence: Updated sequence %d -> %d, accNum: %d\n",
+		oldSeq, seq, num)
+	fmt.Printf("[  END  ] refreshSequence: SUCCESS\n")
+	return nil
+}
+
+// isSequenceError 시퀀스 관련 에러인지 확인
+func (tb *TxBuilder) isSequenceError(errMsg string) bool {
+	sequenceErrors := []string{
+		"account sequence mismatch",
+		"invalid sequence",
+		"sequence",
+		"nonce",
+	}
+
+	for _, seqErr := range sequenceErrors {
+		if containsString(errMsg, seqErr) {
+			return true
+		}
+	}
+	return false
+}
+
+// GetHealthCheckFunc 헬스 체크 함수 반환
+func (tb *TxBuilder) GetHealthCheckFunc() func(ctx context.Context) error {
+	return func(ctx context.Context) error {
+		if tb.keyring == nil {
+			return fmt.Errorf("keyring is nil")
+		}
+
+		// 키 접근 가능성 확인
+		_, err := tb.keyring.Key(tb.config.keyName)
+		if err != nil {
+			return fmt.Errorf("failed to access key %s: %w", tb.config.keyName, err)
+		}
+
+		// 시퀀스가 너무 오래되었는지 확인
+		if time.Since(tb.lastSeqRefresh) > 10*time.Minute {
+			return fmt.Errorf("sequence information is stale (last refresh: %v)", tb.lastSeqRefresh)
+		}
+
+		return nil
+	}
+}
+
+// containsString 문자열 포함 여부 확인
+func containsString(s, substr string) bool {
+	return len(s) >= len(substr) &&
+		(s == substr ||
+			(len(s) > len(substr) &&
+				(s[:len(substr)] == substr ||
+					s[len(s)-len(substr):] == substr ||
+					containsSubstr(s, substr))))
+}
+
+func containsSubstr(s, substr string) bool {
+	for i := 0; i <= len(s)-len(substr); i++ {
+		if s[i:i+len(substr)] == substr {
+			return true
+		}
+	}
+	return false
 }
