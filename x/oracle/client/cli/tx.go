@@ -172,7 +172,7 @@ func NewUpdateModeratorAddressCmd() *cobra.Command {
 func NewUpdatePredefinedOracleCmd() *cobra.Command {
 
 	cmd := &cobra.Command{
-		Use:   "update-predefined-oracle request-id name predefined-oracle-type",
+		Use:   "update-predefined-oracle [request-id] [name] [predefined-oracle-type]",
 		Short: "Update a predefined oracle",
 		// Long:  strings.TrimSpace(fmt.Sprintf(`Update a predefined oracle
 

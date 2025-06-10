@@ -178,6 +178,7 @@ The Oracle module's genesis state contains the following parameters:
       "min_submit_per_window": "0.5",
       "slash_fraction_downtime": "0.01"
     },
+    "oracle_request_doc_count": 0,
     "oracle_request_docs": [],
     "predefined_oracles": [],
     "moderator_address": "guru1..."
@@ -213,6 +214,7 @@ jq '.app_state.oracle = {
     "min_submit_per_window": "0.5",
     "slash_fraction_downtime": "0.01"
   },
+  "oracle_request_doc_count": 0,
   "oracle_request_docs": [],
   "predefined_oracles": [],
   "moderator_address": "guru1..."
@@ -258,16 +260,32 @@ gurud tx oracle update-moderator-address [moderator-address]
 
 ### Update Predefined Oracle
 
-Update a predefined oracle.
+Update a predefined oracle. 
+This transaction is used to update the details of a predefined oracle. The `request-id` is the unique identifier of the oracle request document. The `name` is the new name for the predefined oracle. The `predefined-oracle-type` is the type of the predefined oracle, which must be one of the predefined oracle types listed in the table above.
+
+| Constant | Value | Description |
+| --- | --- | --- |
+| `PREDEFINED_ORACLE_TYPE_UNSPECIFIED` | 0 | Default value, should not be used |
+| `PREDEFINED_ORACLE_TYPE_MIN_GAS_PRICE` | 1 | Minimum gas price oracle for network fee estimation |
+| `PREDEFINED_ORACLE_TYPE_CURRENCY_KRW` | 2 | Currency exchange rates and forex data (KRW) |
+| `PREDEFINED_ORACLE_TYPE_CURRENCY_USD` | 3 | Currency exchange rates and forex data (USD) |
+| `PREDEFINED_ORACLE_TYPE_CURRENCY_EUR` | 4 | Currency exchange rates and forex data (EUR) |
+| `PREDEFINED_ORACLE_TYPE_CURRENCY_JPY` | 5 | Currency exchange rates and forex data (JPY) |
+| `PREDEFINED_ORACLE_TYPE_CURRENCY_CNY` | 6 | Currency exchange rates and forex data (CNY) |
+| `PREDEFINED_ORACLE_TYPE_CURRENCY_PHP` | 7 | Currency exchange rates and forex data (PHP) |
+| `PREDEFINED_ORACLE_TYPE_CURRENCY_AUD` | 8 | Currency exchange rates and forex data (AUD) |
+| `PREDEFINED_ORACLE_TYPE_CURRENCY_CAD` | 9 | Currency exchange rates and forex data (CAD) |
+| `PREDEFINED_ORACLE_TYPE_CURRENCY_HKD` | 10 | Currency exchange rates and forex data (HKD) |
+
 ```bash
-gurud tx oracle update-predefined-oracle 6 "Currency KRW" 2
+gurud tx oracle update-predefined-oracle [request-id] [name] [predefined-oracle-type]
 ```
 
 ### Delete Predefined Oracle
 
 Delete a predefined oracle.
 ```bash
-gurud tx oracle delete-predefined-oracle 2
+gurud tx oracle delete-predefined-oracle [predefined-oracle-type]
 ```
 
 

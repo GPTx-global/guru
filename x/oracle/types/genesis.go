@@ -7,22 +7,24 @@ import (
 )
 
 // NewGenesisState creates a new genesis state.
-func NewGenesisState(params Params, docs []OracleRequestDoc, moderatorAddress string, predefinedOracles []PredefinedOracle) GenesisState {
+func NewGenesisState(params Params, docs []OracleRequestDoc, moderatorAddress string, oracleRequestDocCount uint64, predefinedOracles []PredefinedOracle) GenesisState {
 	return GenesisState{
-		Params:            params,
-		OracleRequestDocs: docs,
-		ModeratorAddress:  moderatorAddress,
-		PredefinedOracles: predefinedOracles,
+		Params:                params,
+		OracleRequestDocCount: oracleRequestDocCount,
+		OracleRequestDocs:     docs,
+		ModeratorAddress:      moderatorAddress,
+		PredefinedOracles:     predefinedOracles,
 	}
 }
 
 // DefaultGenesisState returns a default genesis state
 func DefaultGenesisState() *GenesisState {
 	return &GenesisState{
-		Params:            DefaultParams(),
-		OracleRequestDocs: []OracleRequestDoc{},
-		ModeratorAddress:  "guru1h9y8h0rh6tqxrj045fyvarnnyyxdg07693zkft", // This is a test address
-		PredefinedOracles: []PredefinedOracle{},
+		Params:                DefaultParams(),
+		OracleRequestDocCount: 0,
+		OracleRequestDocs:     []OracleRequestDoc{},
+		ModeratorAddress:      "guru1h9y8h0rh6tqxrj045fyvarnnyyxdg07693zkft", // This is a test address
+		PredefinedOracles:     []PredefinedOracle{},
 	}
 }
 

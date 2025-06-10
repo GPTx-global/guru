@@ -10,15 +10,18 @@ option go_package = "github.com/GPTx-global/guru/x/oracle/types";
 message GenesisState {
   // params defines all the parameters of the module
   Params params = 1 [(gogoproto.nullable) = false];
+
+  // oracle_request_doc_count defines the count of oracle request documents
+  uint64 oracle_request_doc_count = 2;
   
   // request_oracle_docs defines the list of oracle request documents
-  repeated OracleRequestDoc oracle_request_docs = 2 [(gogoproto.nullable) = false];
+  repeated OracleRequestDoc oracle_request_docs = 3 [(gogoproto.nullable) = false];
 
   // predefined_oracles defines the list of predefined oracles
-  repeated PredefinedOracle predefined_oracles = 3 [(gogoproto.nullable) = false];
+  repeated PredefinedOracle predefined_oracles = 4 [(gogoproto.nullable) = false];
   
   // moderator_address defines the address of the oracle moderator
-  string moderator_address = 4;
+  string moderator_address = 5;
 }
 
 // Params defines the parameters for the oracle module

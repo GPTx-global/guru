@@ -38,6 +38,13 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, data types.GenesisState) {
 		k.SetOracleRequestDoc(ctx, doc)
 	}
 
+	if data.OracleRequestDocCount < uint64(len(data.OracleRequestDocs)) {
+		panic(errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "%s: oracle request doc count is less than the number of oracle request docs", types.ModuleName))
+	}
+
+	// Set oracle request doc count
+	k.SetOracleRequestDocCount(ctx, data.OracleRequestDocCount)
+
 	// Set predefined oracles
 	predefinedOracles := data.PredefinedOracles
 	for _, oracle := range predefinedOracles {
@@ -52,6 +59,9 @@ func ExportGenesis(ctx sdk.Context, keeper keeper.Keeper) types.GenesisState {
 
 	// Get the current moderator address from the keeper
 	moderatorAddress := keeper.GetModeratorAddress(ctx)
+
+	// Get the current oracle request doc count from the keeper
+	oracleRequestDocCount := keeper.GetOracleRequestDocCount(ctx)
 
 	// Get the current oracle request documents from the keeper
 	tmpDocs := keeper.GetOracleRequestDocs(ctx)
@@ -75,5 +85,5 @@ func ExportGenesis(ctx sdk.Context, keeper keeper.Keeper) types.GenesisState {
 		predefinedOracles[i] = *oracle
 	}
 
-	return types.NewGenesisState(params, docs, moderatorAddress, predefinedOracles)
+	return types.NewGenesisState(params, docs, moderatorAddress, oracleRequestDocCount, predefinedOracles)
 }
