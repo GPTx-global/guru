@@ -107,18 +107,18 @@ func (c *Client) monitor(ctx context.Context) error {
 	for {
 		select {
 		case event := <-registerCh:
-			c.checkEvent(event)
+			c.checkEvent("register_oracle_request_doc", event)
 		case event := <-updateCh:
-			c.checkEvent(event)
+			c.checkEvent("", event)
 		case event := <-completeCh:
-			c.checkEvent(event)
+			c.checkEvent("", event)
 		case <-ctx.Done():
 			return nil
 		}
 	}
 }
 
-func (c *Client) checkEvent(event coretypes.ResultEvent) {
+func (c *Client) checkEvent(prefix string, event coretypes.ResultEvent) {
 	if event.Data == nil {
 		return
 	}
@@ -156,7 +156,7 @@ func (c *Client) processTransaction(ctx context.Context, oracleResult types.Orac
 		return
 	}
 
-	fmt.Printf("Oracle transaction sent successfully: %s\n", resp.TxHash)
+	fmt.Printf("Oracle transaction sent successfully: %s\n------------------------------------------------------------------------------------------------------\n", resp.TxHash)
 	c.txBuilder.incSequence()
 }
 

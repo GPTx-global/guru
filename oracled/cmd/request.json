@@ -1,16 +1,21 @@
 {
-    "oracle_type": 1,
+    "oracle_type": 2,
     "name": "BTC/USD Price Oracle",
     "description": "BTC/USD Price Oracle",
     "period": 10,
     "account_list": [
-        "guru1xkps9hdrqqra2xmdt2d26ezsm3szm6jnz56kdq"
+        "guru1qwtk4r6n04xr9j8ecu0ycsq5kttl7pwgzdq4lg",
+        "guru1vmr40qepcun45ljdplvdhyz43xe0ep0gvl5str"
     ],
     "quorum": 1,
     "endpoints": [
         {
-            "url": "https://api.coinbase.com/v2/prices/BTC-USD/spot",
-		    "parse_rule": "data.amount"
+            "url": "https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/usd.json",
+            "parse_rule": "usd.krw"
+        },
+        {
+            "url": "https://open.er-api.com/v6/latest/USD",
+            "parse_rule": "rates.KRW"
         }
     ],
     "aggregation_rule": 1,
