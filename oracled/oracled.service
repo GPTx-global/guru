@@ -1,0 +1,59 @@
+[Unit]
+Description=Oracle Daemon for Guru Network
+Documentation=https://github.com/GPTx-global/guru
+After=network-online.target
+Wants=network-online.target
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+User=guru
+Group=guru
+ExecStart=/opt/guru/oracled/cmd/oracled
+ExecReload=/bin/kill -HUP $MAINPID
+KillMode=mixed
+KillSignal=SIGTERM
+TimeoutStopSec=30
+
+# Restart configuration
+Restart=always
+RestartSec=10
+StartLimitBurst=5
+StartLimitIntervalSec=300
+
+# Resource limits
+LimitNOFILE=65536
+LimitNPROC=32768
+
+# Security settings
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictRealtime=true
+RestrictNamespaces=true
+LockPersonality=true
+MemoryDenyWriteExecute=true
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+
+# Working directory and environment
+WorkingDirectory=/opt/guru/oracled
+Environment=HOME=/opt/guru
+Environment=GURU_HOME=/opt/guru/.guru
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=oracled
+
+# File permissions
+ReadWritePaths=/opt/guru/.guru
+ReadOnlyPaths=/opt/guru/oracled
+
+[Install]
+WantedBy=multi-user.target
+Alias=oracle-daemon.service 
