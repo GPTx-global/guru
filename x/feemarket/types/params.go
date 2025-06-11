@@ -29,6 +29,8 @@ var (
 	DefaultMinGasMultiplier = sdk.NewDecWithPrec(50, 2)
 	// DefaultMinGasPrice is 0 (i.e disabled)
 	DefaultMinGasPrice = sdk.ZeroDec()
+	// DefaultMinGasPriceRate is 0 (i.e disabled)
+	DefaultMinGasPriceRate = sdk.ZeroDec()
 	// DefaultEnableHeight is 0 (i.e disabled)
 	DefaultEnableHeight = int64(0)
 	// DefaultNoBaseFee is false
@@ -45,6 +47,7 @@ var (
 	ParamStoreKeyEnableHeight             = []byte("EnableHeight")
 	ParamStoreKeyMinGasPrice              = []byte("MinGasPrice")
 	ParamStoreKeyMinGasMultiplier         = []byte("MinGasMultiplier")
+	ParamStoreKeyMinGasPriceRate          = []byte("MinGasPriceRate")
 )
 
 // ParamKeyTable returns the parameter key table.
@@ -62,6 +65,7 @@ func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 		paramtypes.NewParamSetPair(ParamStoreKeyEnableHeight, &p.EnableHeight, validateEnableHeight),
 		paramtypes.NewParamSetPair(ParamStoreKeyMinGasPrice, &p.MinGasPrice, validateMinGasPrice),
 		paramtypes.NewParamSetPair(ParamStoreKeyMinGasMultiplier, &p.MinGasMultiplier, validateMinGasPrice),
+		paramtypes.NewParamSetPair(ParamStoreKeyMinGasPriceRate, &p.MinGasPriceRate, validateMinGasPriceRate),
 	}
 }
 
@@ -74,6 +78,7 @@ func NewParams(
 	enableHeight int64,
 	minGasPrice sdk.Dec,
 	minGasPriceMultiplier sdk.Dec,
+	minGasPriceRate sdk.Dec,
 ) Params {
 	return Params{
 		NoBaseFee:                noBaseFee,
@@ -83,6 +88,7 @@ func NewParams(
 		EnableHeight:             enableHeight,
 		MinGasPrice:              minGasPrice,
 		MinGasMultiplier:         minGasPriceMultiplier,
+		MinGasPriceRate:          minGasPriceRate,
 	}
 }
 
@@ -96,6 +102,7 @@ func DefaultParams() Params {
 		EnableHeight:             DefaultEnableHeight,
 		MinGasPrice:              DefaultMinGasPrice,
 		MinGasMultiplier:         DefaultMinGasMultiplier,
+		MinGasPriceRate:          DefaultMinGasPriceRate,
 	}
 }
 
@@ -133,6 +140,24 @@ func (p *Params) IsBaseFeeEnabled(height int64) bool {
 }
 
 func validateMinGasPrice(i interface{}) error {
+	v, ok := i.(sdk.Dec)
+
+	if !ok {
+		return fmt.Errorf("invalid parameter type: %T", i)
+	}
+
+	if v.IsNil() {
+		return fmt.Errorf("invalid parameter: nil")
+	}
+
+	if v.IsNegative() {
+		return fmt.Errorf("value cannot be negative: %s", i)
+	}
+
+	return nil
+}
+
+func validateMinGasPriceRate(i interface{}) error {
 	v, ok := i.(sdk.Dec)
 
 	if !ok {

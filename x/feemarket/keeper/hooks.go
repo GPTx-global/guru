@@ -16,7 +16,14 @@ func (k Keeper) AfterOracleEnd(ctx sdk.Context, dataSet oracletypes.DataSet) {
 	logger.Info("AfterOracleEnd hook triggered", "dataSet", dataSet)
 
 	params := k.GetParams(ctx)
-	params.MinGasPrice = sdk.MustNewDecFromStr(dataSet.RawData)
+	minGasPriceRate := params.MinGasPriceRate
+
+	if minGasPriceRate.IsZero() {
+		return
+	}
+
+	newMinGasPrice := minGasPriceRate.Quo(sdk.MustNewDecFromStr(dataSet.RawData))
+	params.MinGasPrice = newMinGasPrice
 
 	k.SetParams(ctx, params)
 
