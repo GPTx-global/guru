@@ -81,7 +81,7 @@ func (od *OracleDaemon) initializeAndStart() error {
 	od.addHealthChecks()
 
 	// 클라이언트와 스케줄러 연결
-	od.scheduler.SetEventChannel(od.client.GetEventChannel())
+	od.scheduler.SetJobChannel(od.client.GetJobChannel())
 	od.client.SetResultChannel(od.scheduler.GetResultChannel())
 
 	// 클라이언트 시작
