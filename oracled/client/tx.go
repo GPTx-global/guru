@@ -79,7 +79,7 @@ func NewTxBuilder(config *Config, rpcClient *http.HTTP) (*TxBuilder, error) {
 		WithClient(rpcClient).
 		WithFromAddress(fromAddress).
 		WithFromName(config.keyName).
-		WithBroadcastMode("sync")
+		WithBroadcastMode("async")
 
 	// 계정 정보 조회를 재시도 로직으로 래핑
 	var num, seq uint64
@@ -108,7 +108,7 @@ func NewTxBuilder(config *Config, rpcClient *http.HTTP) (*TxBuilder, error) {
 	return tb, nil
 }
 
-func (tb *TxBuilder) BuildOracleTx(ctx context.Context, oracleData types.OracleData) ([]byte, error) {
+func (tb *TxBuilder) BuildOracleTx(_ context.Context, oracleData types.OracleData) ([]byte, error) {
 	fmt.Printf("[ START ] BuildOracleTx - RequestID: %d, Nonce: %d\n",
 		oracleData.RequestID, oracleData.Nonce)
 
