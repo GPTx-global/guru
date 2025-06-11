@@ -59,8 +59,7 @@ func NewScheduler() *Scheduler {
 func (s *Scheduler) Start(ctx context.Context) {
 	fmt.Printf("[ START ] Start\n")
 
-	// 워커 풀 초기화 및 시작 (CPU 코어 수 * 4개의 워커)
-	maxWorkers := runtime.NumCPU() * 4 // 동시 처리 가능한 최대 job 수 제한
+	maxWorkers := runtime.NumCPU() * 2
 	s.workerPool = NewJobWorkerPool(maxWorkers, s)
 	s.workerPool.Start(ctx)
 
@@ -326,7 +325,7 @@ func (s *Scheduler) eventToJob(event coretypes.ResultEvent) (*types.Job, error) 
 					ID:     reqID,
 					URL:    oracleMsg.RequestDoc.Endpoints[0].Url,
 					Path:   oracleMsg.RequestDoc.Endpoints[0].ParseRule,
-					Nonce:  1,
+					Nonce:  oracleMsg.RequestDoc.Nonce + 1,
 					Delay:  time.Duration(oracleMsg.RequestDoc.Period) * time.Second,
 					Status: event.Events["register_oracle_request_doc.status"][0],
 				}

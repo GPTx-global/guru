@@ -7,6 +7,7 @@ import (
 	"sync"
 	"time"
 
+	oracletypes "github.com/GPTx-global/guru/x/oracle/types"
 	"github.com/tendermint/tendermint/rpc/client/http"
 	coretypes "github.com/tendermint/tendermint/rpc/core/types"
 
@@ -74,6 +75,25 @@ func (c *Client) Start(ctx context.Context) error {
 		return fmt.Errorf("failed to connect to rpc after retries: %w", err)
 	}
 
+	tempC := oracletypes.NewQueryClient(c.txBuilder.clientCtx)
+	res, err := tempC.OracleRequestDocs(ctx, &oracletypes.QueryOracleRequestDocsRequest{})
+	if err != nil {
+		fmt.Printf("[  END  ] Start: ERROR - %v\n", err)
+		return fmt.Errorf("failed to query oracle request docs: %w", err)
+	}
+
+	fmt.Printf("------------------------\n")
+	for _, doc := range res.OracleRequestDocs {
+		fmt.Printf("ID: %d\n", doc.RequestId)
+		fmt.Printf("Nonce: %d\n", doc.Nonce)
+		fmt.Printf("Status: %s\n", doc.Status)
+		fmt.Printf("Endpoints: %v\n", doc.Endpoints)
+		fmt.Printf("Period: %d\n", doc.Period)
+		fmt.Printf("AccountList: %v\n", doc.AccountList)
+		fmt.Printf("Description: %s\n", doc.Description)
+		fmt.Printf("Name: %s\n", doc.Name)
+		fmt.Printf("------------------------\n")
+	}
 	go c.monitor(ctx)
 	go c.serveOracle(ctx)
 
@@ -205,7 +225,7 @@ func (c *Client) subscribeToEventsWithMonitoring(ctx context.Context) error {
 	for name, query := range subscriptions {
 		fmt.Printf("[  INFO ] subscribeToEventsWithMonitoring: Subscribing to %s\n", name)
 
-		ch, err := c.rpcClient.Subscribe(ctx, name+"_subscribe", query)
+		ch, err := c.rpcClient.Subscribe(ctx, name+"_subscribe", query, 64)
 		if err != nil {
 			fmt.Printf("[  ERROR] subscribeToEventsWithMonitoring: Failed to subscribe %s: %v\n", name, err)
 			// 이미 생성된 구독들 정리
