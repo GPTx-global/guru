@@ -52,7 +52,8 @@ func TestInitGenesis(t *testing.T) {
 				Params: types.Params{
 					EnableOracle: true,
 				},
-				ModeratorAddress: "guru1h9y8h0rh6tqxrj045fyvarnnyyxdg07693zkft",
+				ModeratorAddress:      "guru1h9y8h0rh6tqxrj045fyvarnnyyxdg07693zkft",
+				OracleRequestDocCount: 1,
 				OracleRequestDocs: []types.OracleRequestDoc{
 					{
 						RequestId:       1,
@@ -87,7 +88,8 @@ func TestInitGenesis(t *testing.T) {
 				Params: types.Params{
 					EnableOracle: true,
 				},
-				ModeratorAddress: "guru1h9y8h0rh6tqxrj045fyvarnnyyxdg07693zkft",
+				ModeratorAddress:      "guru1h9y8h0rh6tqxrj045fyvarnnyyxdg07693zkft",
+				OracleRequestDocCount: 1,
 				OracleRequestDocs: []types.OracleRequestDoc{
 					{
 						RequestId:       1,
@@ -112,7 +114,8 @@ func TestInitGenesis(t *testing.T) {
 				Params: types.Params{
 					EnableOracle: true,
 				},
-				ModeratorAddress: "guru1h9y8h0rh6tqxrj045fyvarnnyyxdg07693zkft",
+				ModeratorAddress:      "guru1h9y8h0rh6tqxrj045fyvarnnyyxdg07693zkft",
+				OracleRequestDocCount: 1,
 				OracleRequestDocs: []types.OracleRequestDoc{
 					{
 						RequestId:       1,
@@ -137,7 +140,8 @@ func TestInitGenesis(t *testing.T) {
 				Params: types.Params{
 					EnableOracle: true,
 				},
-				ModeratorAddress: "guru1h9y8h0rh6tqxrj045fyvarnnyyxdg07693zkft",
+				ModeratorAddress:      "guru1h9y8h0rh6tqxrj045fyvarnnyyxdg07693zkft",
+				OracleRequestDocCount: 1,
 				OracleRequestDocs: []types.OracleRequestDoc{
 					{
 						RequestId:       1,
@@ -162,7 +166,8 @@ func TestInitGenesis(t *testing.T) {
 				Params: types.Params{
 					EnableOracle: true,
 				},
-				ModeratorAddress: "guru1h9y8h0rh6tqxrj045fyvarnnyyxdg07693zkft",
+				ModeratorAddress:      "guru1h9y8h0rh6tqxrj045fyvarnnyyxdg07693zkft",
+				OracleRequestDocCount: 1,
 				OracleRequestDocs: []types.OracleRequestDoc{
 					{
 						RequestId:       1,
@@ -187,7 +192,8 @@ func TestInitGenesis(t *testing.T) {
 				Params: types.Params{
 					EnableOracle: true,
 				},
-				ModeratorAddress: "guru1h9y8h0rh6tqxrj045fyvarnnyyxdg07693zkft",
+				ModeratorAddress:      "guru1h9y8h0rh6tqxrj045fyvarnnyyxdg07693zkft",
+				OracleRequestDocCount: 1,
 				OracleRequestDocs: []types.OracleRequestDoc{
 					{
 						RequestId:   1,
@@ -242,7 +248,8 @@ func TestExportGenesis(t *testing.T) {
 			MinSubmitPerWindow:    sdk.MustNewDecFromStr("0.5"),
 			SlashFractionDowntime: sdk.MustNewDecFromStr("0.0001"),
 		},
-		ModeratorAddress: "guru1h9y8h0rh6tqxrj045fyvarnnyyxdg07693zkft",
+		ModeratorAddress:      "guru1h9y8h0rh6tqxrj045fyvarnnyyxdg07693zkft",
+		OracleRequestDocCount: 1,
 		OracleRequestDocs: []types.OracleRequestDoc{
 			{
 				RequestId:       1,

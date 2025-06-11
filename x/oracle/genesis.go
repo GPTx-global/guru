@@ -38,7 +38,7 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, data types.GenesisState) {
 		k.SetOracleRequestDoc(ctx, doc)
 	}
 
-	if data.OracleRequestDocCount < uint64(len(data.OracleRequestDocs)) {
+	if uint64(len(data.OracleRequestDocs)) > 0 && data.OracleRequestDocCount < uint64(len(data.OracleRequestDocs)) {
 		panic(errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "%s: oracle request doc count is less than the number of oracle request docs", types.ModuleName))
 	}
 
