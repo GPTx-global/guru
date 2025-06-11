@@ -3,13 +3,19 @@ package client
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
 
+	"github.com/GPTx-global/guru/app"
+	"github.com/GPTx-global/guru/encoding"
 	oracletypes "github.com/GPTx-global/guru/x/oracle/types"
+	"github.com/cosmos/cosmos-sdk/codec"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/tendermint/tendermint/rpc/client/http"
 	coretypes "github.com/tendermint/tendermint/rpc/core/types"
+	tmtypes "github.com/tendermint/tendermint/types"
 
 	"github.com/GPTx-global/guru/oracled/retry"
 	"github.com/GPTx-global/guru/oracled/types"
@@ -20,8 +26,14 @@ type Client struct {
 	rpcClient   *http.HTTP
 	isConnected bool
 	txBuilder   *TxBuilder
-	eventCh     chan coretypes.ResultEvent
+	jobCh       chan *types.Job // 변경: eventCh -> jobCh
 	resultCh    <-chan types.OracleData
+
+	// Job 변환을 위한 추가 필드
+	activeJobs    map[uint64]*types.Job
+	activeJobsMux sync.Mutex
+	txDecoder     sdk.TxDecoder
+	cdc           codec.Codec
 
 	// 에러 처리를 위한 추가 필드
 	connectCB   *retry.CircuitBreaker
@@ -38,16 +50,21 @@ type Client struct {
 func NewClient() *Client {
 	fmt.Printf("[ START ] NewClient\n")
 
+	encodingConfig := encoding.MakeConfig(app.ModuleBasics)
 	c := &Client{
-		config:      LoadConfig(),
-		rpcClient:   nil,
-		isConnected: false,
-		eventCh:     make(chan coretypes.ResultEvent, 256), // 버퍼 크기 증가
-		resultCh:    nil,
-		connectCB:   retry.NewCircuitBreaker(5, 5*time.Minute),
+		config:        LoadConfig(),
+		rpcClient:     nil,
+		isConnected:   false,
+		jobCh:         make(chan *types.Job, 256), // 변경: eventCh -> jobCh
+		resultCh:      nil,
+		activeJobs:    make(map[uint64]*types.Job),
+		activeJobsMux: sync.Mutex{},
+		txDecoder:     encodingConfig.TxConfig.TxDecoder(),
+		cdc:           encodingConfig.Codec,
+		connectCB:     retry.NewCircuitBreaker(5, 5*time.Minute),
 	}
 
-	fmt.Printf("[  END  ] NewClient: SUCCESS - eventCh buffer size=256\n")
+	fmt.Printf("[  END  ] NewClient: SUCCESS - jobCh buffer size=256\n")
 	return c
 }
 
@@ -435,13 +452,170 @@ func (c *Client) checkEvent(prefix string, event coretypes.ResultEvent) {
 		}
 	}
 
-	// 이벤트 채널에 전송 (논블로킹)
-	select {
-	case c.eventCh <- event:
-		fmt.Printf("[  END  ] checkEvent: SUCCESS\n")
-	default:
-		fmt.Printf("[  WARN ] checkEvent: eventCh buffer full, dropping event\n")
+	// 이벤트를 job으로 변환
+	job, err := c.eventToJob(event)
+	if err != nil {
+		fmt.Printf("[  WARN ] checkEvent: Failed to convert event to job: %v\n", err)
+		return
 	}
+
+	if job == nil {
+		fmt.Printf("[  INFO ] checkEvent: Event converted to nil job (not an error)\n")
+		return
+	}
+
+	// Job 채널에 전송 (논블로킹)
+	select {
+	case c.jobCh <- job:
+		fmt.Printf("[  END  ] checkEvent: SUCCESS - job sent to scheduler\n")
+	default:
+		fmt.Printf("[  WARN ] checkEvent: jobCh buffer full, dropping job\n")
+	}
+}
+
+// eventToJob: scheduler에서 이동한 함수
+func (c *Client) eventToJob(event coretypes.ResultEvent) (*types.Job, error) {
+	fmt.Printf("[ START ] eventToJob\n")
+	fmt.Printf("[  INFO ] eventToJob: Event data type: %T\n", event.Data)
+
+	switch eventData := event.Data.(type) {
+	case tmtypes.EventDataTx:
+		fmt.Printf("[  INFO ] eventToJob: Processing Tx event\n")
+		// 트랜잭션 바이트 데이터를 디코딩
+		tx, err := c.txDecoder(eventData.Tx)
+		if err != nil {
+			fmt.Printf("[  END  ] eventToJob: ERROR - failed to decode transaction: %v\n", err)
+			return nil, fmt.Errorf("failed to decode transaction: %w", err)
+		}
+
+		// 트랜잭션 내의 모든 메시지를 확인
+		msgs := tx.GetMsgs()
+		fmt.Printf("[  INFO ] eventToJob: Transaction has %d messages\n", len(msgs))
+
+		for i, msg := range msgs {
+			fmt.Printf("[  INFO ] eventToJob: Processing message %d/%d - Type: %T\n", i+1, len(msgs), msg)
+
+			switch oracleMsg := msg.(type) {
+			case *oracletypes.MsgRegisterOracleRequestDoc:
+				fmt.Printf("[  INFO ] eventToJob: Found MsgRegisterOracleRequestDoc\n")
+
+				// Register Oracle Request 메시지 처리 - 첫 번째 등록
+				if len(event.Events["register_oracle_request_doc.request_id"]) == 0 {
+					fmt.Printf("[  ERROR] eventToJob: request_id not found in event\n")
+					return nil, fmt.Errorf("request_id not found in event")
+				}
+
+				reqID, err := strconv.ParseUint(event.Events["register_oracle_request_doc.request_id"][0], 10, 64)
+				if err != nil {
+					fmt.Printf("[  ERROR] eventToJob: Failed to parse request_id: %v\n", err)
+					return nil, fmt.Errorf("failed to parse request_id: %w", err)
+				}
+
+				fmt.Printf("[  INFO ] eventToJob: Parsed request_id: %d\n", reqID)
+
+				c.activeJobsMux.Lock()
+				// 이미 존재하는 job인지 확인
+				if _, exists := c.activeJobs[reqID]; exists {
+					c.activeJobsMux.Unlock()
+					fmt.Printf("[  WARN ] eventToJob: Job already exists: %d\n", reqID)
+					return nil, fmt.Errorf("job already exists: %d", reqID)
+				}
+
+				if len(oracleMsg.RequestDoc.Endpoints) == 0 {
+					c.activeJobsMux.Unlock()
+					fmt.Printf("[  ERROR] eventToJob: No endpoints in RequestDoc\n")
+					return nil, fmt.Errorf("no endpoints in RequestDoc")
+				}
+
+				job := &types.Job{
+					ID:     reqID,
+					URL:    oracleMsg.RequestDoc.Endpoints[0].Url,
+					Path:   oracleMsg.RequestDoc.Endpoints[0].ParseRule,
+					Nonce:  oracleMsg.RequestDoc.Nonce + 1,
+					Delay:  time.Duration(oracleMsg.RequestDoc.Period) * time.Second,
+					Status: event.Events["register_oracle_request_doc.status"][0],
+				}
+
+				// activeJobs에 추가
+				c.activeJobs[reqID] = job
+				c.activeJobsMux.Unlock()
+
+				fmt.Printf("[SUCCESS] eventToJob: Registered new job - ID: %d, URL: %s, Path: %s, Delay: %v\n",
+					job.ID, job.URL, job.Path, job.Delay)
+
+				// 첫 번째 실행을 위해 job 반환
+				fmt.Printf("[  END  ] eventToJob: SUCCESS - new job created\n")
+				return job, nil
+
+			case *oracletypes.MsgUpdateOracleRequestDoc:
+				fmt.Printf("[  INFO ] eventToJob: Found MsgUpdateOracleRequestDoc\n")
+				// Update Oracle Request 메시지 처리
+				reqID := oracleMsg.RequestDoc.RequestId
+
+				c.activeJobsMux.Lock()
+				if existingJob, exists := c.activeJobs[reqID]; exists {
+					// 기존 job 업데이트
+					existingJob.URL = oracleMsg.RequestDoc.Endpoints[0].Url
+					existingJob.Path = oracleMsg.RequestDoc.Endpoints[0].ParseRule
+					existingJob.Delay = time.Duration(oracleMsg.RequestDoc.Period) * time.Second
+					c.activeJobsMux.Unlock()
+
+					fmt.Printf("[SUCCESS] eventToJob: Updated existing job - ID: %d, URL: %s, Path: %s\n",
+						existingJob.ID, existingJob.URL, existingJob.Path)
+					fmt.Printf("[  END  ] eventToJob: SUCCESS - job updated\n")
+					return existingJob, nil
+				}
+				c.activeJobsMux.Unlock()
+				fmt.Printf("[  WARN ] eventToJob: Job not found for update: %d\n", reqID)
+				return nil, fmt.Errorf("job not found for update: %d", reqID)
+
+			default:
+				fmt.Printf("[  INFO ] eventToJob: Ignoring message type: %T\n", msg)
+			}
+		}
+
+	case tmtypes.EventDataNewBlock:
+		fmt.Printf("[  INFO ] eventToJob: Processing NewBlock event\n")
+
+		if len(event.Events["complete_oracle_data_set.request_id"]) == 0 {
+			fmt.Printf("[  ERROR] eventToJob: complete_oracle_data_set.request_id not found in NewBlock event\n")
+			return nil, fmt.Errorf("complete_oracle_data_set.request_id not found in NewBlock event")
+		}
+
+		reqID, err := strconv.ParseUint(event.Events["complete_oracle_data_set.request_id"][0], 10, 64)
+		if err != nil {
+			fmt.Printf("[  ERROR] eventToJob: Failed to parse request ID from NewBlock: %v\n", err)
+			return nil, fmt.Errorf("failed to parse request ID: %w", err)
+		}
+
+		fmt.Printf("[  INFO ] eventToJob: NewBlock event for request_id: %d\n", reqID)
+
+		c.activeJobsMux.Lock()
+		existingJob, exists := c.activeJobs[reqID]
+		if !exists {
+			c.activeJobsMux.Unlock()
+			fmt.Printf("[  WARN ] eventToJob: Job not found in activeJobs for NewBlock: %d\n", reqID)
+			return nil, fmt.Errorf("job not found in activeJobs: %d", reqID)
+		}
+
+		// 기존 job의 nonce 증가
+		oldNonce := existingJob.Nonce
+		existingJob.Nonce++
+		fmt.Printf("[SUCCESS] eventToJob: Incremented nonce for job ID=%d: %d -> %d\n",
+			reqID, oldNonce, existingJob.Nonce)
+		c.activeJobsMux.Unlock()
+
+		// 업데이트된 job 반환
+		fmt.Printf("[  END  ] eventToJob: SUCCESS - nonce incremented\n")
+		return existingJob, nil
+
+	default:
+		fmt.Printf("[  WARN ] eventToJob: Unsupported event data type: %T\n", event.Data)
+		return nil, fmt.Errorf("unsupported event data type: %T", event.Data)
+	}
+
+	fmt.Printf("[  WARN ] eventToJob: No matching message found in transaction\n")
+	return nil, nil
 }
 
 func (c *Client) serveOracle(ctx context.Context) {
@@ -523,8 +697,8 @@ func (c *Client) processTransaction(ctx context.Context, oracleResult types.Orac
 	return nil
 }
 
-func (c *Client) GetEventChannel() <-chan coretypes.ResultEvent {
-	return c.eventCh
+func (c *Client) GetJobChannel() <-chan *types.Job {
+	return c.jobCh
 }
 
 func (c *Client) SetResultChannel(ch <-chan types.OracleData) {
