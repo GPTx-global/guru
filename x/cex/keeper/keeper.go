@@ -55,67 +55,67 @@ func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 }
 
 func (k Keeper) SwapCoins(ctx sdk.Context, senderAcc sdk.AccAddress, exchangeId math.Int, fromDenom, toDenom string, fromAmount math.Int) error {
-	exchange, err := k.GetExchange(ctx, exchangeId)
-	if err != nil {
-		return errorsmod.Wrapf(types.ErrInvalidExchangeId, "%v", err)
-	}
-	if err := types.ValidateExchangeRequiredKeys(exchange); err != nil {
-		return err
-	}
+	// exchange, err := k.GetExchange(ctx, exchangeId)
+	// if err != nil {
+	// 	return errorsmod.Wrapf(types.ErrInvalidExchangeId, "%v", err)
+	// }
+	// if err := types.ValidateExchangeRequiredKeys(exchange); err != nil {
+	// 	return err
+	// }
 
-	exReserve, _ := k.GetExchangeAttribute(ctx, exchangeId, types.KeyExchangeReserveAddress)
-	exRate, _ := k.GetExchangeAttribute(ctx, exchangeId, types.KeyExchangeRate)
-	exFee, _ := k.GetExchangeAttribute(ctx, exchangeId, types.KeyExchangeFee)
-	exBaseIbc, _ := k.GetExchangeAttribute(ctx, exchangeId, types.KeyExchangeBaseIBC)
-	exBaseShort, _ := k.GetExchangeAttribute(ctx, exchangeId, types.KeyExchangeBaseShort)
-	exQuoteIbc, _ := k.GetExchangeAttribute(ctx, exchangeId, types.KeyExchangeQuoteIBC)
-	exQuoteShort, _ := k.GetExchangeAttribute(ctx, exchangeId, types.KeyExchangeQuoteShort)
-	rate := sdk.MustNewDecFromStr(exRate.Value)
-	fee := sdk.MustNewDecFromStr(exFee.Value)
-	reserveAcc := sdk.MustAccAddressFromBech32(exReserve.Value)
+	// exReserve, _ := k.GetExchangeAttribute(ctx, exchangeId, types.KeyExchangeReserveAddress)
+	// exRate, _ := k.GetExchangeAttribute(ctx, exchangeId, types.KeyExchangeRate)
+	// exFee, _ := k.GetExchangeAttribute(ctx, exchangeId, types.KeyExchangeFee)
+	// exBaseIbc, _ := k.GetExchangeAttribute(ctx, exchangeId, types.KeyExchangeBaseIBC)
+	// exBaseShort, _ := k.GetExchangeAttribute(ctx, exchangeId, types.KeyExchangeBaseShort)
+	// exQuoteIbc, _ := k.GetExchangeAttribute(ctx, exchangeId, types.KeyExchangeQuoteIBC)
+	// exQuoteShort, _ := k.GetExchangeAttribute(ctx, exchangeId, types.KeyExchangeQuoteShort)
+	// rate := sdk.MustNewDecFromStr(exRate.Value)
+	// fee := sdk.MustNewDecFromStr(exFee.Value)
+	// reserveAcc := sdk.MustAccAddressFromBech32(exReserve.Value)
 
-	var mul bool
-	var fromIbcDenom, toIbcDenom string
-	var toAmount math.Int
-	if (fromDenom == exBaseShort.Value || fromDenom == exBaseIbc.Value) && (toDenom == exQuoteShort.Value || toDenom == exQuoteIbc.Value) {
-		mul = true
-		fromIbcDenom = exBaseIbc.Value
-		toIbcDenom = exQuoteIbc.Value
-	} else if (fromDenom == exQuoteShort.Value || fromDenom == exQuoteIbc.Value) && (toDenom == exBaseShort.Value || toDenom == exBaseIbc.Value) {
-		mul = false
-		fromIbcDenom = exQuoteIbc.Value
-		toIbcDenom = exBaseIbc.Value
-	} else {
-		return errorsmod.Wrapf(types.ErrInvalidExchangeCoins, "%s and %s", fromDenom, toDenom)
-	}
+	// var mul bool
+	// var fromIbcDenom, toIbcDenom string
+	// var toAmount math.Int
+	// if (fromDenom == exBaseShort.Value || fromDenom == exBaseIbc.Value) && (toDenom == exQuoteShort.Value || toDenom == exQuoteIbc.Value) {
+	// 	mul = true
+	// 	fromIbcDenom = exBaseIbc.Value
+	// 	toIbcDenom = exQuoteIbc.Value
+	// } else if (fromDenom == exQuoteShort.Value || fromDenom == exQuoteIbc.Value) && (toDenom == exBaseShort.Value || toDenom == exBaseIbc.Value) {
+	// 	mul = false
+	// 	fromIbcDenom = exQuoteIbc.Value
+	// 	toIbcDenom = exBaseIbc.Value
+	// } else {
+	// 	return errorsmod.Wrapf(types.ErrInvalidExchangeCoins, "%s and %s", fromDenom, toDenom)
+	// }
 
-	if mul {
-		conv := rate.MulInt(fromAmount)
-		toAmount = conv.Sub(conv.Mul(fee)).TruncateInt()
-	} else {
-		conv := sdk.NewDecFromInt(fromAmount).Quo(rate)
-		toAmount = conv.Sub(conv.Mul(fee)).TruncateInt()
-	}
+	// if mul {
+	// 	conv := rate.MulInt(fromAmount)
+	// 	toAmount = conv.Sub(conv.Mul(fee)).TruncateInt()
+	// } else {
+	// 	conv := sdk.NewDecFromInt(fromAmount).Quo(rate)
+	// 	toAmount = conv.Sub(conv.Mul(fee)).TruncateInt()
+	// }
 
-	senderBalance := k.bankKeeper.GetBalance(ctx, senderAcc, fromIbcDenom)
+	// senderBalance := k.bankKeeper.GetBalance(ctx, senderAcc, fromIbcDenom)
 
-	if senderBalance.Amount.LT(fromAmount) {
-		return errorsmod.Wrapf(types.ErrInsufficientBalance, "sender balance: %s is less than %s", senderBalance.String(), fromAmount.String()+fromDenom)
-	}
+	// if senderBalance.Amount.LT(fromAmount) {
+	// 	return errorsmod.Wrapf(types.ErrInsufficientBalance, "sender balance: %s is less than %s", senderBalance.String(), fromAmount.String()+fromDenom)
+	// }
 
-	reserveBalance := k.bankKeeper.GetBalance(ctx, reserveAcc, toIbcDenom)
-	if reserveBalance.Amount.LT(toAmount) {
-		return errorsmod.Wrapf(types.ErrInsufficientReserve, "reserve balance: %s is less than %s", senderBalance.String(), fromAmount.String()+fromDenom)
-	}
+	// reserveBalance := k.bankKeeper.GetBalance(ctx, reserveAcc, toIbcDenom)
+	// if reserveBalance.Amount.LT(toAmount) {
+	// 	return errorsmod.Wrapf(types.ErrInsufficientReserve, "reserve balance: %s is less than %s", senderBalance.String(), fromAmount.String()+fromDenom)
+	// }
 
-	err = k.bankKeeper.SendCoins(ctx, senderAcc, reserveAcc, sdk.NewCoins(sdk.NewCoin(fromIbcDenom, fromAmount)))
-	if err != nil {
-		return err
-	}
-	err = k.bankKeeper.SendCoins(ctx, reserveAcc, senderAcc, sdk.NewCoins(sdk.NewCoin(toIbcDenom, toAmount)))
-	if err != nil {
-		return err
-	}
+	// err = k.bankKeeper.SendCoins(ctx, senderAcc, reserveAcc, sdk.NewCoins(sdk.NewCoin(fromIbcDenom, fromAmount)))
+	// if err != nil {
+	// 	return err
+	// }
+	// err = k.bankKeeper.SendCoins(ctx, reserveAcc, senderAcc, sdk.NewCoins(sdk.NewCoin(toIbcDenom, toAmount)))
+	// if err != nil {
+	// 	return err
+	// }
 	return nil
 }
 
@@ -241,7 +241,7 @@ func (k Keeper) SetExchangeAttribute(ctx sdk.Context, id math.Int, attribute typ
 		return errorsmod.Wrapf(types.ErrInvalidExchangeId, "exchange not found with id %s", id)
 	}
 
-	if attribute.Key == types.KeyExchangeId || attribute.Key == types.KeyExchangeBaseIBC || attribute.Key == types.KeyExchangeQuoteIBC {
+	if attribute.Key == types.KeyExchangeId || attribute.Key == types.KeyExchangeCoinAIBCDenom || attribute.Key == types.KeyExchangeCoinBIBCDenom {
 		return errorsmod.Wrapf(types.ErrConstantKey, "key: %s", attribute.Key)
 	}
 

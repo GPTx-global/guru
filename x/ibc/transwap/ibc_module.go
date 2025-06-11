@@ -14,19 +14,19 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with the Evmos packages. If not, see https://github.com/evmos/evmos/blob/main/LICENSE
 
-package transfer
+package transwap
 
 import (
 	"fmt"
 
-	"github.com/GPTx-global/guru/x/ibc/transfer/keeper"
-	ibctransfer "github.com/cosmos/ibc-go/v6/modules/apps/transfer"
+	"github.com/GPTx-global/guru/x/ibc/transwap/keeper"
+	ibcexchange "github.com/cosmos/ibc-go/v6/modules/apps/exchange"
 	porttypes "github.com/cosmos/ibc-go/v6/modules/core/05-port/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
-	"github.com/cosmos/ibc-go/v6/modules/apps/transfer/types"
+	"github.com/cosmos/ibc-go/v6/modules/apps/exchange/types"
 	channeltypes "github.com/cosmos/ibc-go/v6/modules/core/04-channel/types"
 	ibcexported "github.com/cosmos/ibc-go/v6/modules/core/exported"
 )
@@ -35,13 +35,13 @@ var _ porttypes.IBCModule = IBCModule{}
 
 // IBCModule implements the ICS26 interface for transfer given the transfer keeper.
 type IBCModule struct {
-	*ibctransfer.IBCModule
+	*ibcexchange.IBCModule
 	keeper keeper.Keeper
 }
 
 // NewIBCModule creates a new IBCModule given the keeper
 func NewIBCModule(k keeper.Keeper) IBCModule {
-	transferModule := ibctransfer.NewIBCModule(*k.Keeper)
+	transferModule := ibcexchange.NewIBCModule(*k.Keeper)
 	return IBCModule{
 		IBCModule: &transferModule,
 		keeper:    k,

@@ -221,8 +221,6 @@ github.com/GPTx-global/evmos-ledger-go v0.3.0-rc0-guru.1 h1:e2KkWxlMQcSmnmmK1CM4
 github.com/GPTx-global/evmos-ledger-go v0.3.0-rc0-guru.1/go.mod h1:A58UOaBFP8CipxEBCLRdrkZUqGEbI7VdISXRorRPvMw=
 github.com/GPTx-global/go-ethereum v1.10.26-evmos-rc4-guru.2 h1:E83qX+Qe1C5MKMhK/Z3YCv3nI43XY3Rzl1g3hHlmzJs=
 github.com/GPTx-global/go-ethereum v1.10.26-evmos-rc4-guru.2/go.mod h1:/6CsT5Ceen2WPLI/oCA3xMcZ5sWMF/D46SjM/ayY0Oo=
-github.com/GPTx-global/ibc-go/v6 v6.1.1-guru.1 h1:n0RHiJHgp5rLHEB4ht6iHRXaJbe6If+WcJkrmr61q4I=
-github.com/GPTx-global/ibc-go/v6 v6.1.1-guru.1/go.mod h1:AIONTPeX+ZvxRwK7Cvqf3fHSNcivei7nS48YFybBSe8=
 github.com/Knetic/govaluate v3.0.1-0.20171022003610-9aa49832a739+incompatible/go.mod h1:r7JcOSlj0wfOMncg0iLm8Leh48TZaKVeNIfJntJ2wa0=
 github.com/Microsoft/go-winio v0.6.0 h1:slsWYD/zyx7lCXoZVlvQrj0hPTM1HI4+v1sIda2yDvg=
 github.com/Nvveen/Gotty v0.0.0-20120604004816-cd527374f1e5 h1:TngWCqHvy9oXAN6lEVMRuU21PR1EtLVZJmdB18Gu3Rw=

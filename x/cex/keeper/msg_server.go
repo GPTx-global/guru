@@ -99,6 +99,11 @@ func (k Keeper) RemoveAdmin(goCtx context.Context, msg *types.MsgRemoveAdmin) (*
 func (k Keeper) RegisterExchange(goCtx context.Context, msg *types.MsgRegisterExchange) (*types.MsgRegisterExchangeResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
+	err := types.ValidateExchange(msg.Exchange)
+	if err != nil {
+		return nil, err
+	}
+
 	// validate the ID
 	nextExchangeId := k.GetNextExchangeId(ctx)
 	if !msg.Exchange.Id.Equal(nextExchangeId) {
@@ -109,7 +114,7 @@ func (k Keeper) RegisterExchange(goCtx context.Context, msg *types.MsgRegisterEx
 		return nil, errorsmod.Wrapf(types.ErrWrongAdmin, "%s is not an admin", msg.AdminAddress)
 	}
 
-	_, err := sdk.AccAddressFromBech32(msg.AdminAddress)
+	_, err = sdk.AccAddressFromBech32(msg.AdminAddress)
 	if err != nil {
 		return nil, err
 	}

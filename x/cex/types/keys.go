@@ -31,15 +31,33 @@ var (
 var (
 	KeyExchangeId             = "id"
 	KeyExchangeReserveAddress = "reserve_address"
-	KeyExchangeBaseIBC        = "base_coin_ibc_denom"
-	KeyExchangeQuoteIBC       = "quote_coin_ibc_denom"
-	KeyExchangeBaseShort      = "base_coin_short_denom"
-	KeyExchangeQuoteShort     = "quote_coin_short_denom"
-	KeyExchangeRate           = "rate"
+	KeyExchangeCoinAIBCDenom  = "coin_a_ibc_denom"
+	KeyExchangeCoinBIBCDenom  = "coin_b_ibc_denom"
+	KeyExchangeCoinAShort     = "coin_a_short_denom"
+	KeyExchangeCoinBShort     = "coin_b_short_denom"
+	KeyExchangeCoinAPort      = "coin_a_port"
+	KeyExchangeCoinBPort      = "coin_b_port"
+	KeyExchangeCoinAChannel   = "coin_a_channel"
+	KeyExchangeCoinBChannel   = "coin_b_channel"
+	KeyExchangeAtoBRate       = "a_to_b_rate"
+	KeyExchangeBtoARate       = "b_to_a_rate"
 	KeyExchangeStatus         = "status"
 	KeyExchangeFee            = "fee"
 	KeyExchangeAccumulatedFee = "accumulated_fee"
-	RequiredKeysExchange      = []*string{&KeyExchangeReserveAddress, &KeyExchangeBaseIBC, &KeyExchangeQuoteIBC, &KeyExchangeBaseShort, &KeyExchangeQuoteShort, &KeyExchangeRate, &KeyExchangeFee}
+	RequiredKeysExchange      = []*string{
+		&KeyExchangeReserveAddress,
+		&KeyExchangeCoinAIBCDenom,
+		&KeyExchangeCoinBIBCDenom,
+		&KeyExchangeCoinAShort,
+		&KeyExchangeCoinBShort,
+		&KeyExchangeCoinAPort,
+		&KeyExchangeCoinBPort,
+		&KeyExchangeCoinAChannel,
+		&KeyExchangeCoinBChannel,
+		&KeyExchangeAtoBRate,
+		&KeyExchangeBtoARate,
+		&KeyExchangeFee,
+	}
 )
 
 // func GetCoinKey(ibcDenom string) []byte {

@@ -16,7 +16,8 @@ func ValidateExchange(exchange *Exchange) error {
 			return err
 		}
 	}
-	return nil
+
+	return ValidateExchangeRequiredKeys(exchange)
 }
 
 func ValidateExchangeRequiredKeys(exchange *Exchange) error {
@@ -37,7 +38,7 @@ func ValidateExchangeRequiredKeys(exchange *Exchange) error {
 		keys += *key + ", "
 	}
 
-	if count <= size {
+	if count < size {
 		return errorsmod.Wrapf(ErrRequiredKey, "required keys: %s", keys)
 	}
 
@@ -54,4 +55,12 @@ func ValidateAttribute(attribute Attribute) error {
 	}
 
 	return nil
+}
+
+func AttributesToMap(attributes []Attribute) map[string]string {
+	attributesMap := make(map[string]string)
+	for _, attribute := range attributes {
+		attributesMap[attribute.Key] = attribute.Value
+	}
+	return attributesMap
 }
