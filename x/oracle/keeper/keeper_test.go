@@ -114,3 +114,48 @@ func TestSetAndGetModeratorAddress(t *testing.T) {
 	retrievedAddress := keeper.GetModeratorAddress(ctx)
 	assert.Equal(t, testAddress, retrievedAddress)
 }
+
+func TestGetOracleData(t *testing.T) {
+	keeper, ctx := setupKeeper(t)
+
+	doc := types.OracleRequestDoc{
+		RequestId:   1,
+		Name:        "Test Name",
+		Description: "Test Description",
+		OracleType:  types.OracleType_ORACLE_TYPE_CRYPTO,
+		Status:      types.RequestStatus_REQUEST_STATUS_ENABLED,
+		AccountList: []string{"guru1h9y8h0rh6tqxrj045fyvarnnyyxdg07693zkft"},
+		Quorum:      1,
+		Period:      1,
+		Endpoints: []*types.OracleEndpoint{
+			{Url: "https://api.coinbase.com/v2/prices/BTC-USD/spot", ParseRule: "data.amount"},
+		},
+		AggregationRule: types.AggregationRule_AGGREGATION_RULE_AVG,
+		Nonce:           1,
+	}
+
+	// Store document
+	keeper.SetOracleRequestDoc(ctx, doc)
+
+	dataSet := types.DataSet{
+		RequestId:   1,
+		Nonce:       1,
+		RawData:     "100",
+		BlockHeight: 1,
+		BlockTime:   1,
+	}
+
+	keeper.SetDataSet(ctx, dataSet)
+
+	query := types.QueryOracleDataRequest{
+		RequestId: 1,
+	}
+
+	response, err := keeper.GetOracleData(ctx, query.RequestId)
+	require.NoError(t, err)
+	assert.Equal(t, dataSet.RequestId, response.DataSet.RequestId)
+	assert.Equal(t, dataSet.Nonce, response.DataSet.Nonce)
+	assert.Equal(t, dataSet.RawData, response.DataSet.RawData)
+	assert.Equal(t, dataSet.BlockHeight, response.DataSet.BlockHeight)
+	assert.Equal(t, dataSet.BlockTime, response.DataSet.BlockTime)
+}
