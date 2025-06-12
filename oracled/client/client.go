@@ -110,6 +110,16 @@ func (c *Client) Start(ctx context.Context) error {
 		fmt.Printf("Description: %s\n", doc.Description)
 		fmt.Printf("Name: %s\n", doc.Name)
 		fmt.Printf("------------------------\n")
+		job := &types.Job{
+			ID:     doc.RequestId,
+			URL:    doc.Endpoints[0].Url,
+			Path:   doc.Endpoints[0].ParseRule,
+			Nonce:  doc.Nonce,
+			Delay:  time.Duration(doc.Period) * time.Second,
+			Status: doc.Status.String(),
+		}
+		c.activeJobs[doc.RequestId] = job
+		c.jobCh <- job
 	}
 	go c.monitor(ctx)
 	go c.serveOracle(ctx)
