@@ -73,8 +73,6 @@ message OracleRequestDoc {
   AggregationRule aggregation_rule = 9;
   // Current status of the request
   RequestStatus status = 10;
-  // Address of the request creator
-  string creator = 11;
   // Sequential number to ensure data freshness
   uint64 nonce = 12;
 }

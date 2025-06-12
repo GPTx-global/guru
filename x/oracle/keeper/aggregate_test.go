@@ -125,7 +125,6 @@ func TestProcessOracleDataSetAggregation(t *testing.T) {
 		Endpoints:       []*types.OracleEndpoint{{Url: "http://test.com", ParseRule: "test"}},
 		AggregationRule: types.AggregationRule_AGGREGATION_RULE_AVG,
 		Status:          types.RequestStatus_REQUEST_STATUS_ENABLED,
-		Creator:         "guru1h9y8h0rh6tqxrj045fyvarnnyyxdg07693zkft",
 	}
 
 	// Store the document
@@ -177,7 +176,6 @@ func TestProcessOracleDataSetAggregationWithInsufficientQuorum(t *testing.T) {
 		Endpoints:       []*types.OracleEndpoint{{Url: "http://test.com", ParseRule: "test"}},
 		AggregationRule: types.AggregationRule_AGGREGATION_RULE_AVG,
 		Status:          types.RequestStatus_REQUEST_STATUS_ENABLED,
-		Creator:         "guru1h9y8h0rh6tqxrj045fyvarnnyyxdg07693zkft",
 	}
 
 	// Store the document
@@ -221,7 +219,6 @@ func TestProcessOracleDataSetAggregationWithDisabledStatus(t *testing.T) {
 		Endpoints:       []*types.OracleEndpoint{{Url: "http://test.com", ParseRule: "test"}},
 		AggregationRule: types.AggregationRule_AGGREGATION_RULE_AVG,
 		Status:          types.RequestStatus_REQUEST_STATUS_DISABLED,
-		Creator:         "guru1h9y8h0rh6tqxrj045fyvarnnyyxdg07693zkft",
 	}
 
 	// Store the document

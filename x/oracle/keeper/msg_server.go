@@ -42,7 +42,6 @@ func (k Keeper) RegisterOracleRequestDoc(c context.Context, doc *types.MsgRegist
 		Quorum:          doc.RequestDoc.Quorum,
 		Endpoints:       doc.RequestDoc.Endpoints,
 		AggregationRule: doc.RequestDoc.AggregationRule,
-		Creator:         doc.RequestDoc.Creator,
 	}
 
 	// Store the oracle request document
@@ -64,7 +63,6 @@ func (k Keeper) RegisterOracleRequestDoc(c context.Context, doc *types.MsgRegist
 			sdk.NewAttribute(types.AttributeKeyEndpoints, fmt.Sprintf("%v", oracleRequestDoc.Endpoints)),
 			sdk.NewAttribute(types.AttributeKeyAggregationRule, string(oracleRequestDoc.AggregationRule)),
 			sdk.NewAttribute(types.AttributeKeyStatus, string(oracleRequestDoc.Status)),
-			sdk.NewAttribute(types.AttributeKeyCreator, oracleRequestDoc.Creator),
 		),
 	)
 
@@ -105,7 +103,6 @@ func (k Keeper) UpdateOracleRequestDoc(c context.Context, doc *types.MsgUpdateOr
 			sdk.NewAttribute(types.AttributeKeyAggregationRule, string(doc.RequestDoc.AggregationRule)),
 			sdk.NewAttribute(types.AttributeKeyStatus, string(doc.RequestDoc.Status)),
 			sdk.NewAttribute(types.AttributeKeyNonce, fmt.Sprint(doc.RequestDoc.Nonce)),
-			sdk.NewAttribute(types.AttributeKeyCreator, doc.RequestDoc.Creator),
 		),
 	)
 
