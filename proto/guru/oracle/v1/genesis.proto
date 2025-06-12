@@ -16,12 +16,9 @@ message GenesisState {
   
   // request_oracle_docs defines the list of oracle request documents
   repeated OracleRequestDoc oracle_request_docs = 3 [(gogoproto.nullable) = false];
-
-  // predefined_oracles defines the list of predefined oracles
-  repeated PredefinedOracle predefined_oracles = 4 [(gogoproto.nullable) = false];
   
   // moderator_address defines the address of the oracle moderator
-  string moderator_address = 5;
+  string moderator_address = 4;
 }
 
 // Params defines the parameters for the oracle module

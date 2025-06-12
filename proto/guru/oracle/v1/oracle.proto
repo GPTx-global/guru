@@ -7,31 +7,6 @@ import "cosmos/base/v1beta1/coin.proto";
 
 option go_package = "github.com/GPTx-global/guru/x/oracle/types";
 
-enum PredefinedOracleType {
-  // Default value, should not be used
-  PREDEFINED_ORACLE_TYPE_UNSPECIFIED = 0;
-  // Minimum gas price oracle for network fee estimation
-  PREDEFINED_ORACLE_TYPE_MIN_GAS_PRICE = 1;
-  // Currency exchange rates and forex data (KRW)
-  PREDEFINED_ORACLE_TYPE_CURRENCY_KRW = 2;
-  // Currency exchange rates and forex data (USD)
-  PREDEFINED_ORACLE_TYPE_CURRENCY_USD = 3;
-  // Currency exchange rates and forex data (EUR)
-  PREDEFINED_ORACLE_TYPE_CURRENCY_EUR = 4;
-  // Currency exchange rates and forex data (JPY)
-  PREDEFINED_ORACLE_TYPE_CURRENCY_JPY = 5;
-  // Currency exchange rates and forex data (CNY)
-  PREDEFINED_ORACLE_TYPE_CURRENCY_CNY = 6;
-  // Currency exchange rates and forex data (PHP)
-  PREDEFINED_ORACLE_TYPE_CURRENCY_PHP = 7;
-  // Currency exchange rates and forex data (AUD)
-  PREDEFINED_ORACLE_TYPE_CURRENCY_AUD = 8;
-  // Currency exchange rates and forex data (CAD)
-  PREDEFINED_ORACLE_TYPE_CURRENCY_CAD = 9;
-  // Currency exchange rates and forex data (HKD)
-  PREDEFINED_ORACLE_TYPE_CURRENCY_HKD = 10;
-}
-
 // OracleType defines the type of oracle data that can be requested and provided
 // This enum helps categorize different kinds of oracle data sources and their purposes
 enum OracleType {
@@ -138,15 +113,4 @@ message DataSet {
   uint64 block_time = 4;
   // raw_data represents the raw data in string format (can be JSON, CSV, etc.)
   string raw_data = 5;
-}
-
-// PredefinedOracle defines the structure for predefined oracles
-// This is a predefined oracle that is used to fetch data from an external source
-message PredefinedOracle {
-  // name represents the name of the predefined oracle
-  string name = 1;
-  // type represents the type of the predefined oracle
-  PredefinedOracleType type = 2;
-  // request_id represents the ID of the request this predefined oracle belongs to
-  uint64 request_id = 3;
 }

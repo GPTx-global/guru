@@ -68,10 +68,3 @@ func (doc OracleRequestDoc) Validate() error {
 	}
 	return nil
 }
-
-func PredefinedOracleTypeFromUint64(idx uint64) (PredefinedOracleType, error) {
-	if idx > uint64(len(PredefinedOracleType_name)) {
-		return PredefinedOracleType_PREDEFINED_ORACLE_TYPE_UNSPECIFIED, fmt.Errorf("invalid predefined oracle type index")
-	}
-	return PredefinedOracleType(idx), nil
-}

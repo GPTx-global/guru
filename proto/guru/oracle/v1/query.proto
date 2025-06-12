@@ -39,12 +39,6 @@ service Query {
   rpc ModeratorAddress(QueryModeratorAddressRequest) returns (QueryModeratorAddressResponse) {
     option (google.api.http).get = "/guru/oracle/v1/moderator";
   }
-
-  // PredefinedOracles queries the predefined oracles
-  rpc PredefinedOracles(QueryPredefinedOraclesRequest) returns (QueryPredefinedOraclesResponse) {
-    option (google.api.http).get = "/guru/oracle/v1/predefined_oracles";
-  }
-
 }
 
 // QueryParamsRequest is request type for the Query/Params RPC method
@@ -109,12 +103,4 @@ message QueryModeratorAddressRequest {}
 message QueryModeratorAddressResponse {
   // moderator_address is the address of the moderator
   string moderator_address = 1;
-}
-
-// QueryPredefinedOraclesRequest is request type for the Query/PredefinedOracles RPC method
-message QueryPredefinedOraclesRequest {}
-
-// QueryPredefinedOraclesResponse is response type for the Query/PredefinedOracles RPC method
-message QueryPredefinedOraclesResponse {
-  repeated PredefinedOracle predefined_oracles = 1;
 }

@@ -5,12 +5,10 @@ import (
 	"fmt"
 	"os"
 	"strconv"
-	"strings"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
-	"github.com/cosmos/cosmos-sdk/version"
 	"github.com/spf13/cobra"
 
 	"github.com/GPTx-global/guru/x/oracle/types"
@@ -32,8 +30,6 @@ func GetTxCmd() *cobra.Command {
 		NewUpdateOracleRequestDocCmd(),
 		NewSubmitOracleDataCmd(),
 		NewUpdateModeratorAddressCmd(),
-		NewUpdatePredefinedOracleCmd(),
-		NewDeletePredefinedOracleCmd(),
 	)
 
 	return cmd
@@ -159,84 +155,6 @@ func NewUpdateModeratorAddressCmd() *cobra.Command {
 			msg := types.NewMsgUpdateModeratorAddress(
 				clientCtx.GetFromAddress().String(),
 				args[0],
-			)
-
-			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
-		},
-	}
-
-	flags.AddTxFlagsToCmd(cmd)
-	return cmd
-}
-
-func NewUpdatePredefinedOracleCmd() *cobra.Command {
-
-	cmd := &cobra.Command{
-		Use:   "update-predefined-oracle [request-id] [name] [predefined-oracle-type]",
-		Short: "Update a predefined oracle",
-		// Long:  strings.TrimSpace(fmt.Sprintf(`Update a predefined oracle
-
-		// `, version.AppName)),
-
-		Example: strings.TrimSpace(fmt.Sprintf(`$ %s tx oracle update-predefined-oracle 1 "Min Gas Price" 1
-$ %s tx oracle update-predefined-oracle 1 "Currency KRW" 2
-$ %s tx oracle update-predefined-oracle 1 "Currency USD" 3
-$ %s tx oracle update-predefined-oracle 1 "Currency EUR" 4
-$ %s tx oracle update-predefined-oracle 1 "Currency JPY" 5
-		`, version.AppName, version.AppName, version.AppName, version.AppName, version.AppName)),
-		Args: cobra.ExactArgs(3),
-		RunE: func(cmd *cobra.Command, args []string) error {
-			clientCtx, err := client.GetClientTxContext(cmd)
-			if err != nil {
-				return err
-			}
-
-			requestId := args[0]
-			name := args[1]
-			predefinedOracleType := args[2]
-
-			requestIdUint64, err := strconv.ParseUint(requestId, 10, 64)
-			if err != nil {
-				return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "request id is not a valid uint64")
-			}
-
-			predefinedOracleTypeUint32, err := strconv.ParseUint(predefinedOracleType, 10, 32)
-			if err != nil {
-				return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "predefined oracle type is not a valid uint32")
-			}
-
-			msg := types.NewMsgUpdatePredefinedOracle(
-				clientCtx.GetFromAddress().String(),
-				types.PredefinedOracle{
-					RequestId: requestIdUint64,
-					Name:      name,
-					Type:      types.PredefinedOracleType(predefinedOracleTypeUint32),
-				},
-			)
-
-			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
-		},
-	}
-
-	flags.AddTxFlagsToCmd(cmd)
-	return cmd
-}
-
-func NewDeletePredefinedOracleCmd() *cobra.Command {
-
-	cmd := &cobra.Command{
-		Use:   "delete-predefined-oracle [predefined-oracle-type]",
-		Short: "Delete a predefined oracle",
-		Args:  cobra.ExactArgs(1),
-		RunE: func(cmd *cobra.Command, args []string) error {
-			clientCtx, err := client.GetClientTxContext(cmd)
-			if err != nil {
-				return err
-			}
-
-			msg := types.NewMsgDeletePredefinedOracle(
-				clientCtx.GetFromAddress().String(),
-				types.PredefinedOracleType(types.PredefinedOracleType_value[args[0]]),
 			)
 
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
