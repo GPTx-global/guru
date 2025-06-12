@@ -25,14 +25,16 @@ type SubscribeManager struct {
 	ctx               context.Context
 }
 
+// NewSubscribeManager creates a new subscription manager for blockchain events
 func NewSubscribeManager(ctx context.Context) *SubscribeManager {
 	return &SubscribeManager{
 		subscriptions: make(map[string]<-chan coretypes.ResultEvent),
-		channelSize:   64,
+		channelSize:   2 << 10,
 		ctx:           ctx,
 	}
 }
 
+// LoadRegisterRequest queries and returns all existing oracle request documents from the blockchain
 func (sm *SubscribeManager) LoadRegisterRequest(clientCtx client.Context) ([]*oracletypes.OracleRequestDoc, error) {
 	client := oracletypes.NewQueryClient(clientCtx)
 	res, err := client.OracleRequestDocs(sm.ctx, &oracletypes.QueryOracleRequestDocsRequest{})
@@ -43,6 +45,7 @@ func (sm *SubscribeManager) LoadRegisterRequest(clientCtx client.Context) ([]*or
 	return res.OracleRequestDocs, nil
 }
 
+// SetSubscribe establishes subscriptions to oracle-related blockchain events
 func (sm *SubscribeManager) SetSubscribe(client *http.HTTP) error {
 	sm.subscriptionsLock.Lock()
 	defer sm.subscriptionsLock.Unlock()
@@ -71,6 +74,7 @@ func (sm *SubscribeManager) SetSubscribe(client *http.HTTP) error {
 	return nil
 }
 
+// Subscribe listens for events from all subscribed channels and converts them to jobs
 func (sm *SubscribeManager) Subscribe() *types.Job {
 	sm.subscriptionsLock.RLock()
 	defer sm.subscriptionsLock.RUnlock()

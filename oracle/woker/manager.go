@@ -15,27 +15,32 @@ type JobManager struct {
 	wg       sync.WaitGroup
 }
 
+// NewJobManager creates a new job manager with CPU-based worker pool capacity
 func NewJobManager() *JobManager {
-	jm := new(JobManager)
-	jm.jobQueue = make(chan *types.Job, runtime.NumCPU()*4)
-	jm.quit = make(chan struct{})
-	jm.wg = sync.WaitGroup{}
+	jm := &JobManager{
+		jobQueue: make(chan *types.Job, runtime.NumCPU()*4),
+		quit:     make(chan struct{}),
+		wg:       sync.WaitGroup{},
+	}
 
 	return jm
 }
 
-func (jm *JobManager) Start(ctx context.Context) {
+// Start launches worker goroutines equal to the number of CPU cores
+func (jm *JobManager) Start(ctx context.Context, resultQueue chan<- *types.JobResult) {
 	for i := 0; i < runtime.NumCPU(); i++ {
 		jm.wg.Add(1)
-		go jm.worker(ctx)
+		go jm.worker(ctx, resultQueue)
 	}
 }
 
+// Stop gracefully shuts down all workers and waits for completion
 func (jm *JobManager) Stop() {
 	close(jm.quit)
 	jm.wg.Wait()
 }
 
+// SubmitJob adds a new job to the processing queue, drops job if queue is full
 func (jm *JobManager) SubmitJob(job *types.Job) {
 	select {
 	case jm.jobQueue <- job:
@@ -45,15 +50,19 @@ func (jm *JobManager) SubmitJob(job *types.Job) {
 	}
 }
 
-func (jm *JobManager) worker(ctx context.Context) {
+// worker processes jobs from the queue and sends results to the result channel
+func (jm *JobManager) worker(ctx context.Context, resultQueue chan<- *types.JobResult) {
 	defer jm.wg.Done()
 
 	for {
 		select {
 		case job := <-jm.jobQueue:
+			// 임시로 여기서 증가
+			// 추후에 activeJob으로 관리할 예정
+			job.Nonce++
 			jr := executeJob(job)
 			if jr != nil {
-
+				resultQueue <- jr
 			}
 		case <-jm.quit:
 			return

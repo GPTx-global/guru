@@ -17,24 +17,26 @@ var (
 	httpClient *http.Client
 )
 
+// executorClient returns a singleton HTTP client optimized for oracle data fetching
 func executorClient() *http.Client {
 	once.Do(func() {
-		transport := new(http.Transport)
-		transport.MaxIdleConns = 1000
-		transport.MaxIdleConnsPerHost = 100
-		transport.IdleConnTimeout = 90 * time.Second
-		transport.MaxConnsPerHost = 200
-		transport.WriteBufferSize = 32 * 1024
-		transport.ReadBufferSize = 32 * 1024
-
-		httpClient = new(http.Client)
-		httpClient.Timeout = 30 * time.Second
-		httpClient.Transport = transport
+		httpClient = &http.Client{
+			Timeout: 30 * time.Second,
+			Transport: &http.Transport{
+				MaxIdleConns:        1000,
+				MaxIdleConnsPerHost: 100,
+				IdleConnTimeout:     90 * time.Second,
+				MaxConnsPerHost:     200,
+				WriteBufferSize:     32 * 1024,
+				ReadBufferSize:      32 * 1024,
+			},
+		}
 	})
 
 	return httpClient
 }
 
+// executeJob processes a job by fetching data from URL and extracting value by path
 func executeJob(job *types.Job) *types.JobResult {
 	if 1 < job.Nonce {
 		<-time.After(job.Delay)
@@ -59,14 +61,16 @@ func executeJob(job *types.Job) *types.JobResult {
 		return nil
 	}
 
-	jr := new(types.JobResult)
-	jr.ID = job.ID
-	jr.Data = extractedValue
-	jr.Nonce = job.Nonce
+	jr := &types.JobResult{
+		ID:    job.ID,
+		Data:  extractedValue,
+		Nonce: job.Nonce,
+	}
 
 	return jr
 }
 
+// fetchRawData makes HTTP GET request to the specified URL and returns response body
 func fetchRawData(url string) ([]byte, error) {
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
@@ -91,6 +95,7 @@ func fetchRawData(url string) ([]byte, error) {
 	return body, nil
 }
 
+// parseJSON parses raw JSON data into a map, handles both objects and arrays
 func parseJSON(rawData []byte) (map[string]any, error) {
 	var result map[string]any
 	if err := json.Unmarshal(rawData, &result); err != nil {
@@ -113,6 +118,7 @@ func parseJSON(rawData []byte) (map[string]any, error) {
 	return result, nil
 }
 
+// extractDataByPath extracts value from nested JSON data using dot notation path
 func extractDataByPath(data map[string]any, path string) (string, error) {
 	if path == "" {
 		return "", fmt.Errorf("empty path")
@@ -147,6 +153,7 @@ func extractDataByPath(data map[string]any, path string) (string, error) {
 	return fmt.Sprintf("%v", current), nil
 }
 
+// parseArrayIndex converts string to integer for array indexing
 func parseArrayIndex(s string) (int, error) {
 	if s == "" {
 		return -1, fmt.Errorf("empty string")

@@ -7,8 +7,8 @@ import (
 	"github.com/GPTx-global/guru/app"
 	"github.com/GPTx-global/guru/encoding"
 	"github.com/GPTx-global/guru/oracle/subscribe"
-	"github.com/GPTx-global/guru/oracle/types"
 	"github.com/GPTx-global/guru/oracle/tx"
+	"github.com/GPTx-global/guru/oracle/types"
 	"github.com/GPTx-global/guru/oracle/woker"
 	"github.com/cosmos/cosmos-sdk/client"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
@@ -23,13 +23,14 @@ type Daemon struct {
 	jobManager         *woker.JobManager
 	transactionManager *tx.TxManager
 
-	jobChannel chan *types.Job
-
 	ctx context.Context
 }
 
+// New creates a new Oracle daemon instance with initialized components
 func New(ctx context.Context) (*Daemon, error) {
 	d := new(Daemon)
+	d.ctx = ctx
+
 	clt, err := http.New(types.Config.RpcEndpoint(), "/websocket")
 	if err != nil {
 		return nil, fmt.Errorf("failed to create client: %w", err)
@@ -68,13 +69,13 @@ func New(ctx context.Context) (*Daemon, error) {
 
 	d.transactionManager = tx.NewTxManager(d.clientCtx)
 	d.subscribeManager = subscribe.NewSubscribeManager(d.ctx)
-	d.jobChannel = make(chan *types.Job, 64)
 	d.jobManager = woker.NewJobManager()
 	return d, nil
 }
 
+// Start initializes and starts all daemon components including job manager, client, and event subscriptions
 func (d *Daemon) Start() error {
-	d.jobManager.Start(d.ctx)
+	d.jobManager.Start(d.ctx, d.transactionManager.ResultQueue())
 
 	err := d.client.Start()
 	if err != nil {
@@ -96,17 +97,17 @@ func (d *Daemon) Start() error {
 		return fmt.Errorf("failed to set subscribe: %w", err)
 	}
 
-	go d.Monitor()
-
 	return nil
 }
 
+// Stop gracefully shuts down all daemon components
 func (d *Daemon) Stop() {
 	d.jobManager.Stop()
 	d.client.Stop()
 	d.ctx.Done()
 }
 
+// Monitor continuously listens for new events and processes them as jobs
 func (d *Daemon) Monitor() {
 	for {
 		if job := d.subscribeManager.Subscribe(); job != nil {
@@ -115,10 +116,29 @@ func (d *Daemon) Monitor() {
 	}
 }
 
+// ProcessJob submits a job to the job manager for execution
 func (d *Daemon) ProcessJob(job *types.Job) {
 	d.jobManager.SubmitJob(job)
 }
 
-func (d *Daemon) Serve() error {
-	return nil
+// ServeOracle continuously builds and broadcasts oracle data submission transactions
+func (d *Daemon) ServeOracle() error {
+	for {
+		txBytes, err := d.transactionManager.BuildSubmitTx()
+		if err != nil {
+			return fmt.Errorf("failed to build submit tx: %w", err)
+		}
+
+		txResponse, err := d.transactionManager.BroadcastTx(txBytes)
+		if err != nil {
+			return fmt.Errorf("failed to broadcast tx: %w", err)
+		}
+
+		if txResponse.Code == 0 {
+			fmt.Printf("txHash: %s\n", txResponse.TxHash)
+			d.transactionManager.IncrementSequenceNumber()
+		} else {
+			fmt.Printf("tx failed: %s\n", txResponse.RawLog)
+		}
+	}
 }

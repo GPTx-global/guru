@@ -1,0 +1,17 @@
+# RPC 엔드포인트
+rpc_endpoint = "http://localhost:26657"
+
+# 체인 ID
+chain_id = "guru_3110-1"
+
+# 키링 디렉토리 경로
+keyring_dir = "/Users/pamla/.oracled/"
+
+# 사용할 키 이름
+key_name = "node1"
+
+# 가스 가격
+gas_price = "630000000aguru"
+
+# 가스 한도
+gas_limit = 30000 
