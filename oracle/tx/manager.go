@@ -13,52 +13,55 @@ import (
 )
 
 type TxManager struct {
-	clientCtx      client.Context
+	sequenceNumber uint64
+	accountNumber  uint64
+	sequenceLock   sync.Mutex
 	resultQueue    chan *types.JobResult
+	clientCtx      client.Context
 	quit           chan struct{}
 	wg             sync.WaitGroup
-	accountNumber  uint64
-	sequenceNumber uint64
-	sequenceLock   sync.Mutex
 }
 
+// NewTxManager creates a new transaction manager with initialized account information
 func NewTxManager(clientCtx client.Context) *TxManager {
-	txm := new(TxManager)
-	txm.clientCtx = clientCtx
-	txm.resultQueue = make(chan *types.JobResult, 128)
-	txm.quit = make(chan struct{})
-	txm.wg = sync.WaitGroup{}
+	txm := &TxManager{
+		clientCtx:    clientCtx,
+		resultQueue:  make(chan *types.JobResult, 2<<10),
+		quit:         make(chan struct{}),
+		wg:           sync.WaitGroup{},
+		sequenceLock: sync.Mutex{},
+	}
 	acc, seq, err := txm.clientCtx.AccountRetriever.GetAccountNumberSequence(txm.clientCtx, txm.clientCtx.GetFromAddress())
 	if err != nil {
 		panic(err)
 	}
 	txm.accountNumber = acc
 	txm.sequenceNumber = seq
-	txm.sequenceLock = sync.Mutex{}
 
 	return txm
 }
 
-// TODO: 채널 어떻게 처리할지 고민
+// ResultQueue returns the channel for receiving job results
 func (txm *TxManager) ResultQueue() chan<- *types.JobResult {
 	return txm.resultQueue
 }
 
+// BuildSubmitTx builds a transaction for submitting oracle data to the blockchain
 func (txm *TxManager) BuildSubmitTx() ([]byte, error) {
 	msgs := make([]sdk.Msg, 0, 1)
 
 	jobResult := <-txm.resultQueue
 
-	dataSet := new(oracletypes.SubmitDataSet)
-	dataSet.RequestId = jobResult.ID
-	dataSet.RawData = jobResult.Data
-	dataSet.Nonce = jobResult.Nonce
-	dataSet.Provider = txm.clientCtx.GetFromAddress().String()
-	dataSet.Signature = "test"
-
-	msg := new(oracletypes.MsgSubmitOracleData)
-	msg.AuthorityAddress = txm.clientCtx.GetFromAddress().String()
-	msg.DataSet = dataSet
+	msg := &oracletypes.MsgSubmitOracleData{
+		AuthorityAddress: txm.clientCtx.GetFromAddress().String(),
+		DataSet: &oracletypes.SubmitDataSet{
+			RequestId: jobResult.ID,
+			RawData:   jobResult.Data,
+			Nonce:     jobResult.Nonce,
+			Provider:  txm.clientCtx.GetFromAddress().String(),
+			Signature: "test",
+		},
+	}
 
 	msgs = append(msgs, msg)
 
@@ -98,6 +101,7 @@ func (txm *TxManager) BuildSubmitTx() ([]byte, error) {
 	return txBytes, nil
 }
 
+// BroadcastTx broadcasts a transaction to the blockchain network
 func (txm *TxManager) BroadcastTx(txBytes []byte) (*sdk.TxResponse, error) {
 	res, err := txm.clientCtx.BroadcastTx(txBytes)
 	if err != nil {
@@ -105,4 +109,11 @@ func (txm *TxManager) BroadcastTx(txBytes []byte) (*sdk.TxResponse, error) {
 	}
 
 	return res, nil
+}
+
+// IncrementSequenceNumber safely increments the sequence number for the next transaction
+func (txm *TxManager) IncrementSequenceNumber() {
+	txm.sequenceLock.Lock()
+	txm.sequenceNumber++
+	txm.sequenceLock.Unlock()
 }
