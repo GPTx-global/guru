@@ -1,0 +1,88 @@
+package subscribe
+
+import (
+	"context"
+	"fmt"
+	"sync"
+
+	"github.com/GPTx-global/guru/oracle/types"
+	oracletypes "github.com/GPTx-global/guru/x/oracle/types"
+	"github.com/cosmos/cosmos-sdk/client"
+	"github.com/tendermint/tendermint/rpc/client/http"
+	coretypes "github.com/tendermint/tendermint/rpc/core/types"
+)
+
+var (
+	registerMsg = "/guru.oracle.v1.MsgRegisterOracleRequestDoc"
+	updateMsg   = "/guru.oracle.v1.MsgUpdateOracleRequestDoc"
+	completeMsg = "complete_oracle_data_set"
+)
+
+type SubscribeManager struct {
+	subscriptions     map[string]<-chan coretypes.ResultEvent
+	subscriptionsLock sync.RWMutex
+	channelSize       int
+	ctx               context.Context
+}
+
+func NewSubscribeManager(ctx context.Context) *SubscribeManager {
+	return &SubscribeManager{
+		subscriptions: make(map[string]<-chan coretypes.ResultEvent),
+		channelSize:   64,
+		ctx:           ctx,
+	}
+}
+
+func (sm *SubscribeManager) LoadRegisterRequest(clientCtx client.Context) ([]*oracletypes.OracleRequestDoc, error) {
+	client := oracletypes.NewQueryClient(clientCtx)
+	res, err := client.OracleRequestDocs(sm.ctx, &oracletypes.QueryOracleRequestDocsRequest{})
+	if err != nil {
+		return nil, fmt.Errorf("failed to load register request: %w", err)
+	}
+
+	return res.OracleRequestDocs, nil
+}
+
+func (sm *SubscribeManager) SetSubscribe(client *http.HTTP) error {
+	sm.subscriptionsLock.Lock()
+	defer sm.subscriptionsLock.Unlock()
+
+	registerQuery := fmt.Sprintf("tm.event='Tx' AND message.action='%s'", registerMsg)
+	ch, err := client.Subscribe(sm.ctx, registerMsg, registerQuery, sm.channelSize)
+	if err != nil {
+		return fmt.Errorf("failed to subscribe to %s: %w", registerMsg, err)
+	}
+	sm.subscriptions[registerMsg] = ch
+
+	updateQuery := fmt.Sprintf("tm.event='Tx' AND message.action='%s'", updateMsg)
+	ch, err = client.Subscribe(sm.ctx, updateMsg, updateQuery, sm.channelSize)
+	if err != nil {
+		return fmt.Errorf("failed to subscribe to %s: %w", updateMsg, err)
+	}
+	sm.subscriptions[updateMsg] = ch
+
+	completeQuery := fmt.Sprintf("tm.event='NewBlock' AND %s.request_id EXISTS", completeMsg)
+	ch, err = client.Subscribe(sm.ctx, completeMsg, completeQuery, sm.channelSize)
+	if err != nil {
+		return fmt.Errorf("failed to subscribe to %s: %w", completeMsg, err)
+	}
+	sm.subscriptions[completeMsg] = ch
+
+	return nil
+}
+
+func (sm *SubscribeManager) Subscribe() *types.Job {
+	sm.subscriptionsLock.RLock()
+	defer sm.subscriptionsLock.RUnlock()
+
+	select {
+	case event := <-sm.subscriptions[registerMsg]:
+		return types.MakeJob(event)
+	case event := <-sm.subscriptions[updateMsg]:
+		return types.MakeJob(event)
+	case event := <-sm.subscriptions[completeMsg]:
+		return types.MakeJob(event)
+	case <-sm.ctx.Done():
+		return nil
+	}
+}
