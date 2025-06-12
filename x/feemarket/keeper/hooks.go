@@ -30,7 +30,7 @@ func (k Keeper) AfterOracleEnd(ctx sdk.Context, dataSet oracletypes.DataSet) {
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
 			types.EventTypeChangeMinGasPrice,
-			sdk.NewAttribute(types.AttributeKeyMinGasPrice, dataSet.RawData),
+			sdk.NewAttribute(types.AttributeKeyMinGasPrice, newMinGasPrice.String()),
 		),
 	)
 }

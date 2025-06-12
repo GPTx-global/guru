@@ -21,5 +21,5 @@ const (
 	EventTypeChangeMinGasPrice = "change_min_gas_price"
 
 	AttributeKeyBaseFee     = "base_fee"
-	AttributeKeyMinGasPrice = "min_gas_price"
+	AttributeKeyMinGasPrice = "new_min_gas_price"
 )
