@@ -349,3 +349,21 @@ func (k Keeper) GetPredefinedOracleData(ctx sdk.Context, oracleType types.Predef
 		DataSet: dataset,
 	}, nil
 }
+
+// GetOracleData retrieves the oracle data by request ID
+func (k Keeper) GetOracleData(ctx sdk.Context, requestId uint64) (*types.QueryOracleDataResponse, error) {
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	doc, err := k.GetOracleRequestDoc(sdkCtx, requestId)
+	if err != nil {
+		return nil, err
+	}
+
+	dataset, err := k.GetDataSet(sdkCtx, doc.RequestId, doc.Nonce)
+	if err != nil {
+		return nil, err
+	}
+
+	return &types.QueryOracleDataResponse{
+		DataSet: dataset,
+	}, nil
+}
