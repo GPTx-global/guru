@@ -130,7 +130,10 @@ func (w *JobWorker) Start(ctx context.Context) {
 			case job := <-w.jobQueue:
 				// job 처리
 				fmt.Printf("[ WORKER] JobWorker-%d processing job %d\n", w.id, job.ID)
-				w.scheduler.processJobWithRetry(ctx, job)
+				err := w.scheduler.processJob(ctx, job)
+				if err != nil {
+					fmt.Printf("[ WORKER] JobWorker-%d failed to process job %d: %v\n", w.id, job.ID, err)
+				}
 
 			case <-w.quit:
 				fmt.Printf("[  END  ] JobWorker-%d: SUCCESS - quit signal\n", w.id)

@@ -79,7 +79,7 @@ func NewTxBuilder(config *Config, rpcClient *http.HTTP) (*TxBuilder, error) {
 		WithClient(rpcClient).
 		WithFromAddress(fromAddress).
 		WithFromName(config.keyName).
-		WithBroadcastMode("async")
+		WithBroadcastMode("block")
 
 	// 계정 정보 조회를 재시도 로직으로 래핑
 	var num, seq uint64
@@ -100,7 +100,7 @@ func NewTxBuilder(config *Config, rpcClient *http.HTTP) (*TxBuilder, error) {
 	tb.clientCtx = clientCtx
 	tb.config = config
 	tb.keyring = keyRing
-	tb.sequence = seq
+	tb.sequence = seq + 1
 	tb.accNum = num
 	tb.lastSeqRefresh = time.Now()
 
@@ -202,16 +202,16 @@ func (tb *TxBuilder) BroadcastTx(ctx context.Context, txBytes []byte) (*sdk.TxRe
 		// 시퀀스 에러인 경우 시퀀스 갱신 시도
 		if tb.isSequenceError(res.RawLog) {
 			fmt.Printf("[  WARN ] BroadcastTx: Sequence error detected, refreshing sequence\n")
-			if refreshErr := tb.refreshSequence(ctx); refreshErr != nil {
-				fmt.Printf("[  WARN ] BroadcastTx: Failed to refresh sequence: %v\n", refreshErr)
-			}
+			// if refreshErr := tb.refreshSequence(ctx); refreshErr != nil {
+			// 	fmt.Printf("[  WARN ] BroadcastTx: Failed to refresh sequence: %v\n", refreshErr)
+			// }
 		}
 
 		return res, fmt.Errorf("tx failed with code %d: %s", res.Code, res.RawLog)
 	}
 
 	// 트랜잭션이 성공적으로 멤풀에 제출되었을 때만 시퀀스 증가
-	tb.incSequence()
+	// tb.incSequence()
 
 	fmt.Printf("[  END  ] BroadcastTx: SUCCESS - TxHash: %s\n", res.TxHash)
 	return res, nil
