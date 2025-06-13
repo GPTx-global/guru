@@ -186,6 +186,22 @@ func (k Keeper) GetOracleRequestDocs(ctx sdk.Context) []*types.OracleRequestDoc 
 	return docs
 }
 
+func (k Keeper) GetOracleRequestDocsByStatus(ctx sdk.Context, status types.RequestStatus) []*types.OracleRequestDoc {
+	store := ctx.KVStore(k.storeKey)
+	iterator := sdk.KVStorePrefixIterator(store, types.KeyOracleRequestDoc)
+	defer iterator.Close()
+
+	var docs []*types.OracleRequestDoc
+	for ; iterator.Valid(); iterator.Next() {
+		var doc types.OracleRequestDoc
+		k.cdc.MustUnmarshal(iterator.Value(), &doc)
+		if doc.Status == status {
+			docs = append(docs, &doc)
+		}
+	}
+	return docs
+}
+
 func (k Keeper) SetSubmitData(ctx sdk.Context, data types.SubmitDataSet) {
 	store := ctx.KVStore(k.storeKey)
 	bz := k.cdc.MustMarshal(&data)

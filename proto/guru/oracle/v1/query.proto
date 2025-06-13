@@ -89,7 +89,9 @@ message QueryOracleRequestDocResponse {
 }
 
 // QueryOracleRequestDocRequest is the request type for the Query/OracleRequestDoc RPC method
-message QueryOracleRequestDocsRequest {}
+message QueryOracleRequestDocsRequest {
+  RequestStatus status = 1;
+}
 
 // QueryOracleRequestDocResponse is the response type for the Query/OracleRequestDoc RPC method
 message QueryOracleRequestDocsResponse {

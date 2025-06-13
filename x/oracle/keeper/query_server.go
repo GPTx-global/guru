@@ -49,7 +49,12 @@ func (k Keeper) OracleRequestDoc(ctx context.Context, req *types.QueryOracleRequ
 // OracleRequestDocs queries an oracle request document list
 func (k Keeper) OracleRequestDocs(ctx context.Context, req *types.QueryOracleRequestDocsRequest) (*types.QueryOracleRequestDocsResponse, error) {
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
-	docs := k.GetOracleRequestDocs(sdkCtx)
+	var docs []*types.OracleRequestDoc
+	if req.Status != types.RequestStatus_REQUEST_STATUS_UNSPECIFIED {
+		docs = k.GetOracleRequestDocsByStatus(sdkCtx, req.Status)
+	} else {
+		docs = k.GetOracleRequestDocs(sdkCtx)
+	}
 	return &types.QueryOracleRequestDocsResponse{
 		OracleRequestDocs: docs,
 	}, nil

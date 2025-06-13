@@ -189,17 +189,28 @@ Description:
 // GetCmdQueryOracleRequestDocs implements the oracle request documents query command
 func GetCmdQueryOracleRequestDocs() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "request-docs",
+		Use:   "request-docs [status]",
 		Short: "Query all oracle request documents",
-		Args:  cobra.NoArgs,
+		// Args:  cobra.MaximumNArgs(1),
+		Args: cobra.RangeArgs(0, 1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientQueryContext(cmd)
 			if err != nil {
 				return err
 			}
 
+			var status int64 = 0
+			if len(args) > 0 {
+				status, err = strconv.ParseInt(args[0], 10, 32)
+				if err != nil {
+					return fmt.Errorf("invalid status: %w", err)
+				}
+			}
+
 			queryClient := types.NewQueryClient(clientCtx)
-			res, err := queryClient.OracleRequestDocs(cmd.Context(), &types.QueryOracleRequestDocsRequest{})
+			res, err := queryClient.OracleRequestDocs(cmd.Context(), &types.QueryOracleRequestDocsRequest{
+				Status: types.RequestStatus(status),
+			})
 			if err != nil {
 				return err
 			}

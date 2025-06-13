@@ -6,11 +6,10 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-// BeforeOracleStart: noop, We don't need to do anything here
 func (k Keeper) BeforeOracleStart(_ sdk.Context, _ oracletypes.DataSet) {
 }
 
-// AfterOracleEnd mints and allocates coins at the end of each oracle end
+// AfterOracleEnd updates the min gas price at the end of each oracle end
 func (k Keeper) AfterOracleEnd(ctx sdk.Context, dataSet oracletypes.DataSet) {
 	logger := ctx.Logger()
 	logger.Info("AfterOracleEnd hook triggered", "dataSet", dataSet)
@@ -22,6 +21,7 @@ func (k Keeper) AfterOracleEnd(ctx sdk.Context, dataSet oracletypes.DataSet) {
 		return
 	}
 
+	// newMinGasPrice = minGasPriceRate / dataSet.RawData
 	newMinGasPrice := minGasPriceRate.Quo(sdk.MustNewDecFromStr(dataSet.RawData))
 	params.MinGasPrice = newMinGasPrice
 
@@ -35,9 +35,7 @@ func (k Keeper) AfterOracleEnd(ctx sdk.Context, dataSet oracletypes.DataSet) {
 	)
 }
 
-// ___________________________________________________________________________________________________
-
-// Hooks wrapper struct for incentives keeper
+// Hooks wrapper struct for feemarket keeper
 type Hooks struct {
 	k Keeper
 }
