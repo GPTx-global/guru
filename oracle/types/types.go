@@ -46,10 +46,14 @@ func MakeJob(event any) *Job {
 			for _, msg := range msgs {
 				switch oracleMsg := msg.(type) {
 				case *oracletypes.MsgRegisterOracleRequestDoc:
-					job.ID = oracleMsg.RequestDoc.RequestId
+					requestID, err := strconv.ParseUint(event.Events[oracletypes.EventTypeRegisterOracleRequestDoc+"."+oracletypes.AttributeKeyRequestId][0], 10, 64)
+					if err != nil {
+						return nil
+					}
+					job.ID = requestID
 					job.URL = oracleMsg.RequestDoc.Endpoints[0].Url
 					job.Path = oracleMsg.RequestDoc.Endpoints[0].ParseRule
-					job.Nonce = oracleMsg.RequestDoc.Nonce
+					job.Nonce = 0
 					job.Delay = time.Duration(oracleMsg.RequestDoc.Period) * time.Second
 					job.Status = oracleMsg.RequestDoc.Status.String()
 				case *oracletypes.MsgUpdateOracleRequestDoc:

@@ -63,13 +63,14 @@ func (jm *JobManager) worker(ctx context.Context, resultQueue chan<- *types.JobR
 		select {
 		case job := <-jm.jobQueue:
 			jm.activeJobsLock.Lock()
-			if job.Nonce == 0 {
+			if _, ok := jm.activeJobs[job.ID]; !ok {
 				jm.activeJobs[job.ID] = job
 			} else {
-				if _, ok := jm.activeJobs[job.ID]; ok {
-					job = jm.activeJobs[job.ID]
-				} else {
-					continue
+				existingJob := jm.activeJobs[job.ID]
+				reciveNonce, existNonce := job.Nonce, existingJob.Nonce
+				job = existingJob
+				if reciveNonce > existNonce {
+					job.Nonce = reciveNonce
 				}
 			}
 			jm.activeJobsLock.Unlock()
