@@ -61,6 +61,8 @@ func executeJob(job *types.Job) *types.JobResult {
 		return nil
 	}
 
+	fmt.Printf("[EXECUTOR] ID: %5d, Nonce: %5d, Data: %s\n", job.ID, job.Nonce, extractedValue)
+
 	jr := &types.JobResult{
 		ID:    job.ID,
 		Data:  extractedValue,
