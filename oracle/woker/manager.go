@@ -23,7 +23,7 @@ func NewJobManager() *JobManager {
 	jm := &JobManager{
 		activeJobs:     make(map[uint64]*types.Job),
 		activeJobsLock: sync.Mutex{},
-		jobQueue:       make(chan *types.Job, runtime.NumCPU()*4),
+		jobQueue:       make(chan *types.Job, 2<<5),
 		quit:           make(chan struct{}),
 		wg:             sync.WaitGroup{},
 	}

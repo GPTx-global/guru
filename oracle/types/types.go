@@ -3,6 +3,7 @@ package types
 import (
 	"fmt"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/GPTx-global/guru/app"
@@ -21,18 +22,20 @@ type Job struct {
 	Status string
 }
 
-// MakeJob creates a Job instance from various event types (OracleRequestDoc or blockchain events)
-func MakeJob(event any) *Job {
-	job := &Job{}
+// MakeJobs creates a Job instance from various event types (OracleRequestDoc or blockchain events)
+func MakeJobs(event any) []*Job {
+	jobs := make([]*Job, 0)
 
 	switch event := event.(type) {
 	case *oracletypes.OracleRequestDoc:
-		job.ID = event.RequestId
-		job.URL = event.Endpoints[0].Url
-		job.Path = event.Endpoints[0].ParseRule
-		job.Nonce = event.Nonce
-		job.Delay = time.Duration(event.Period) * time.Second
-		job.Status = event.Status.String()
+		jobs = append(jobs, &Job{
+			ID:     event.RequestId,
+			URL:    event.Endpoints[0].Url,
+			Path:   event.Endpoints[0].ParseRule,
+			Nonce:  event.Nonce,
+			Delay:  time.Duration(event.Period) * time.Second,
+			Status: event.Status.String(),
+		})
 	case coretypes.ResultEvent:
 		switch event.Data.(type) {
 		case tmtypes.EventDataTx:
@@ -50,38 +53,42 @@ func MakeJob(event any) *Job {
 					if err != nil {
 						return nil
 					}
-					job.ID = requestID
-					job.URL = oracleMsg.RequestDoc.Endpoints[0].Url
-					job.Path = oracleMsg.RequestDoc.Endpoints[0].ParseRule
-					job.Nonce = 0
-					job.Delay = time.Duration(oracleMsg.RequestDoc.Period) * time.Second
-					job.Status = oracleMsg.RequestDoc.Status.String()
+					jobs = append(jobs, &Job{
+						ID:     requestID,
+						URL:    oracleMsg.RequestDoc.Endpoints[0].Url,
+						Path:   oracleMsg.RequestDoc.Endpoints[0].ParseRule,
+						Nonce:  0,
+						Delay:  time.Duration(oracleMsg.RequestDoc.Period) * time.Second,
+						Status: oracleMsg.RequestDoc.Status.String(),
+					})
 				case *oracletypes.MsgUpdateOracleRequestDoc:
 					fmt.Println("TODO: MsgUpdateOracleRequestDoc")
-					job = nil
+					jobs = nil
 				}
 			}
 		case tmtypes.EventDataNewBlock:
-			requestID, err := strconv.ParseUint(event.Events[oracletypes.EventTypeCompleteOracleDataSet+"."+oracletypes.AttributeKeyRequestId][0], 10, 64)
-			if err != nil {
-				return nil
+			jobs = make([]*Job, len(event.Events[oracletypes.EventTypeCompleteOracleDataSet+"."+oracletypes.AttributeKeyRequestId]))
+			for i := range jobs {
+				jobs[i] = &Job{}
 			}
 
-			nonce, err := strconv.ParseUint(event.Events[oracletypes.EventTypeCompleteOracleDataSet+"."+oracletypes.AttributeKeyNonce][0], 10, 64)
-			if err != nil {
-				return nil
+			for attributeKey, attributeValues := range event.Events {
+				if strings.Contains(attributeKey, oracletypes.EventTypeCompleteOracleDataSet) {
+					for i, attributeValue := range attributeValues {
+						if strings.Contains(attributeKey, oracletypes.AttributeKeyRequestId) {
+							jobs[i].ID, _ = strconv.ParseUint(attributeValue, 10, 64)
+						} else if strings.Contains(attributeKey, oracletypes.AttributeKeyNonce) {
+							jobs[i].Nonce, _ = strconv.ParseUint(attributeValue, 10, 64)
+						}
+					}
+				}
 			}
-
-			job.ID = requestID
-			job.Nonce = nonce
 		}
 	default:
-		job = nil
+		jobs = nil
 	}
 
-	fmt.Printf("job: %+v\n", job)
-
-	return job
+	return jobs
 }
 
 type JobResult struct {

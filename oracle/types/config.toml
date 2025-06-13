@@ -15,3 +15,6 @@ gas_price = "630000000aguru"
 
 # 가스 한도
 gas_limit = 30000 
+
+# 자동 시퀀스 번호 사용 여부
+auto_sequence_number = true

@@ -51,7 +51,6 @@ func (txm *TxManager) BuildSubmitTx() ([]byte, error) {
 	msgs := make([]sdk.Msg, 0, 1)
 
 	jobResult := <-txm.resultQueue
-	fmt.Println("jobResult:", jobResult)
 
 	msg := &oracletypes.MsgSubmitOracleData{
 		AuthorityAddress: txm.clientCtx.GetFromAddress().String(),
@@ -98,6 +97,8 @@ func (txm *TxManager) BuildSubmitTx() ([]byte, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to encode tx: %w", err)
 	}
+
+	fmt.Printf("[SUBMIT] ID: %5d, Nonce: %5d", jobResult.ID, jobResult.Nonce)
 
 	return txBytes, nil
 }

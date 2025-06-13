@@ -87,8 +87,8 @@ func (d *Daemon) Start() error {
 		return fmt.Errorf("failed to load register request: %w", err)
 	}
 	for _, doc := range docs {
-		if job := types.MakeJob(doc); job != nil {
-			d.ProcessJob(job)
+		if jobs := types.MakeJobs(doc); jobs != nil {
+			d.ProcessJob(jobs)
 		}
 	}
 
@@ -110,15 +110,17 @@ func (d *Daemon) Stop() {
 // Monitor continuously listens for new events and processes them as jobs
 func (d *Daemon) Monitor() {
 	for {
-		if job := d.subscribeManager.Subscribe(); job != nil {
-			d.ProcessJob(job)
+		if jobs := d.subscribeManager.Subscribe(); jobs != nil {
+			d.ProcessJob(jobs)
 		}
 	}
 }
 
 // ProcessJob submits a job to the job manager for execution
-func (d *Daemon) ProcessJob(job *types.Job) {
-	d.jobManager.SubmitJob(job)
+func (d *Daemon) ProcessJob(jobs []*types.Job) {
+	for _, job := range jobs {
+		d.jobManager.SubmitJob(job)
+	}
 }
 
 // ServeOracle continuously builds and broadcasts oracle data submission transactions
@@ -135,7 +137,7 @@ func (d *Daemon) ServeOracle() error {
 		}
 
 		if txResponse.Code == 0 {
-			fmt.Printf("txHash: %s\n", txResponse.TxHash)
+			fmt.Printf(", Hash: %s\n", txResponse.TxHash)
 			d.transactionManager.IncrementSequenceNumber()
 		} else {
 			fmt.Printf("tx failed: %s\n", txResponse.RawLog)
