@@ -31,6 +31,8 @@ func main() {
 
 	go daemon.Monitor()
 	go daemon.ServeOracle()
+	time.Sleep(3 * time.Second)
+	fmt.Println("==daemon started==")
 
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)

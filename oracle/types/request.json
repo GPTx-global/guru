@@ -4,7 +4,9 @@
     "description": "BTC/USD Price Oracle",
     "period": 15,
     "account_list": [
-        "guru1465y46sejysnqwvp3ycae3pd3vv2zwe54jju0s"
+        "guru1qh7pceqhzdkd9qcqjrpc2hjtvmnf5cl2xwxm5l",
+        "guru16824cfxx4q0czjwmnf7lzuew5d0p6qm2jcpald",
+        "guru13y0eywz89k3fyxw9g3kgyr8kssdtlqn62yll6j"
     ],
     "quorum": 1,
     "endpoints": [

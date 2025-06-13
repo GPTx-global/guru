@@ -51,6 +51,7 @@ func (txm *TxManager) BuildSubmitTx() ([]byte, error) {
 	msgs := make([]sdk.Msg, 0, 1)
 
 	jobResult := <-txm.resultQueue
+	fmt.Println("jobResult:", jobResult)
 
 	msg := &oracletypes.MsgSubmitOracleData{
 		AuthorityAddress: txm.clientCtx.GetFromAddress().String(),
