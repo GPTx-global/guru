@@ -69,7 +69,7 @@ func (suite *TypesTestSuite) TestMakeJob_FromOracleRequestDoc() {
 	}
 
 	// When: MakeJob 호출
-	job := MakeJob(doc)
+	job := MakeJobs(doc)
 
 	// Then: Job이 올바르게 생성됨
 	suite.NotNil(job)
@@ -93,7 +93,7 @@ func (suite *TypesTestSuite) TestMakeJob_FromOracleRequestDoc_EmptyEndpoints() {
 
 	// When/Then: MakeJob 호출 시 패닉 방지를 위한 테스트
 	suite.Panics(func() {
-		MakeJob(doc)
+		MakeJobs(doc)
 	})
 }
 
@@ -102,7 +102,7 @@ func (suite *TypesTestSuite) TestMakeJob_FromInvalidEvent() {
 	invalidEvent := "invalid event type"
 
 	// When: MakeJob 호출
-	job := MakeJob(invalidEvent)
+	job := MakeJobs(invalidEvent)
 
 	// Then: nil이 반환됨
 	suite.Nil(job)
@@ -138,7 +138,7 @@ func TestMakeJobNilInput(t *testing.T) {
 	var nilInput interface{} = nil
 
 	// When: MakeJob 호출
-	job := MakeJob(nilInput)
+	job := MakeJobs(nilInput)
 
 	// Then: nil이 반환됨
 	assert.Nil(t, job)
@@ -210,7 +210,7 @@ func TestMakeJobWithValidOracleRequestDoc(t *testing.T) {
 	}
 
 	// When: MakeJob 호출
-	job := MakeJob(doc)
+	job := MakeJobs(doc)
 
 	// Then: 올바른 Job이 생성됨
 	require.NotNil(t, job)
@@ -242,7 +242,7 @@ func TestMakeJobWithMultipleEndpoints(t *testing.T) {
 	}
 
 	// When: MakeJob 호출
-	job := MakeJob(doc)
+	job := MakeJobs(doc)
 
 	// Then: 첫 번째 엔드포인트가 사용됨
 	require.NotNil(t, job)

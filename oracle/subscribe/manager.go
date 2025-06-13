@@ -28,10 +28,10 @@ type SubscribeManager struct {
 // NewSubscribeManager creates a new subscription manager for blockchain events
 func NewSubscribeManager(ctx context.Context) *SubscribeManager {
 	return &SubscribeManager{
-		subscriptions: make(map[string]<-chan coretypes.ResultEvent),
+		subscriptions:     make(map[string]<-chan coretypes.ResultEvent),
 		subscriptionsLock: sync.RWMutex{},
-		channelSize:   2 << 10,
-		ctx:           ctx,
+		channelSize:       2 << 10,
+		ctx:               ctx,
 	}
 }
 
@@ -76,19 +76,19 @@ func (sm *SubscribeManager) SetSubscribe(client *http.HTTP) error {
 }
 
 // Subscribe listens for events from all subscribed channels and converts them to jobs
-func (sm *SubscribeManager) Subscribe() *types.Job {
+func (sm *SubscribeManager) Subscribe() []*types.Job {
 	sm.subscriptionsLock.RLock()
 	defer sm.subscriptionsLock.RUnlock()
 
 	select {
 	case event := <-sm.subscriptions[registerMsg]:
 		// TODO: daemon account에 할달되었는지 확인
-		return types.MakeJob(event)
+		return types.MakeJobs(event)
 	case event := <-sm.subscriptions[updateMsg]:
-		return types.MakeJob(event)
+		return types.MakeJobs(event)
 	case event := <-sm.subscriptions[completeMsg]:
 		// TODO: daemon account에 할달되었는지 확인
-		return types.MakeJob(event)
+		return types.MakeJobs(event)
 	case <-sm.ctx.Done():
 		return nil
 	}
