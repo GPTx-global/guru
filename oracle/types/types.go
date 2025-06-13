@@ -88,6 +88,10 @@ func MakeJobs(event any) []*Job {
 		jobs = nil
 	}
 
+	for _, job := range jobs {
+		fmt.Printf("[MAKE-JOBS] ID: %5d, Nonce: %5d\n", job.ID, job.Nonce)
+	}
+
 	return jobs
 }
 

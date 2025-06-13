@@ -3,6 +3,7 @@ package subscribe
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"sync"
 
 	"github.com/GPTx-global/guru/oracle/types"
@@ -83,6 +84,9 @@ func (sm *SubscribeManager) Subscribe() []*types.Job {
 	select {
 	case event := <-sm.subscriptions[registerMsg]:
 		// TODO: daemon account에 할달되었는지 확인
+		id, _ := strconv.ParseUint(event.Events[oracletypes.EventTypeRegisterOracleRequestDoc+"."+oracletypes.AttributeKeyRequestId][0], 10, 64)
+		nonce, _ := strconv.ParseUint(event.Events[oracletypes.EventTypeRegisterOracleRequestDoc+"."+oracletypes.AttributeKeyNonce][0], 10, 64)
+		fmt.Printf("[MONITOR-REGISTER] ID: %5d, Nonce: %5d\n", id, nonce)
 		return types.MakeJobs(event)
 	case event := <-sm.subscriptions[updateMsg]:
 		return types.MakeJobs(event)
