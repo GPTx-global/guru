@@ -10,6 +10,9 @@ import (
 )
 
 type JobManager struct {
+	activeJobs     map[uint64]*types.Job
+	activeJobsLock sync.Mutex
+
 	jobQueue chan *types.Job
 	quit     chan struct{}
 	wg       sync.WaitGroup
@@ -18,9 +21,11 @@ type JobManager struct {
 // NewJobManager creates a new job manager with CPU-based worker pool capacity
 func NewJobManager() *JobManager {
 	jm := &JobManager{
-		jobQueue: make(chan *types.Job, runtime.NumCPU()*4),
-		quit:     make(chan struct{}),
-		wg:       sync.WaitGroup{},
+		activeJobs:     make(map[uint64]*types.Job),
+		activeJobsLock: sync.Mutex{},
+		jobQueue:       make(chan *types.Job, runtime.NumCPU()*4),
+		quit:           make(chan struct{}),
+		wg:             sync.WaitGroup{},
 	}
 
 	return jm
@@ -57,8 +62,17 @@ func (jm *JobManager) worker(ctx context.Context, resultQueue chan<- *types.JobR
 	for {
 		select {
 		case job := <-jm.jobQueue:
-			// 임시로 여기서 증가
-			// 추후에 activeJob으로 관리할 예정
+			jm.activeJobsLock.Lock()
+			if job.Nonce == 0 {
+				jm.activeJobs[job.ID] = job
+			} else {
+				if _, ok := jm.activeJobs[job.ID]; ok {
+					job = jm.activeJobs[job.ID]
+				} else {
+					continue
+				}
+			}
+			jm.activeJobsLock.Unlock()
 			job.Nonce++
 			jr := executeJob(job)
 			if jr != nil {

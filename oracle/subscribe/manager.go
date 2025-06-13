@@ -29,6 +29,7 @@ type SubscribeManager struct {
 func NewSubscribeManager(ctx context.Context) *SubscribeManager {
 	return &SubscribeManager{
 		subscriptions: make(map[string]<-chan coretypes.ResultEvent),
+		subscriptionsLock: sync.RWMutex{},
 		channelSize:   2 << 10,
 		ctx:           ctx,
 	}
@@ -81,10 +82,12 @@ func (sm *SubscribeManager) Subscribe() *types.Job {
 
 	select {
 	case event := <-sm.subscriptions[registerMsg]:
+		// TODO: daemon account에 할달되었는지 확인
 		return types.MakeJob(event)
 	case event := <-sm.subscriptions[updateMsg]:
 		return types.MakeJob(event)
 	case event := <-sm.subscriptions[completeMsg]:
+		// TODO: daemon account에 할달되었는지 확인
 		return types.MakeJob(event)
 	case <-sm.ctx.Done():
 		return nil
