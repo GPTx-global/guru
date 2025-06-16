@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	"github.com/stretchr/testify/assert"
@@ -213,11 +214,174 @@ func TestDefaultConfigPaths(t *testing.T) {
 	once = sync.Once{}
 	Config = nil
 
-	// When: 경로 없이 설정 로드
-	err := LoadConfig()
+	// When: 경로 없이 설정 로드 (빈 문자열 전달)
+	err := LoadConfig("")
 
 	// Then: 에러 없이 기본값으로 설정
 	require.NoError(t, err)
 	assert.NotNil(t, Config)
 	assert.Equal(t, "guru_3110-1", Config.ChainID())
+}
+
+func (suite *ConfigTestSuite) TestLoadOrGenerateConfig() {
+	// 임시 디렉토리 생성
+	tempDir := filepath.Join(os.TempDir(), "test_oracled_"+time.Now().Format("20060102_150405"))
+	defer os.RemoveAll(tempDir)
+
+	// 설정 파일이 없는 상태에서 LoadConfig 호출
+	Config = nil       // 전역 설정 초기화
+	once = sync.Once{} // once도 초기화
+	err := LoadConfig(tempDir)
+	suite.NoError(err)
+
+	// 디렉토리가 생성되었는지 확인
+	suite.DirExists(tempDir)
+
+	// 설정 파일이 생성되었는지 확인
+	configPath := filepath.Join(tempDir, "config.toml")
+	suite.FileExists(configPath)
+
+	// keyring 디렉토리가 생성되었는지 확인
+	keyringDir := filepath.Join(tempDir, "keyring")
+	suite.DirExists(keyringDir)
+
+	// 설정이 올바르게 로드되었는지 확인
+	suite.NotNil(Config)
+	suite.Equal("http://localhost:26657", Config.RpcEndpoint())
+	suite.Equal("guru_3110-1", Config.ChainID())
+	suite.Equal("node1", Config.KeyName())
+	suite.Equal("630000000aguru", Config.GasPrice())
+	suite.Equal(uint64(30000), Config.GasLimit())
+}
+
+func (suite *ConfigTestSuite) TestGenerateDefaultConfigFile() {
+	// 임시 디렉토리 생성
+	tempDir := filepath.Join(os.TempDir(), "test_config_"+time.Now().Format("20060102_150405"))
+	defer os.RemoveAll(tempDir)
+
+	configPath := filepath.Join(tempDir, "config.toml")
+
+	// generateDefaultConfigFile 테스트
+	err := generateDefaultConfigFile(configPath, tempDir)
+	suite.NoError(err)
+
+	// 파일이 생성되었는지 확인
+	suite.FileExists(configPath)
+
+	// 파일 내용 확인
+	content, err := os.ReadFile(configPath)
+	suite.NoError(err)
+
+	configContent := string(content)
+	suite.Contains(configContent, "rpc_endpoint = \"http://localhost:26657\"")
+	suite.Contains(configContent, "chain_id = \"guru_3110-1\"")
+	suite.Contains(configContent, "key_name = \"node1\"")
+	suite.Contains(configContent, "gas_price = \"630000000aguru\"")
+	suite.Contains(configContent, "gas_limit = 30000")
+}
+
+func (suite *ConfigTestSuite) TestValidateConfig() {
+	// 유효한 설정으로 테스트
+	Config = &configure{
+		rpcEndpoint: "http://localhost:26657",
+		chainID:     "guru_3110-1",
+		keyringDir:  filepath.Join(os.TempDir(), "test_keyring"),
+		keyName:     "node1",
+		gasPrice:    "630000000aguru",
+		gasLimit:    30000,
+	}
+	defer os.RemoveAll(Config.keyringDir)
+
+	err := ValidateConfig()
+	suite.NoError(err)
+
+	// keyring 디렉토리가 생성되었는지 확인
+	suite.DirExists(Config.keyringDir)
+}
+
+func (suite *ConfigTestSuite) TestValidateConfigErrors() {
+	testCases := []struct {
+		name   string
+		config *configure
+		errMsg string
+	}{
+		{
+			name:   "nil config",
+			config: nil,
+			errMsg: "configuration not loaded",
+		},
+		{
+			name: "empty rpc endpoint",
+			config: &configure{
+				rpcEndpoint: "",
+				chainID:     "guru_3110-1",
+				keyringDir:  "/tmp/test",
+				keyName:     "node1",
+				gasPrice:    "630000000aguru",
+				gasLimit:    30000,
+			},
+			errMsg: "rpc_endpoint cannot be empty",
+		},
+		{
+			name: "empty chain id",
+			config: &configure{
+				rpcEndpoint: "http://localhost:26657",
+				chainID:     "",
+				keyringDir:  "/tmp/test",
+				keyName:     "node1",
+				gasPrice:    "630000000aguru",
+				gasLimit:    30000,
+			},
+			errMsg: "chain_id cannot be empty",
+		},
+		{
+			name: "zero gas limit",
+			config: &configure{
+				rpcEndpoint: "http://localhost:26657",
+				chainID:     "guru_3110-1",
+				keyringDir:  "/tmp/test",
+				keyName:     "node1",
+				gasPrice:    "630000000aguru",
+				gasLimit:    0,
+			},
+			errMsg: "gas_limit must be greater than 0",
+		},
+	}
+
+	for _, tc := range testCases {
+		suite.Run(tc.name, func() {
+			originalConfig := Config
+			Config = tc.config
+
+			err := ValidateConfig()
+			suite.Error(err)
+			suite.Contains(err.Error(), tc.errMsg)
+
+			Config = originalConfig
+		})
+	}
+}
+
+func (suite *ConfigTestSuite) TestPrintConfigInfo() {
+	// 이 테스트는 출력을 검증하기 어려우므로 panic이 발생하지 않는지만 확인
+	Config = &configure{
+		rpcEndpoint: "http://localhost:26657",
+		chainID:     "guru_3110-1",
+		keyringDir:  "/tmp/test",
+		keyName:     "node1",
+		gasPrice:    "630000000aguru",
+		gasLimit:    30000,
+	}
+
+	suite.NotPanics(func() {
+		PrintConfigInfo()
+	})
+
+	// nil config로도 테스트
+	originalConfig := Config
+	Config = nil
+	suite.NotPanics(func() {
+		PrintConfigInfo()
+	})
+	Config = originalConfig
 }

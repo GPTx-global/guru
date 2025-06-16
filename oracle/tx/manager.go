@@ -31,7 +31,10 @@ func NewTxManager(clientCtx client.Context) *TxManager {
 		wg:           sync.WaitGroup{},
 		sequenceLock: sync.Mutex{},
 	}
-	acc, seq, err := txm.clientCtx.AccountRetriever.GetAccountNumberSequence(txm.clientCtx, txm.clientCtx.GetFromAddress())
+	addr := txm.clientCtx.GetFromAddress()
+	types.Config.SetAddress(addr.String())
+	fmt.Printf("Address: %s\n", addr)
+	acc, seq, err := txm.clientCtx.AccountRetriever.GetAccountNumberSequence(txm.clientCtx, addr)
 	if err != nil {
 		panic(err)
 	}
