@@ -101,9 +101,6 @@ func (sm *SubscribeManager) Subscribe() []*types.Job {
 
 		return types.MakeJobs(event)
 	case event := <-sm.subscriptions[updateMsg]:
-		if !sm.filterAccount(event, oracletypes.EventTypeUpdateOracleRequestDoc) {
-			return nil
-		}
 		return types.MakeJobs(event)
 	case event := <-sm.subscriptions[completeMsg]:
 		return types.MakeJobs(event)
