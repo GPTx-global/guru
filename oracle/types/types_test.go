@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/GPTx-global/guru/oracle/config"
 	oracletypes "github.com/GPTx-global/guru/x/oracle/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -13,6 +14,12 @@ import (
 
 type TypesTestSuite struct {
 	suite.Suite
+}
+
+func (suite *TypesTestSuite) SetupSuite() {
+	// Load config to avoid nil pointer issues
+	err := config.LoadConfig()
+	suite.Require().NoError(err, "Failed to load config for testing")
 }
 
 func TestTypesTestSuite(t *testing.T) {
@@ -69,10 +76,12 @@ func (suite *TypesTestSuite) TestMakeJob_FromOracleRequestDoc() {
 	}
 
 	// When: MakeJob 호출
-	job := MakeJobs(doc)
+	jobs := MakeJobs(doc)
 
 	// Then: Job이 올바르게 생성됨
-	suite.NotNil(job)
+	suite.NotNil(jobs)
+	suite.Equal(1, len(jobs))
+	job := jobs[0]
 	suite.Equal(uint64(100), job.ID)
 	suite.Equal("https://api.coinbase.com/v2/exchange-rates", job.URL)
 	suite.Equal("data.rates.USD", job.Path)
@@ -102,10 +111,10 @@ func (suite *TypesTestSuite) TestMakeJob_FromInvalidEvent() {
 	invalidEvent := "invalid event type"
 
 	// When: MakeJob 호출
-	job := MakeJobs(invalidEvent)
+	jobs := MakeJobs(invalidEvent)
 
 	// Then: nil이 반환됨
-	suite.Nil(job)
+	suite.Nil(jobs)
 }
 
 // 단위 테스트 함수들
@@ -195,6 +204,10 @@ func TestJobResultSerialization(t *testing.T) {
 }
 
 func TestMakeJobWithValidOracleRequestDoc(t *testing.T) {
+	// Load config first
+	err := config.LoadConfig()
+	require.NoError(t, err, "Failed to load config")
+
 	// Given: 유효한 OracleRequestDoc
 	doc := &oracletypes.OracleRequestDoc{
 		RequestId: 12345,
@@ -210,10 +223,12 @@ func TestMakeJobWithValidOracleRequestDoc(t *testing.T) {
 	}
 
 	// When: MakeJob 호출
-	job := MakeJobs(doc)
+	jobs := MakeJobs(doc)
 
 	// Then: 올바른 Job이 생성됨
-	require.NotNil(t, job)
+	require.NotNil(t, jobs)
+	require.Equal(t, 1, len(jobs))
+	job := jobs[0]
 	assert.Equal(t, uint64(12345), job.ID)
 	assert.Equal(t, "https://api.test.com/price", job.URL)
 	assert.Equal(t, "price.value", job.Path)
@@ -223,6 +238,10 @@ func TestMakeJobWithValidOracleRequestDoc(t *testing.T) {
 }
 
 func TestMakeJobWithMultipleEndpoints(t *testing.T) {
+	// Load config first
+	err := config.LoadConfig()
+	require.NoError(t, err, "Failed to load config")
+
 	// Given: 여러 엔드포인트를 가진 OracleRequestDoc
 	doc := &oracletypes.OracleRequestDoc{
 		RequestId: 54321,
@@ -242,10 +261,12 @@ func TestMakeJobWithMultipleEndpoints(t *testing.T) {
 	}
 
 	// When: MakeJob 호출
-	job := MakeJobs(doc)
+	jobs := MakeJobs(doc)
 
 	// Then: 첫 번째 엔드포인트가 사용됨
-	require.NotNil(t, job)
+	require.NotNil(t, jobs)
+	require.Equal(t, 1, len(jobs))
+	job := jobs[0]
 	assert.Equal(t, "https://api1.test.com", job.URL)
 	assert.Equal(t, "price1", job.Path)
 	assert.Equal(t, "REQUEST_STATUS_PAUSED", job.Status)

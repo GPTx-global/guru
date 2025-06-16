@@ -8,20 +8,22 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/GPTx-global/guru/oracle/config"
 	"github.com/GPTx-global/guru/oracle/daemon"
-	"github.com/GPTx-global/guru/oracle/types"
+	"github.com/GPTx-global/guru/oracle/log"
 )
 
 func main() {
-	if err := types.LoadConfig(); err != nil {
+	if err := config.LoadConfig(); err != nil {
 		panic(fmt.Errorf("failed to load config: %w", err))
 	}
 
-	if err := types.ValidateConfig(); err != nil {
+	if err := config.ValidateConfig(); err != nil {
 		panic(fmt.Errorf("invalid configuration: %w", err))
 	}
 
-	types.PrintConfigInfo()
+	config.PrintConfigInfo()
+	log.InitLogger()
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
