@@ -3,6 +3,7 @@ package daemon
 import (
 	"context"
 	"fmt"
+	"slices"
 
 	"github.com/GPTx-global/guru/app"
 	"github.com/GPTx-global/guru/encoding"
@@ -86,7 +87,12 @@ func (d *Daemon) Start() error {
 	if err != nil {
 		return fmt.Errorf("failed to load register request: %w", err)
 	}
+label:
 	for _, doc := range docs {
+		if !slices.Contains(doc.AccountList, d.clientCtx.GetFromAddress().String()) {
+			fmt.Printf("skipping job %d because it is not in the account list\n", doc.RequestId)
+			continue label
+		}
 		if jobs := types.MakeJobs(doc); jobs != nil {
 			d.ProcessJob(jobs)
 		}

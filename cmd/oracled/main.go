@@ -17,6 +17,12 @@ func main() {
 		panic(fmt.Errorf("failed to load config: %w", err))
 	}
 
+	if err := types.ValidateConfig(); err != nil {
+		panic(fmt.Errorf("invalid configuration: %w", err))
+	}
+
+	types.PrintConfigInfo()
+
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 

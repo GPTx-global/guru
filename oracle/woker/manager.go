@@ -63,16 +63,30 @@ func (jm *JobManager) worker(ctx context.Context, resultQueue chan<- *types.JobR
 		select {
 		case job := <-jm.jobQueue:
 			jm.activeJobsLock.Lock()
-			if _, ok := jm.activeJobs[job.ID]; !ok {
-				jm.activeJobs[job.ID] = job
-			} else {
-				existingJob := jm.activeJobs[job.ID]
-				reciveNonce, existNonce := job.Nonce, existingJob.Nonce
-				job = existingJob
-				if reciveNonce > existNonce {
-					job.Nonce = reciveNonce
+
+			switch job.Type {
+			case types.Register:
+				if _, ok := jm.activeJobs[job.ID]; !ok {
+					jm.activeJobs[job.ID] = job
 				}
+			case types.Update:
+				// TODO: logic to update job
+				jm.activeJobs[job.ID] = job
+			case types.Complete:
+				if existingJob, ok := jm.activeJobs[job.ID]; ok {
+					nonce := job.Nonce
+					if nonce < existingJob.Nonce {
+						nonce = existingJob.Nonce
+					}
+					job = existingJob
+					job.Nonce = nonce
+				} else {
+					fmt.Printf("job %d is not MINE!!\n", job.ID)
+					continue
+				}
+				job.Type = types.Complete
 			}
+
 			jm.activeJobsLock.Unlock()
 			job.Nonce++
 			jr := executeJob(job)

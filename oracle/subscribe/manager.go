@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strconv"
+	"strings"
 	"sync"
 
 	"github.com/GPTx-global/guru/oracle/types"
@@ -83,17 +84,33 @@ func (sm *SubscribeManager) Subscribe() []*types.Job {
 
 	select {
 	case event := <-sm.subscriptions[registerMsg]:
-		// TODO: daemon account에 할달되었는지 확인
+		if !sm.filterAccount(event, oracletypes.EventTypeRegisterOracleRequestDoc) {
+			return nil
+		}
+		// TODO: daemon account에 할달되었는지 확인 + 할당된 경우 어느 account가 어느 작업을 수행하는지 확인
 		id, _ := strconv.ParseUint(event.Events[oracletypes.EventTypeRegisterOracleRequestDoc+"."+oracletypes.AttributeKeyRequestId][0], 10, 64)
 		nonce, _ := strconv.ParseUint(event.Events[oracletypes.EventTypeRegisterOracleRequestDoc+"."+oracletypes.AttributeKeyNonce][0], 10, 64)
 		fmt.Printf("[MONITOR-REGISTER] ID: %5d, Nonce: %5d\n", id, nonce)
+
 		return types.MakeJobs(event)
 	case event := <-sm.subscriptions[updateMsg]:
+		if !sm.filterAccount(event, oracletypes.EventTypeUpdateOracleRequestDoc) {
+			return nil
+		}
 		return types.MakeJobs(event)
 	case event := <-sm.subscriptions[completeMsg]:
+		if !sm.filterAccount(event, oracletypes.EventTypeCompleteOracleDataSet) {
+			return nil
+		}
 		// TODO: daemon account에 할달되었는지 확인
 		return types.MakeJobs(event)
 	case <-sm.ctx.Done():
 		return nil
 	}
+}
+
+func (sm *SubscribeManager) filterAccount(event coretypes.ResultEvent, prefix string) bool {
+	accounts := event.Events[prefix+"."+oracletypes.AttributeKeyAccountList][0]
+
+	return strings.Contains(accounts, types.Config.Address())
 }

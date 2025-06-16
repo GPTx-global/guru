@@ -2,6 +2,7 @@ package types
 
 import (
 	"fmt"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -13,10 +14,19 @@ import (
 	tmtypes "github.com/tendermint/tendermint/types"
 )
 
+type JobType byte
+
+const (
+	Register JobType = iota
+	Update
+	Complete
+)
+
 type Job struct {
 	ID     uint64
 	URL    string
 	Path   string
+	Type   JobType
 	Nonce  uint64
 	Delay  time.Duration
 	Status string
@@ -28,10 +38,13 @@ func MakeJobs(event any) []*Job {
 
 	switch event := event.(type) {
 	case *oracletypes.OracleRequestDoc:
+		myIndex := slices.Index(event.AccountList, Config.Address())
+		index := (myIndex + 1) % len(event.Endpoints)
 		jobs = append(jobs, &Job{
 			ID:     event.RequestId,
-			URL:    event.Endpoints[0].Url,
-			Path:   event.Endpoints[0].ParseRule,
+			URL:    event.Endpoints[index].Url,
+			Path:   event.Endpoints[index].ParseRule,
+			Type:   Register,
 			Nonce:  event.Nonce,
 			Delay:  time.Duration(event.Period) * time.Second,
 			Status: event.Status.String(),
@@ -49,14 +62,17 @@ func MakeJobs(event any) []*Job {
 			for _, msg := range msgs {
 				switch oracleMsg := msg.(type) {
 				case *oracletypes.MsgRegisterOracleRequestDoc:
+					myIndex := slices.Index(oracleMsg.RequestDoc.AccountList, Config.Address())
+					index := (myIndex + 1) % len(oracleMsg.RequestDoc.Endpoints)
 					requestID, err := strconv.ParseUint(event.Events[oracletypes.EventTypeRegisterOracleRequestDoc+"."+oracletypes.AttributeKeyRequestId][0], 10, 64)
 					if err != nil {
 						return nil
 					}
 					jobs = append(jobs, &Job{
 						ID:     requestID,
-						URL:    oracleMsg.RequestDoc.Endpoints[0].Url,
-						Path:   oracleMsg.RequestDoc.Endpoints[0].ParseRule,
+						URL:    oracleMsg.RequestDoc.Endpoints[index].Url,
+						Path:   oracleMsg.RequestDoc.Endpoints[index].ParseRule,
+						Type:   Register,
 						Nonce:  0,
 						Delay:  time.Duration(oracleMsg.RequestDoc.Period) * time.Second,
 						Status: oracleMsg.RequestDoc.Status.String(),
@@ -69,7 +85,9 @@ func MakeJobs(event any) []*Job {
 		case tmtypes.EventDataNewBlock:
 			jobs = make([]*Job, len(event.Events[oracletypes.EventTypeCompleteOracleDataSet+"."+oracletypes.AttributeKeyRequestId]))
 			for i := range jobs {
-				jobs[i] = &Job{}
+				jobs[i] = &Job{
+					Type: Complete,
+				}
 			}
 
 			for attributeKey, attributeValues := range event.Events {
