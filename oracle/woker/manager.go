@@ -74,10 +74,7 @@ func (jm *JobManager) worker(ctx context.Context, resultQueue chan<- *types.JobR
 				jm.activeJobs[job.ID] = job
 			case types.Complete:
 				if existingJob, ok := jm.activeJobs[job.ID]; ok {
-					nonce := job.Nonce
-					if nonce < existingJob.Nonce {
-						nonce = existingJob.Nonce
-					}
+					nonce := max(job.Nonce, existingJob.Nonce)
 					job = existingJob
 					job.Nonce = nonce
 				} else {

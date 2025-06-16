@@ -73,7 +73,10 @@ func (txm *TxManager) BuildSubmitTx() ([]byte, error) {
 		return nil, fmt.Errorf("failed to parse gas price: %w", err)
 	}
 
+	// sequence number 사용 전체 과정을 보호
 	txm.sequenceLock.Lock()
+	defer txm.sequenceLock.Unlock()
+
 	factory := tx.Factory{}.
 		WithTxConfig(txm.clientCtx.TxConfig).
 		WithAccountRetriever(txm.clientCtx.AccountRetriever).
@@ -85,7 +88,6 @@ func (txm *TxManager) BuildSubmitTx() ([]byte, error) {
 		WithAccountNumber(txm.accountNumber).
 		WithSequence(txm.sequenceNumber).
 		WithSignMode(signing.SignMode_SIGN_MODE_DIRECT)
-	txm.sequenceLock.Unlock()
 
 	txBuilder, err := factory.BuildUnsignedTx(msgs...)
 	if err != nil {
@@ -121,4 +123,20 @@ func (txm *TxManager) IncrementSequenceNumber() {
 	txm.sequenceLock.Lock()
 	txm.sequenceNumber++
 	txm.sequenceLock.Unlock()
+}
+
+// SyncSequenceNumber synchronizes the sequence number with the blockchain
+func (txm *TxManager) SyncSequenceNumber() error {
+	txm.sequenceLock.Lock()
+	defer txm.sequenceLock.Unlock()
+
+	addr := txm.clientCtx.GetFromAddress()
+	_, seq, err := txm.clientCtx.AccountRetriever.GetAccountNumberSequence(txm.clientCtx, addr)
+	if err != nil {
+		return fmt.Errorf("failed to get account sequence: %w", err)
+	}
+
+	fmt.Printf("[SYNC] Sequence updated: %d -> %d\n", txm.sequenceNumber, seq)
+	txm.sequenceNumber = seq
+	return nil
 }
