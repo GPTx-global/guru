@@ -25,7 +25,7 @@ var (
 	rpcEndpoint    = flag.String("rpc-endpoint", "http://localhost:26657", "RPC endpoint for connecting to the blockchain node")
 	chainID        = flag.String("chain-id", "guru_3110-1", "Chain ID for the blockchain network")
 	keyName        = flag.String("key-name", "node1", "Key name for signing transactions")
-	gasPrice       = flag.String("gas-price", "630000000aguru", "Gas price for transactions (format: amount + denomination)")
+	gasPrice       = flag.String("gas-price", "630000000000aguru", "Gas price for transactions (format: amount + denomination)")
 	gasLimit       = flag.Uint64("gas-limit", 30000, "Gas limit for transactions")
 )
 

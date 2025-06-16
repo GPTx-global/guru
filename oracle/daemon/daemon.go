@@ -144,9 +144,22 @@ func (d *Daemon) ServeOracle() error {
 
 		if txResponse.Code == 0 {
 			fmt.Printf(", Hash: %s\n", txResponse.TxHash)
-			d.transactionManager.IncrementSequenceNumber()
 		} else {
 			fmt.Printf("tx failed: %s\n", txResponse.RawLog)
+
+			// sequence mismatch 에러인 경우 sequence 동기화 시도
+			if txResponse.Code == 32 { // sequence mismatch error code
+				fmt.Println("[RECOVERY] Attempting to sync sequence number...")
+				if err := d.transactionManager.SyncSequenceNumber(); err != nil {
+					fmt.Printf("[RECOVERY] Failed to sync sequence: %v\n", err)
+				} else {
+					fmt.Println("[RECOVERY] Sequence number synchronized")
+				}
+			}
 		}
+
+		// 성공/실패 관계없이 sequence number 증가
+		// 블록체인에서 sequence는 한번 사용되면 소모됨
+		d.transactionManager.IncrementSequenceNumber()
 	}
 }
