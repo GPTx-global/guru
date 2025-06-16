@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/GPTx-global/guru/oracle/config"
+	"github.com/GPTx-global/guru/oracle/log"
 	"github.com/GPTx-global/guru/oracle/types"
 	oracletypes "github.com/GPTx-global/guru/x/oracle/types"
 	"github.com/cosmos/cosmos-sdk/client"
@@ -32,7 +34,7 @@ func NewTxManager(clientCtx client.Context) *TxManager {
 		sequenceLock: sync.Mutex{},
 	}
 	addr := txm.clientCtx.GetFromAddress()
-	types.Config.SetAddress(addr.String())
+	config.Config.SetAddress(addr.String())
 	fmt.Printf("Address: %s\n", addr)
 	acc, seq, err := txm.clientCtx.AccountRetriever.GetAccountNumberSequence(txm.clientCtx, addr)
 	if err != nil {
@@ -51,6 +53,7 @@ func (txm *TxManager) ResultQueue() chan<- *types.JobResult {
 
 // BuildSubmitTx builds a transaction for submitting oracle data to the blockchain
 func (txm *TxManager) BuildSubmitTx() ([]byte, error) {
+	log.Debugf("start building submit tx")
 	msgs := make([]sdk.Msg, 0, 1)
 
 	jobResult := <-txm.resultQueue
@@ -68,7 +71,7 @@ func (txm *TxManager) BuildSubmitTx() ([]byte, error) {
 
 	msgs = append(msgs, msg)
 
-	gasPrice, err := sdk.ParseDecCoin(types.Config.GasPrice())
+	gasPrice, err := sdk.ParseDecCoin(config.Config.GasPrice())
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse gas price: %w", err)
 	}
@@ -81,8 +84,8 @@ func (txm *TxManager) BuildSubmitTx() ([]byte, error) {
 		WithTxConfig(txm.clientCtx.TxConfig).
 		WithAccountRetriever(txm.clientCtx.AccountRetriever).
 		WithKeybase(txm.clientCtx.Keyring).
-		WithChainID(types.Config.ChainID()).
-		WithGas(types.Config.GasLimit()).
+		WithChainID(config.Config.ChainID()).
+		WithGas(config.Config.GasLimit()).
 		WithGasAdjustment(1.2).
 		WithGasPrices(gasPrice.String()).
 		WithAccountNumber(txm.accountNumber).
@@ -94,7 +97,7 @@ func (txm *TxManager) BuildSubmitTx() ([]byte, error) {
 		return nil, fmt.Errorf("failed to build unsigned tx: %w", err)
 	}
 
-	if err := tx.Sign(factory, types.Config.KeyName(), txBuilder, true); err != nil {
+	if err := tx.Sign(factory, config.Config.KeyName(), txBuilder, true); err != nil {
 		return nil, fmt.Errorf("failed to sign tx: %w", err)
 	}
 
@@ -103,7 +106,7 @@ func (txm *TxManager) BuildSubmitTx() ([]byte, error) {
 		return nil, fmt.Errorf("failed to encode tx: %w", err)
 	}
 
-	fmt.Printf("[SUBMIT] ID: %5d, Nonce: %5d", jobResult.ID, jobResult.Nonce)
+	log.Debugf("end building submit tx, ID: %+v, Nonce: %+v", jobResult.ID, jobResult.Nonce)
 
 	return txBytes, nil
 }
@@ -136,7 +139,7 @@ func (txm *TxManager) SyncSequenceNumber() error {
 		return fmt.Errorf("failed to get account sequence: %w", err)
 	}
 
-	fmt.Printf("[SYNC] Sequence updated: %d -> %d\n", txm.sequenceNumber, seq)
+	log.Debugf("sequence updated: %d -> %d", txm.sequenceNumber, seq)
 	txm.sequenceNumber = seq
 	return nil
 }

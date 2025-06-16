@@ -2,10 +2,10 @@ package woker
 
 import (
 	"context"
-	"fmt"
 	"runtime"
 	"sync"
 
+	"github.com/GPTx-global/guru/oracle/log"
 	"github.com/GPTx-global/guru/oracle/types"
 )
 
@@ -50,7 +50,7 @@ func (jm *JobManager) SubmitJob(job *types.Job) {
 	select {
 	case jm.jobQueue <- job:
 	default:
-		fmt.Println("job queue is full, drop job")
+		log.Debugf("job queue is full, drop job")
 		return
 	}
 }
@@ -66,19 +66,22 @@ func (jm *JobManager) worker(ctx context.Context, resultQueue chan<- *types.JobR
 
 			switch job.Type {
 			case types.Register:
+				log.Debugf("register job %d", job.ID)
 				if _, ok := jm.activeJobs[job.ID]; !ok {
 					jm.activeJobs[job.ID] = job
 				}
 			case types.Update:
+				log.Debugf("update job %d", job.ID)
 				// TODO: logic to update job
 				jm.activeJobs[job.ID] = job
 			case types.Complete:
+				log.Debugf("complete job %d", job.ID)
 				if existingJob, ok := jm.activeJobs[job.ID]; ok {
 					nonce := max(job.Nonce, existingJob.Nonce)
 					job = existingJob
 					job.Nonce = nonce
 				} else {
-					fmt.Printf("job %d is not MINE!!\n", job.ID)
+					log.Debugf("job %d is not MINE!!", job.ID)
 					continue
 				}
 				job.Type = types.Complete

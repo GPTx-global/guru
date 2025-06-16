@@ -1,4 +1,4 @@
-package types
+package config
 
 import (
 	"flag"
@@ -20,7 +20,7 @@ var (
 )
 
 var (
-	daemonDir      = flag.String("daemon-dir", "", "daemon directory")
+	DaemonDir      = flag.String("daemon-dir", "", "daemon directory")
 	keyringBackend = flag.String("keyring-backend", "test", "keyring backend")
 	rpcEndpoint    = flag.String("rpc-endpoint", "http://localhost:26657", "RPC endpoint for connecting to the blockchain node")
 	chainID        = flag.String("chain-id", "guru_3110-1", "Chain ID for the blockchain network")
@@ -143,16 +143,16 @@ func defaultDir() string {
 }
 
 func loadOrGenerateConfig() error {
-	if *daemonDir == "" {
-		*daemonDir = defaultDir()
+	if *DaemonDir == "" {
+		*DaemonDir = defaultDir()
 	}
 
 	// 데몬 디렉토리가 존재하지 않으면 생성
-	if err := os.MkdirAll(*daemonDir, 0755); err != nil {
-		return fmt.Errorf("failed to create daemon directory %s: %w", *daemonDir, err)
+	if err := os.MkdirAll(*DaemonDir, 0755); err != nil {
+		return fmt.Errorf("failed to create daemon directory %s: %w", *DaemonDir, err)
 	}
 
-	daemonCfg := filepath.Join(*daemonDir, "config.toml")
+	daemonCfg := filepath.Join(*DaemonDir, "config.toml")
 
 	// 설정 파일이 존재하지 않으면 기본 설정 파일 생성
 	if _, err := os.Stat(daemonCfg); os.IsNotExist(err) {
@@ -176,8 +176,8 @@ func loadOrGenerateConfig() error {
 
 // generateDefaultConfigFile creates a default config.toml file with proper values
 func generateDefaultConfigFile(configPath string) error {
-	if err := os.MkdirAll(*daemonDir, 0755); err != nil {
-		return fmt.Errorf("failed to create keyring directory %s: %w", *daemonDir, err)
+	if err := os.MkdirAll(*DaemonDir, 0755); err != nil {
+		return fmt.Errorf("failed to create keyring directory %s: %w", *DaemonDir, err)
 	}
 
 	defaultConfigContent := fmt.Sprintf(`# Oracle Daemon Configuration File
@@ -200,7 +200,7 @@ gas_price = "%s"
 
 # Gas limit for transactions
 gas_limit = %d
-`, *rpcEndpoint, *chainID, *daemonDir, *keyName, *gasPrice, *gasLimit)
+`, *rpcEndpoint, *chainID, *DaemonDir, *keyName, *gasPrice, *gasLimit)
 
 	if err := os.WriteFile(configPath, []byte(defaultConfigContent), 0644); err != nil {
 		return fmt.Errorf("failed to write config file: %w", err)

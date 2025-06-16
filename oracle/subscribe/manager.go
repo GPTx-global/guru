@@ -6,6 +6,8 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/GPTx-global/guru/oracle/config"
+	"github.com/GPTx-global/guru/oracle/log"
 	"github.com/GPTx-global/guru/oracle/types"
 	oracletypes "github.com/GPTx-global/guru/x/oracle/types"
 	"github.com/cosmos/cosmos-sdk/client"
@@ -38,17 +40,21 @@ func NewSubscribeManager(ctx context.Context) *SubscribeManager {
 
 // LoadRegisterRequest queries and returns all existing oracle request documents from the blockchain
 func (sm *SubscribeManager) LoadRegisterRequest(clientCtx client.Context) ([]*oracletypes.OracleRequestDoc, error) {
+	log.Debugf("start loading register request")
 	client := oracletypes.NewQueryClient(clientCtx)
 	res, err := client.OracleRequestDocs(sm.ctx, &oracletypes.QueryOracleRequestDocsRequest{})
 	if err != nil {
+		log.Errorf("failed to load register request: %v", err)
 		return nil, fmt.Errorf("failed to load register request: %w", err)
 	}
+	log.Debugf("end loading register request, %d", len(res.OracleRequestDocs))
 
 	return res.OracleRequestDocs, nil
 }
 
 // SetSubscribe establishes subscriptions to oracle-related blockchain events
 func (sm *SubscribeManager) SetSubscribe(client *http.HTTP) error {
+	log.Debugf("start setting subscribe")
 	sm.subscriptionsLock.Lock()
 	defer sm.subscriptionsLock.Unlock()
 
@@ -72,6 +78,8 @@ func (sm *SubscribeManager) SetSubscribe(client *http.HTTP) error {
 		return fmt.Errorf("failed to subscribe to %s: %w", completeMsg, err)
 	}
 	sm.subscriptions[completeMsg] = ch
+
+	log.Debugf("end setting subscribe")
 
 	return nil
 }
@@ -107,5 +115,5 @@ func (sm *SubscribeManager) Subscribe() []*types.Job {
 func (sm *SubscribeManager) filterAccount(event coretypes.ResultEvent, prefix string) bool {
 	accounts := event.Events[prefix+"."+oracletypes.AttributeKeyAccountList][0]
 
-	return strings.Contains(accounts, types.Config.Address())
+	return strings.Contains(accounts, config.Config.Address())
 }

@@ -9,6 +9,8 @@ import (
 
 	"github.com/GPTx-global/guru/app"
 	"github.com/GPTx-global/guru/encoding"
+	"github.com/GPTx-global/guru/oracle/config"
+	"github.com/GPTx-global/guru/oracle/log"
 	oracletypes "github.com/GPTx-global/guru/x/oracle/types"
 	coretypes "github.com/tendermint/tendermint/rpc/core/types"
 	tmtypes "github.com/tendermint/tendermint/types"
@@ -34,11 +36,12 @@ type Job struct {
 
 // MakeJobs creates a Job instance from various event types (OracleRequestDoc or blockchain events)
 func MakeJobs(event any) []*Job {
+	log.Debugf("start making jobs")
 	jobs := make([]*Job, 0)
 
 	switch event := event.(type) {
 	case *oracletypes.OracleRequestDoc:
-		myIndex := slices.Index(event.AccountList, Config.Address())
+		myIndex := slices.Index(event.AccountList, config.Config.Address())
 		index := (myIndex + 1) % len(event.Endpoints)
 		jobs = append(jobs, &Job{
 			ID:     event.RequestId,
@@ -62,7 +65,7 @@ func MakeJobs(event any) []*Job {
 			for _, msg := range msgs {
 				switch oracleMsg := msg.(type) {
 				case *oracletypes.MsgRegisterOracleRequestDoc:
-					myIndex := slices.Index(oracleMsg.RequestDoc.AccountList, Config.Address())
+					myIndex := slices.Index(oracleMsg.RequestDoc.AccountList, config.Config.Address())
 					index := (myIndex + 1) % len(oracleMsg.RequestDoc.Endpoints)
 					requestID, err := strconv.ParseUint(event.Events[oracletypes.EventTypeRegisterOracleRequestDoc+"."+oracletypes.AttributeKeyRequestId][0], 10, 64)
 					if err != nil {
@@ -106,9 +109,13 @@ func MakeJobs(event any) []*Job {
 		jobs = nil
 	}
 
-	for _, job := range jobs {
-		fmt.Printf("[MAKE-JOBS] ID: %5d, Nonce: %5d\n", job.ID, job.Nonce)
+	if 0 < len(jobs) {
+		for _, job := range jobs {
+			log.Debugf("ID: %+v, Nonce: %+v", job.ID, job.Nonce)
+		}
 	}
+
+	log.Debugf("end making jobs, %d", len(jobs))
 
 	return jobs
 }

@@ -8,8 +8,6 @@ import (
 	"time"
 
 	"github.com/GPTx-global/guru/oracle/types"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -220,258 +218,583 @@ func (suite *ExecutorTestSuite) TestFetchRawData_HTTPError() {
 	suite.Equal("Internal Server Error", string(data))
 }
 
-func (suite *ExecutorTestSuite) TestParseJSON_ValidJSON() {
-	// Given: 유효한 JSON 데이터
-	jsonData := []byte(`{"price": {"usd": 12345}, "status": "ok"}`)
-
-	// When: parseJSON 실행
-	result, err := parseJSON(jsonData)
-
-	// Then: 파싱된 맵 반환
-	suite.NoError(err)
-	suite.NotNil(result)
-	suite.Equal("ok", result["status"])
-}
-
-func (suite *ExecutorTestSuite) TestParseJSON_ValidJSONArray() {
-	// Given: 배열 형태의 JSON 데이터
-	jsonData := []byte(`[{"symbol": "BTC", "price": 50000}, {"symbol": "ETH", "price": 3000}]`)
-
-	// When: parseJSON 실행
-	result, err := parseJSON(jsonData)
-
-	// Then: 첫 번째 요소가 반환됨
-	suite.NoError(err)
-	suite.NotNil(result)
-	suite.Equal("BTC", result["symbol"])
-	suite.Equal(float64(50000), result["price"])
-}
-
-func (suite *ExecutorTestSuite) TestParseJSON_InvalidJSON() {
-	// Given: 잘못된 JSON 데이터
-	jsonData := []byte(`{"invalid": json}`)
-
-	// When: parseJSON 실행
-	result, err := parseJSON(jsonData)
-
-	// Then: 에러 반환
-	suite.Error(err)
-	suite.Nil(result)
-}
-
-func (suite *ExecutorTestSuite) TestExtractDataByPath_SimpleKey() {
-	// Given: 간단한 데이터와 경로
-	data := map[string]interface{}{
-		"price":  12345.67,
-		"status": "active",
-	}
-	path := "price"
-
-	// When: extractDataByPath 실행
-	result, err := extractDataByPath(data, path)
-
-	// Then: 올바른 값 반환
-	suite.NoError(err)
-	suite.Equal("12345.67", result)
-}
-
-func (suite *ExecutorTestSuite) TestExtractDataByPath_NestedKey() {
-	// Given: 중첩된 데이터와 경로
-	data := map[string]interface{}{
-		"price": map[string]interface{}{
-			"usd": 50000.123,
-			"eur": 42000.456,
+// Test parseJSON with valid JSON object
+func (suite *ExecutorTestSuite) TestParseJSON_ValidObject() {
+	testCases := []struct {
+		name     string
+		rawData  []byte
+		expected map[string]any
+	}{
+		{
+			name:    "simple object",
+			rawData: []byte(`{"name":"John","age":30}`),
+			expected: map[string]any{
+				"name": "John",
+				"age":  float64(30),
+			},
 		},
-	}
-	path := "price.usd"
-
-	// When: extractDataByPath 실행
-	result, err := extractDataByPath(data, path)
-
-	// Then: 올바른 값 반환
-	suite.NoError(err)
-	suite.Equal("50000.123", result)
-}
-
-func (suite *ExecutorTestSuite) TestExtractDataByPath_ArrayIndex() {
-	// Given: 배열이 포함된 데이터 (수동으로 배열 처리 구현 필요)
-	// 참고: 현재 구현에서는 배열 인덱스 처리가 완전하지 않을 수 있음
-	data := map[string]interface{}{
-		"prices": []interface{}{
-			map[string]interface{}{"value": 100},
-			map[string]interface{}{"value": 200},
-		},
-	}
-	path := "prices.0.value"
-
-	// When: extractDataByPath 실행
-	_, err := extractDataByPath(data, path)
-
-	// Then: 에러가 발생할 수 있음 (현재 구현의 한계)
-	// 이 테스트는 현재 구현의 한계를 확인하는 용도
-	if err != nil {
-		suite.Contains(err.Error(), "cannot traverse")
-	}
-}
-
-func (suite *ExecutorTestSuite) TestExtractDataByPath_NonexistentKey() {
-	// Given: 존재하지 않는 키
-	data := map[string]interface{}{
-		"price": 12345,
-	}
-	path := "nonexistent.key"
-
-	// When: extractDataByPath 실행
-	result, err := extractDataByPath(data, path)
-
-	// Then: 에러 반환
-	suite.Error(err)
-	suite.Empty(result)
-	suite.Contains(err.Error(), "not found")
-}
-
-func (suite *ExecutorTestSuite) TestParseArrayIndex_Valid() {
-	// Given: 유효한 숫자 문자열
-	indexStr := "123"
-
-	// When: parseArrayIndex 실행
-	index, err := parseArrayIndex(indexStr)
-
-	// Then: 올바른 인덱스 반환
-	suite.NoError(err)
-	suite.Equal(123, index)
-}
-
-func (suite *ExecutorTestSuite) TestParseArrayIndex_Invalid() {
-	// Given: 잘못된 문자열
-	indexStr := "abc"
-
-	// When: parseArrayIndex 실행
-	index, err := parseArrayIndex(indexStr)
-
-	// Then: 에러 반환
-	suite.Error(err)
-	suite.Equal(-1, index)
-}
-
-func (suite *ExecutorTestSuite) TestParseArrayIndex_Empty() {
-	// Given: 빈 문자열
-	indexStr := ""
-
-	// When: parseArrayIndex 실행
-	index, err := parseArrayIndex(indexStr)
-
-	// Then: 에러 반환
-	suite.Error(err)
-	suite.Equal(-1, index)
-}
-
-func (suite *ExecutorTestSuite) TestExecutorClient_Singleton() {
-	// Given/When: 여러 번 executorClient 호출
-	client1 := executorClient()
-	client2 := executorClient()
-
-	// Then: 같은 인스턴스 반환 (싱글톤 패턴)
-	suite.Same(client1, client2)
-	suite.NotNil(client1)
-}
-
-// 단위 테스트 함수들
-
-func TestExecuteJobWithRealData(t *testing.T) {
-	// Given: 실제 API와 유사한 응답을 제공하는 테스트 서버
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		data := map[string]interface{}{
-			"data": map[string]interface{}{
-				"rates": map[string]interface{}{
-					"USD": 1.0,
-					"KRW": 1300.75,
-					"EUR": 0.85,
+		{
+			name:    "nested object",
+			rawData: []byte(`{"data":{"price":100.5,"currency":"USD"}}`),
+			expected: map[string]any{
+				"data": map[string]any{
+					"price":    float64(100.5),
+					"currency": "USD",
 				},
 			},
-			"timestamp": 1234567890,
-		}
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(data)
-	}))
-	defer server.Close()
-
-	job := &types.Job{
-		ID:    99,
-		URL:   server.URL,
-		Path:  "data.rates.KRW",
-		Nonce: 1,
-		Delay: 0,
+		},
+		{
+			name:     "empty object",
+			rawData:  []byte(`{}`),
+			expected: map[string]any{},
+		},
 	}
 
-	// When: executeJob 실행
-	result := executeJob(job)
-
-	// Then: 정확한 결과 반환
-	require.NotNil(t, result)
-	assert.Equal(t, uint64(99), result.ID)
-	assert.Equal(t, "1300.75", result.Data)
-	assert.Equal(t, uint64(1), result.Nonce)
+	for _, tc := range testCases {
+		suite.Run(tc.name, func() {
+			result, err := parseJSON(tc.rawData)
+			suite.NoError(err)
+			suite.Equal(tc.expected, result)
+		})
+	}
 }
 
-func TestFetchRawDataTimeout(t *testing.T) {
-	// Given: 느린 서버
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		time.Sleep(35 * time.Second) // HTTP 클라이언트 타임아웃보다 길게
-		w.Write([]byte("delayed response"))
-	}))
-	defer server.Close()
-
-	// When: fetchRawData 실행
-	data, err := fetchRawData(server.URL)
-
-	// Then: 타임아웃 에러 발생
-	assert.Error(t, err)
-	assert.Nil(t, data)
-	assert.Contains(t, err.Error(), "timeout")
-}
-
-func TestExtractDataByPathEdgeCases(t *testing.T) {
-	// Given: 다양한 타입의 값들
-	data := map[string]interface{}{
-		"string_val": "hello",
-		"int_val":    42,
-		"float_val":  3.14159,
-		"bool_val":   true,
-		"null_val":   nil,
-		"nested": map[string]interface{}{
-			"deep": map[string]interface{}{
-				"value": "found",
+// Test parseJSON with JSON array
+func (suite *ExecutorTestSuite) TestParseJSON_Array() {
+	testCases := []struct {
+		name     string
+		rawData  []byte
+		expected map[string]any
+	}{
+		{
+			name:    "array with object",
+			rawData: []byte(`[{"name":"John","age":30},{"name":"Jane","age":25}]`),
+			expected: map[string]any{
+				"name": "John",
+				"age":  float64(30),
 			},
+		},
+		{
+			name:    "array with single object",
+			rawData: []byte(`[{"price":100.5}]`),
+			expected: map[string]any{
+				"price": float64(100.5),
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		suite.Run(tc.name, func() {
+			result, err := parseJSON(tc.rawData)
+			suite.NoError(err)
+			suite.Equal(tc.expected, result)
+		})
+	}
+}
+
+// Test parseJSON with invalid JSON
+func (suite *ExecutorTestSuite) TestParseJSON_Invalid() {
+	testCases := []struct {
+		name    string
+		rawData []byte
+	}{
+		{
+			name:    "invalid JSON syntax",
+			rawData: []byte(`{"name":"John",`),
+		},
+		{
+			name:    "empty data",
+			rawData: []byte(``),
+		},
+		{
+			name:    "non-JSON string",
+			rawData: []byte(`not json`),
+		},
+		{
+			name:    "array with non-object",
+			rawData: []byte(`["string", 123]`),
+		},
+		{
+			name:    "empty array",
+			rawData: []byte(`[]`),
+		},
+	}
+
+	for _, tc := range testCases {
+		suite.Run(tc.name, func() {
+			result, err := parseJSON(tc.rawData)
+			suite.Error(err)
+			suite.Nil(result)
+		})
+	}
+}
+
+// Test extractDataByPath with valid paths
+func (suite *ExecutorTestSuite) TestExtractDataByPath_ValidPaths() {
+	data := map[string]any{
+		"name": "John",
+		"age":  float64(30),
+		"address": map[string]any{
+			"street": "123 Main St",
+			"city":   "New York",
+		},
+		"numbers": []any{float64(10), float64(20), float64(30)},
+		"items": []any{
+			map[string]any{"id": float64(1), "name": "item1"},
+			map[string]any{"id": float64(2), "name": "item2"},
 		},
 	}
 
 	testCases := []struct {
+		name     string
 		path     string
 		expected string
-		hasError bool
 	}{
-		{"string_val", "hello", false},
-		{"int_val", "42", false},
-		{"float_val", "3.14159", false},
-		{"bool_val", "true", false},
-		{"null_val", "<nil>", false},
-		{"nested.deep.value", "found", false},
-		{"nested.deep.nonexistent", "", true},
-		{"nonexistent", "", true},
+		{
+			name:     "simple field",
+			path:     "name",
+			expected: "John",
+		},
+		{
+			name:     "numeric field",
+			path:     "age",
+			expected: "30",
+		},
+		{
+			name:     "nested field",
+			path:     "address.street",
+			expected: "123 Main St",
+		},
+		{
+			name:     "nested deep field",
+			path:     "address.city",
+			expected: "New York",
+		},
+		{
+			name:     "array element",
+			path:     "numbers.0",
+			expected: "10",
+		},
+		{
+			name:     "array last element",
+			path:     "numbers.2",
+			expected: "30",
+		},
+		{
+			name:     "nested array field",
+			path:     "items.0.name",
+			expected: "item1",
+		},
+		{
+			name:     "nested array numeric field",
+			path:     "items.1.id",
+			expected: "2",
+		},
 	}
 
 	for _, tc := range testCases {
-		t.Run(tc.path, func(t *testing.T) {
-			// When: extractDataByPath 실행
+		suite.Run(tc.name, func() {
 			result, err := extractDataByPath(data, tc.path)
+			suite.NoError(err)
+			suite.Equal(tc.expected, result)
+		})
+	}
+}
 
-			// Then: 예상된 결과 확인
+// Test extractDataByPath with invalid paths
+func (suite *ExecutorTestSuite) TestExtractDataByPath_InvalidPaths() {
+	data := map[string]any{
+		"name": "John",
+		"age":  float64(30),
+		"address": map[string]any{
+			"street": "123 Main St",
+		},
+		"numbers": []any{float64(10), float64(20)},
+	}
+
+	testCases := []struct {
+		name string
+		path string
+	}{
+		{
+			name: "empty path",
+			path: "",
+		},
+		{
+			name: "non-existent field",
+			path: "nonexistent",
+		},
+		{
+			name: "non-existent nested field",
+			path: "address.nonexistent",
+		},
+		{
+			name: "array index out of bounds",
+			path: "numbers.5",
+		},
+		{
+			name: "invalid array index",
+			path: "numbers.abc",
+		},
+		{
+			name: "path through non-object",
+			path: "name.something",
+		},
+	}
+
+	for _, tc := range testCases {
+		suite.Run(tc.name, func() {
+			result, err := extractDataByPath(data, tc.path)
+			suite.Error(err)
+			suite.Empty(result)
+		})
+	}
+}
+
+// Test parseArrayIndex function
+func (suite *ExecutorTestSuite) TestParseArrayIndex() {
+	testCases := []struct {
+		name     string
+		input    string
+		expected int
+		hasError bool
+	}{
+		{
+			name:     "valid index 0",
+			input:    "0",
+			expected: 0,
+			hasError: false,
+		},
+		{
+			name:     "valid index 123",
+			input:    "123",
+			expected: 123,
+			hasError: false,
+		},
+		{
+			name:     "empty string",
+			input:    "",
+			expected: -1,
+			hasError: true,
+		},
+		{
+			name:     "invalid character",
+			input:    "12a",
+			expected: -1,
+			hasError: true,
+		},
+		{
+			name:     "negative sign",
+			input:    "-1",
+			expected: -1,
+			hasError: true,
+		},
+		{
+			name:     "special characters",
+			input:    "1.5",
+			expected: -1,
+			hasError: true,
+		},
+	}
+
+	for _, tc := range testCases {
+		suite.Run(tc.name, func() {
+			result, err := parseArrayIndex(tc.input)
 			if tc.hasError {
-				assert.Error(t, err)
+				suite.Error(err)
+				suite.Equal(-1, result)
 			} else {
-				assert.NoError(t, err)
-				assert.Equal(t, tc.expected, result)
+				suite.NoError(err)
+				suite.Equal(tc.expected, result)
+			}
+		})
+	}
+}
+
+// Test executeJob function logic (without actual HTTP calls)
+func (suite *ExecutorTestSuite) TestExecuteJob_DelayLogic() {
+	// Test job with nonce > 1 (should have delay)
+	suite.Run("job with nonce > 1", func() {
+		job := &types.Job{
+			ID:    1,
+			URL:   "http://invalid-url.com", // Will fail HTTP, but tests delay logic
+			Path:  "data.value",
+			Type:  types.Register,
+			Nonce: 2, // > 1, should trigger delay
+			Delay: time.Millisecond,
+		}
+
+		start := time.Now()
+		result := executeJob(job)
+		elapsed := time.Since(start)
+
+		// Should have waited for delay
+		suite.GreaterOrEqual(elapsed, time.Millisecond)
+		suite.Nil(result) // Should be nil due to HTTP failure, but delay was tested
+	})
+
+	// Test job with nonce <= 1 (no delay)
+	suite.Run("job with nonce <= 1", func() {
+		job := &types.Job{
+			ID:    1,
+			URL:   "http://invalid-url.com", // Will fail HTTP
+			Path:  "data.value",
+			Type:  types.Register,
+			Nonce: 1,           // <= 1, no delay
+			Delay: time.Second, // Long delay, but shouldn't be applied
+		}
+
+		start := time.Now()
+		result := executeJob(job)
+		elapsed := time.Since(start)
+
+		// Should not have waited for delay
+		suite.Less(elapsed, 500*time.Millisecond)
+		suite.Nil(result) // Should be nil due to HTTP failure
+	})
+}
+
+// Test edge cases for extractDataByPath
+func (suite *ExecutorTestSuite) TestExtractDataByPath_EdgeCases() {
+	// Test with complex nested structure
+	suite.Run("complex nested structure", func() {
+		data := map[string]any{
+			"level1": map[string]any{
+				"level2": []any{
+					map[string]any{
+						"level3": map[string]any{
+							"value": "found",
+						},
+					},
+				},
+			},
+		}
+
+		result, err := extractDataByPath(data, "level1.level2.0.level3.value")
+		suite.NoError(err)
+		suite.Equal("found", result)
+	})
+
+	// Test with mixed types in path
+	suite.Run("mixed types", func() {
+		data := map[string]any{
+			"string":  "text",
+			"number":  float64(42),
+			"boolean": true,
+			"null":    nil,
+		}
+
+		// String value
+		result, err := extractDataByPath(data, "string")
+		suite.NoError(err)
+		suite.Equal("text", result)
+
+		// Number value
+		result, err = extractDataByPath(data, "number")
+		suite.NoError(err)
+		suite.Equal("42", result)
+
+		// Boolean value
+		result, err = extractDataByPath(data, "boolean")
+		suite.NoError(err)
+		suite.Equal("true", result)
+
+		// Null value
+		result, err = extractDataByPath(data, "null")
+		suite.NoError(err)
+		suite.Equal("<nil>", result)
+	})
+}
+
+// Test parseJSON edge cases
+func (suite *ExecutorTestSuite) TestParseJSON_EdgeCases() {
+	// Test with array containing mixed types
+	suite.Run("array with mixed types", func() {
+		rawData := []byte(`[{"valid":"object"}, "string", 123]`)
+		result, err := parseJSON(rawData)
+		suite.NoError(err)
+		suite.Equal(map[string]any{"valid": "object"}, result)
+	})
+
+	// Test with deeply nested object
+	suite.Run("deeply nested object", func() {
+		rawData := []byte(`{"a":{"b":{"c":{"d":"deep"}}}}`)
+		expected := map[string]any{
+			"a": map[string]any{
+				"b": map[string]any{
+					"c": map[string]any{
+						"d": "deep",
+					},
+				},
+			},
+		}
+		result, err := parseJSON(rawData)
+		suite.NoError(err)
+		suite.Equal(expected, result)
+	})
+
+	// Test with special characters
+	suite.Run("special characters", func() {
+		rawData := []byte(`{"unicode":"测试","emoji":"😀","escape":"line1\nline2"}`)
+		result, err := parseJSON(rawData)
+		suite.NoError(err)
+		suite.Equal("测试", result["unicode"])
+		suite.Equal("😀", result["emoji"])
+		suite.Equal("line1\nline2", result["escape"])
+	})
+}
+
+// Test concurrent access to executorClient
+func (suite *ExecutorTestSuite) TestExecutorClient_Singleton() {
+	// Test that multiple calls to executorClient return the same instance
+	clients := make([]*http.Client, 10)
+	done := make(chan bool, 10)
+
+	for i := 0; i < 10; i++ {
+		go func(index int) {
+			clients[index] = executorClient()
+			done <- true
+		}(i)
+	}
+
+	// Wait for all goroutines
+	for i := 0; i < 10; i++ {
+		<-done
+	}
+
+	// All clients should be the same instance (singleton)
+	firstClient := clients[0]
+	for i := 1; i < 10; i++ {
+		suite.Same(firstClient, clients[i])
+	}
+
+	// Verify client configuration
+	suite.NotNil(firstClient)
+	suite.Equal(30*time.Second, firstClient.Timeout)
+}
+
+// Test parseArrayIndex with edge cases
+func (suite *ExecutorTestSuite) TestParseArrayIndex_EdgeCases() {
+	testCases := []struct {
+		name     string
+		input    string
+		expected int
+		hasError bool
+	}{
+		{
+			name:     "single digit",
+			input:    "7",
+			expected: 7,
+			hasError: false,
+		},
+		{
+			name:     "multiple digits",
+			input:    "123456",
+			expected: 123456,
+			hasError: false,
+		},
+		{
+			name:     "leading zeros",
+			input:    "007",
+			expected: 7,
+			hasError: false,
+		},
+		{
+			name:     "just zero",
+			input:    "000",
+			expected: 0,
+			hasError: false,
+		},
+		{
+			name:     "mixed invalid chars",
+			input:    "1a2b3",
+			expected: -1,
+			hasError: true,
+		},
+		{
+			name:     "space character",
+			input:    "1 2",
+			expected: -1,
+			hasError: true,
+		},
+	}
+
+	for _, tc := range testCases {
+		suite.Run(tc.name, func() {
+			result, err := parseArrayIndex(tc.input)
+			if tc.hasError {
+				suite.Error(err)
+				suite.Equal(-1, result)
+			} else {
+				suite.NoError(err)
+				suite.Equal(tc.expected, result)
+			}
+		})
+	}
+}
+
+// Test type assertions in extractDataByPath
+func (suite *ExecutorTestSuite) TestExtractDataByPath_TypeAssertions() {
+	// Test invalid type casting scenarios
+	data := map[string]any{
+		"string":    "not_an_object",
+		"number":    123,
+		"boolean":   true,
+		"array":     []any{1, 2, 3},
+		"object":    map[string]any{"field": "value"},
+		"null":      nil,
+		"interface": interface{}(map[string]any{"nested": "value"}),
+	}
+
+	testCases := []struct {
+		name     string
+		path     string
+		hasError bool
+	}{
+		{
+			name:     "traverse through string",
+			path:     "string.field",
+			hasError: true,
+		},
+		{
+			name:     "traverse through number",
+			path:     "number.field",
+			hasError: true,
+		},
+		{
+			name:     "traverse through boolean",
+			path:     "boolean.field",
+			hasError: true,
+		},
+		{
+			name:     "traverse through null",
+			path:     "null.field",
+			hasError: true,
+		},
+		{
+			name:     "valid array access",
+			path:     "array.1",
+			hasError: false,
+		},
+		{
+			name:     "valid object access",
+			path:     "object.field",
+			hasError: false,
+		},
+		{
+			name:     "interface cast to map",
+			path:     "interface.nested",
+			hasError: false,
+		},
+	}
+
+	for _, tc := range testCases {
+		suite.Run(tc.name, func() {
+			_, err := extractDataByPath(data, tc.path)
+			if tc.hasError {
+				suite.Error(err)
+			} else {
+				suite.NoError(err)
 			}
 		})
 	}

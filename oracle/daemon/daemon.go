@@ -7,6 +7,8 @@ import (
 
 	"github.com/GPTx-global/guru/app"
 	"github.com/GPTx-global/guru/encoding"
+	"github.com/GPTx-global/guru/oracle/config"
+	"github.com/GPTx-global/guru/oracle/log"
 	"github.com/GPTx-global/guru/oracle/subscribe"
 	"github.com/GPTx-global/guru/oracle/tx"
 	"github.com/GPTx-global/guru/oracle/types"
@@ -32,18 +34,18 @@ func New(ctx context.Context) (*Daemon, error) {
 	d := new(Daemon)
 	d.ctx = ctx
 
-	clt, err := http.New(types.Config.RpcEndpoint(), "/websocket")
+	clt, err := http.New(config.Config.RpcEndpoint(), "/websocket")
 	if err != nil {
 		return nil, fmt.Errorf("failed to create client: %w", err)
 	}
 	d.client = clt
 
-	keyRing, err := types.Config.Keyring()
+	keyRing, err := config.Config.Keyring()
 	if err != nil {
 		return nil, fmt.Errorf("failed to create keyring: %w", err)
 	}
 
-	key, err := keyRing.Key(types.Config.KeyName())
+	key, err := keyRing.Key(config.Config.KeyName())
 	if err != nil {
 		return nil, fmt.Errorf("failed to get key: %w", err)
 	}
@@ -60,12 +62,12 @@ func New(ctx context.Context) (*Daemon, error) {
 		WithTxConfig(encCfg.TxConfig).
 		WithLegacyAmino(encCfg.Amino).
 		WithKeyring(keyRing).
-		WithChainID(types.Config.ChainID()).
+		WithChainID(config.Config.ChainID()).
 		WithAccountRetriever(authtypes.AccountRetriever{}).
-		WithNodeURI(types.Config.RpcEndpoint()).
+		WithNodeURI(config.Config.RpcEndpoint()).
 		WithClient(d.client).
 		WithFromAddress(fromAddress).
-		WithFromName(types.Config.KeyName()).
+		WithFromName(config.Config.KeyName()).
 		WithBroadcastMode("sync")
 
 	d.transactionManager = tx.NewTxManager(d.clientCtx)
@@ -143,17 +145,17 @@ func (d *Daemon) ServeOracle() error {
 		}
 
 		if txResponse.Code == 0 {
-			fmt.Printf(", Hash: %s\n", txResponse.TxHash)
+			log.Debugf("tx success, Hash: %s", txResponse.TxHash)
 		} else {
-			fmt.Printf("tx failed: %s\n", txResponse.RawLog)
+			log.Debugf("tx failed: %s", txResponse.RawLog)
 
 			// sequence mismatch 에러인 경우 sequence 동기화 시도
 			if txResponse.Code == 32 { // sequence mismatch error code
-				fmt.Println("[RECOVERY] Attempting to sync sequence number...")
+				log.Debugf("sequence mismatch error, attempting to sync sequence number")
 				if err := d.transactionManager.SyncSequenceNumber(); err != nil {
-					fmt.Printf("[RECOVERY] Failed to sync sequence: %v\n", err)
+					log.Debugf("failed to sync sequence: %v", err)
 				} else {
-					fmt.Println("[RECOVERY] Sequence number synchronized")
+					log.Debugf("sequence number synchronized")
 				}
 			}
 		}
