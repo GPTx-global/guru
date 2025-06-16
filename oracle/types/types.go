@@ -1,7 +1,6 @@
 package types
 
 import (
-	"fmt"
 	"slices"
 	"strconv"
 	"strings"
@@ -81,7 +80,6 @@ func MakeJobs(event any) []*Job {
 						Status: oracleMsg.RequestDoc.Status.String(),
 					})
 				case *oracletypes.MsgUpdateOracleRequestDoc:
-					fmt.Println("TODO: MsgUpdateOracleRequestDoc")
 					jobs = nil
 				}
 			}

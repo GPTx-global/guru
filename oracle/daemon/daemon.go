@@ -145,7 +145,7 @@ func (d *Daemon) ServeOracle() error {
 		}
 
 		if txResponse.Code == 0 {
-			log.Debugf("tx success, Hash: %s", txResponse.TxHash)
+			log.Debugf("tx success, Hash: \n\t[%s]", txResponse.TxHash)
 		} else {
 			log.Debugf("tx failed: %s", txResponse.RawLog)
 
