@@ -1,0 +1,22 @@
+{
+    "oracle_type": 2,
+    "name": "BTC/USD Price Oracle",
+    "description": "BTC/USD Price Oracle",
+    "period": 15,
+    "account_list": [
+        "guru13gu9pvc5rzmj5t5xc4xjer33h0eqa0ptxg9cm6"
+    ],
+    "quorum": 1,
+    "endpoints": [
+        {
+            "url": "https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/usd.json",
+            "parse_rule": "usd.krw"
+        },
+        {
+            "url": "https://open.er-api.com/v6/latest/USD",
+            "parse_rule": "rates.KRW"
+        }
+    ],
+    "aggregation_rule": 1,
+    "status": 1
+}
