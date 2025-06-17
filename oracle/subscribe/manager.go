@@ -42,7 +42,9 @@ func NewSubscribeManager(ctx context.Context) *SubscribeManager {
 func (sm *SubscribeManager) LoadRegisterRequest(clientCtx client.Context) ([]*oracletypes.OracleRequestDoc, error) {
 	log.Debugf("start loading register request")
 	client := oracletypes.NewQueryClient(clientCtx)
-	res, err := client.OracleRequestDocs(sm.ctx, &oracletypes.QueryOracleRequestDocsRequest{})
+	res, err := client.OracleRequestDocs(sm.ctx, &oracletypes.QueryOracleRequestDocsRequest{
+		Status: oracletypes.RequestStatus_REQUEST_STATUS_ENABLED,
+	})
 	if err != nil {
 		log.Errorf("failed to load register request: %v", err)
 		return nil, fmt.Errorf("failed to load register request: %w", err)
