@@ -7,6 +7,7 @@ import (
 
 	"github.com/GPTx-global/guru/oracle/log"
 	"github.com/GPTx-global/guru/oracle/types"
+	oracletypes "github.com/GPTx-global/guru/x/oracle/types"
 )
 
 type JobManager struct {
@@ -77,6 +78,10 @@ func (jm *JobManager) worker(ctx context.Context, resultQueue chan<- *types.JobR
 			case types.Complete:
 				log.Debugf("complete job %d", job.ID)
 				if existingJob, ok := jm.activeJobs[job.ID]; ok {
+					if existingJob.Status != oracletypes.RequestStatus_REQUEST_STATUS_ENABLED.String() {
+						log.Debugf("job %d is not enabled", job.ID)
+						continue
+					}
 					nonce := max(job.Nonce, existingJob.Nonce)
 					job = existingJob
 					job.Nonce = nonce
