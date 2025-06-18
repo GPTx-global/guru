@@ -34,18 +34,14 @@ func New(ctx context.Context) (*Daemon, error) {
 	d := new(Daemon)
 	d.ctx = ctx
 
-	clt, err := http.New(config.Config.RpcEndpoint(), "/websocket")
+	clt, err := http.New(config.ChainEndpoint(), "/websocket")
 	if err != nil {
 		return nil, fmt.Errorf("failed to create client: %w", err)
 	}
 	d.client = clt
 
-	keyRing, err := config.Config.Keyring()
-	if err != nil {
-		return nil, fmt.Errorf("failed to create keyring: %w", err)
-	}
-
-	key, err := keyRing.Key(config.Config.KeyName())
+	keyRing := config.Keyring()
+	key, err := keyRing.Key(config.KeyName())
 	if err != nil {
 		return nil, fmt.Errorf("failed to get key: %w", err)
 	}
@@ -62,12 +58,12 @@ func New(ctx context.Context) (*Daemon, error) {
 		WithTxConfig(encCfg.TxConfig).
 		WithLegacyAmino(encCfg.Amino).
 		WithKeyring(keyRing).
-		WithChainID(config.Config.ChainID()).
+		WithChainID(config.ChainID()).
 		WithAccountRetriever(authtypes.AccountRetriever{}).
-		WithNodeURI(config.Config.RpcEndpoint()).
+		WithNodeURI(config.ChainEndpoint()).
 		WithClient(d.client).
 		WithFromAddress(fromAddress).
-		WithFromName(config.Config.KeyName()).
+		WithFromName(config.KeyName()).
 		WithBroadcastMode("sync")
 
 	d.transactionManager = tx.NewTxManager(d.clientCtx)

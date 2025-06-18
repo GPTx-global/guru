@@ -40,7 +40,7 @@ func MakeJobs(event any) []*Job {
 
 	switch event := event.(type) {
 	case *oracletypes.OracleRequestDoc:
-		myIndex := slices.Index(event.AccountList, config.Config.Address())
+		myIndex := slices.Index(event.AccountList, config.Address().String())
 		index := (myIndex + 1) % len(event.Endpoints)
 		jobs = append(jobs, &Job{
 			ID:     event.RequestId,
@@ -64,7 +64,7 @@ func MakeJobs(event any) []*Job {
 			for _, msg := range msgs {
 				switch oracleMsg := msg.(type) {
 				case *oracletypes.MsgRegisterOracleRequestDoc:
-					myIndex := slices.Index(oracleMsg.RequestDoc.AccountList, config.Config.Address())
+					myIndex := slices.Index(oracleMsg.RequestDoc.AccountList, config.Address().String())
 					index := (myIndex + 1) % len(oracleMsg.RequestDoc.Endpoints)
 					requestID, err := strconv.ParseUint(event.Events[oracletypes.EventTypeRegisterOracleRequestDoc+"."+oracletypes.AttributeKeyRequestId][0], 10, 64)
 					if err != nil {

@@ -35,12 +35,11 @@ func (suite *TypesTestSuite) SetupSuite() {
 	// Use a temporary directory for daemon data to avoid conflicts
 	tempDir := suite.T().TempDir()
 	flag.Set("daemon-dir", tempDir)
-	err := config.LoadConfig()
-	suite.Require().NoError(err, "Failed to load config for test suite")
+	config.Load()
 }
 
 func (suite *TypesTestSuite) SetupTest() {
-	config.Config.SetAddress("my_address")
+	// config.Config.SetAddress("my_address")
 }
 
 func (suite *TypesTestSuite) TestMakeJobs_FromOracleRequestDoc() {
