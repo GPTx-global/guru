@@ -1,20 +1,12 @@
-# RPC 엔드포인트
-rpc_endpoint = "http://localhost:26657"
+[chain]
+id = 'guru_3110-1'
+endpoint = 'http://localhost:26657'
 
-# 체인 ID
-chain_id = "guru_3110-1"
+[key]
+name = 'node1'
+keyring_dir = '/Users/pamla/.oracled'
+keyring_backend = 'test'
 
-# 키링 디렉토리 경로
-keyring_dir = "/Users/pamla/.oracled/"
-
-# 사용할 키 이름
-key_name = "node1"
-
-# 가스 가격
-gas_price = "630000000aguru"
-
-# 가스 한도
-gas_limit = 30000 
-
-# 자동 시퀀스 번호 사용 여부
-auto_sequence_number = true
+[gas]
+limit = 30000
+prices = '630000000aguru'

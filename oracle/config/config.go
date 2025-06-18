@@ -5,98 +5,184 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"sync"
 
 	"github.com/GPTx-global/guru/app"
 	"github.com/GPTx-global/guru/crypto/hd"
 	"github.com/GPTx-global/guru/encoding"
+	"github.com/GPTx-global/guru/oracle/log"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
-	"github.com/spf13/viper"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/pelletier/go-toml/v2"
 )
 
-var (
-	once   sync.Once
-	Config *configure
-)
+var home = flag.String("home", homeDir(), "oracle daemon home directory")
 
-var (
-	DaemonDir      = flag.String("daemon-dir", defaultDir(), "daemon directory")
-	keyringBackend = flag.String("keyring-backend", "test", "keyring backend")
-	rpcEndpoint    = flag.String("rpc-endpoint", "http://localhost:26657", "RPC endpoint for connecting to the blockchain node")
-	chainID        = flag.String("chain-id", "guru_3110-1", "Chain ID for the blockchain network")
-	keyName        = flag.String("key-name", "node1", "Key name for signing transactions")
-	gasPrice       = flag.String("gas-price", "630000000000aguru", "Gas price for transactions (format: amount + denomination)")
-	gasLimit       = flag.Uint64("gas-limit", 30000, "Gas limit for transactions")
-)
+var globalConfig configData
 
-type configure struct {
-	rpcEndpoint string
-	chainID     string
-	keyringDir  string
-	keyName     string
-	gasPrice    string
-	gasLimit    uint64
-
-	address string
+type configData struct {
+	Chain chainConfig `toml:"chain"`
+	Key   keyConfig   `toml:"key"`
+	Gas   gasConfig   `toml:"gas"`
 }
 
-// LoadConfig load config from config.toml file
-func LoadConfig() error {
-	var err error
-	once.Do(func() {
-		flag.Parse()
-		err = loadOrGenerateConfig()
-	})
-
-	return err
+type chainConfig struct {
+	ID       string `toml:"id"`
+	Endpoint string `toml:"endpoint"`
 }
 
-// RpcEndpoint returns the RPC endpoint URL
-func (c *configure) RpcEndpoint() string {
-	return c.rpcEndpoint
+type keyConfig struct {
+	Name           string `toml:"name"`
+	KeyringDir     string `toml:"keyring_dir"`
+	KeyringBackend string `toml:"keyring_backend"`
 }
 
-// ChainID returns the blockchain chain ID
-func (c *configure) ChainID() string {
-	return c.chainID
+type gasConfig struct {
+	Limit  uint64 `toml:"limit"`
+	Prices string `toml:"prices"`
 }
 
-// KeyringDir returns the keyring directory path
-func (c *configure) KeyringDir() string {
-	return c.keyringDir
+func Load() {
+	flag.Parse()
+	path := filepath.Join(Home(), "config.toml")
+
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		if err := createDefaultConfig(path); err != nil {
+			log.Fatalf("Failed to create default config: %v", err)
+		}
+	}
+
+	data, err := os.ReadFile(path)
+	if err != nil {
+		log.Fatalf("Failed to read config file: %v", err)
+	}
+
+	if err := toml.Unmarshal(data, &globalConfig); err != nil {
+		log.Fatalf("Failed to parse TOML: %v", err)
+	}
+
+	if err := validateConfig(); err != nil {
+		log.Fatalf("Invalid config: %v", err)
+	}
+
+	log.Infof("Loaded config from %s", path)
 }
 
-// KeyName returns the key name for signing transactions
-func (c *configure) KeyName() string {
-	return c.keyName
+func homeDir() string {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		log.Fatalf("Failed to get user home directory: %v", err)
+	}
+
+	return filepath.Join(home, ".oracled")
 }
 
-// GasPrice returns the gas price for transactions
-func (c *configure) GasPrice() string {
-	return c.gasPrice
+func createDefaultConfig(path string) error {
+	dir := filepath.Dir(path)
+	if err := os.MkdirAll(dir, 0755); err != nil {
+		return fmt.Errorf("failed to create directory %s: %w", dir, err)
+	}
+
+	globalConfig = configData{
+		Chain: chainConfig{
+			ID:       "guru_3110-1",
+			Endpoint: "http://localhost:26657",
+		},
+		Key: keyConfig{
+			Name:           "node1",
+			KeyringDir:     Home(),
+			KeyringBackend: "test",
+		},
+		Gas: gasConfig{
+			Limit:  30000,
+			Prices: "630000000000aguru",
+		},
+	}
+
+	data, err := toml.Marshal(globalConfig)
+	if err != nil {
+		return fmt.Errorf("failed to marshal TOML: %w", err)
+	}
+
+	if err := os.WriteFile(path, data, 0644); err != nil {
+		return fmt.Errorf("failed to write config file: %w", err)
+	}
+
+	return nil
 }
 
-// GasLimit returns the gas limit for transactions
-func (c *configure) GasLimit() uint64 {
-	return c.gasLimit
+func validateConfig() error {
+	if globalConfig.Chain.ID == "" {
+		return fmt.Errorf("chain ID is required")
+	}
+
+	if globalConfig.Chain.Endpoint == "" {
+		return fmt.Errorf("chain endpoint is required")
+	}
+
+	if globalConfig.Key.Name == "" {
+		return fmt.Errorf("key name is required")
+	}
+
+	if globalConfig.Key.KeyringDir == "" {
+		return fmt.Errorf("keyring directory is required")
+	}
+
+	if globalConfig.Key.KeyringBackend == "" {
+		return fmt.Errorf("keyring backend is required")
+	}
+
+	if globalConfig.Gas.Limit == 0 {
+		return fmt.Errorf("gas limit is required")
+	}
+
+	if globalConfig.Gas.Prices == "" {
+		return fmt.Errorf("gas prices is required")
+	}
+
+	return nil
 }
 
-// SetAddress sets the address for the configured key
-func (c *configure) SetAddress(address string) {
-	c.address = address
+func Print() {
+	log.Infof("%-15s: %s", "Home", Home())
+	log.Infof("%-15s: %s", "Chain ID", ChainID())
+	log.Infof("%-15s: %s", "Chain Endpoint", ChainEndpoint())
+	log.Infof("%-15s: %s", "Key Name", KeyName())
+	log.Infof("%-15s: %s", "Keyring Dir", KeyringDir())
+	log.Infof("%-15s: %s", "Keyring Backend", KeyringBackend())
+	log.Infof("%-15s: %s", "Address", Address().String())
+	log.Infof("%-15s: %d", "Gas Limit", GasLimit())
+	log.Infof("%-15s: %s", "Gas Prices", GasPrices())
 }
 
-// Address returns the address for the configured key
-func (c *configure) Address() string {
-	return c.address
+func Home() string {
+	return *home
 }
 
-// Keyring creates and returns a keyring instance for cryptographic operations
-func (c *configure) Keyring() (keyring.Keyring, error) {
+func ChainID() string {
+	return globalConfig.Chain.ID
+}
+
+func ChainEndpoint() string {
+	return globalConfig.Chain.Endpoint
+}
+
+func KeyName() string {
+	return globalConfig.Key.Name
+}
+
+func KeyringDir() string {
+	return globalConfig.Key.KeyringDir
+}
+
+func KeyringBackend() string {
+	return globalConfig.Key.KeyringBackend
+}
+
+func Keyring() keyring.Keyring {
 	encCfg := encoding.MakeConfig(app.ModuleBasics)
 
 	var backend string
-	switch *keyringBackend {
+	switch KeyringBackend() {
 	case "test":
 		backend = keyring.BackendTest
 	case "file":
@@ -104,173 +190,36 @@ func (c *configure) Keyring() (keyring.Keyring, error) {
 	case "os":
 		backend = keyring.BackendOS
 	default:
-		return nil, fmt.Errorf("invalid keyring backend: %s", *keyringBackend)
+		log.Fatalf("Invalid keyring backend: %s", KeyringBackend())
 	}
 
-	kr, err := keyring.New("guru", backend, c.keyringDir, nil, encCfg.Codec, hd.EthSecp256k1Option())
+	kr, err := keyring.New("guru", backend, KeyringDir(), nil, encCfg.Codec, hd.EthSecp256k1Option())
 	if err != nil {
-		return nil, fmt.Errorf("failed to create keyring: %w", err)
+		log.Fatalf("Failed to create keyring: %v", err)
 	}
 
-	return kr, nil
+	return kr
 }
 
-// PrintConfigInfo prints the current configuration information for debugging
-func PrintConfigInfo() {
-	if Config == nil {
-		fmt.Println("[CONFIG] Configuration not loaded")
-		return
-	}
-
-	fmt.Println("=== Oracle Daemon Configuration ===")
-	fmt.Printf("Chain ID: %s\n", Config.chainID)
-	fmt.Printf("RPC Endpoint: %s\n", Config.rpcEndpoint)
-	fmt.Printf("Key Name: %s\n", Config.keyName)
-	fmt.Printf("Keyring Backend: %s\n", *keyringBackend)
-	fmt.Printf("Keyring Directory: %s\n", Config.keyringDir)
-	fmt.Printf("Gas Price: %s\n", Config.gasPrice)
-	fmt.Printf("Gas Limit: %d\n", Config.gasLimit)
-	fmt.Println("================================")
-}
-
-func defaultDir() string {
-	home, err := os.UserHomeDir()
+func Address() sdk.AccAddress {
+	kr := Keyring()
+	info, err := kr.Key(KeyName())
 	if err != nil {
-		panic(err)
+		log.Fatalf("Failed to get key info: %v", err)
 	}
 
-	return filepath.Join(home, ".oracled")
+	address, err := info.GetAddress()
+	if err != nil {
+		log.Fatalf("Failed to get address: %v", err)
+	}
+
+	return address
 }
 
-func loadOrGenerateConfig() error {
-	// 데몬 디렉토리가 존재하지 않으면 생성
-	if err := os.MkdirAll(*DaemonDir, 0755); err != nil {
-		return fmt.Errorf("failed to create daemon directory %s: %w", *DaemonDir, err)
-	}
-
-	daemonCfg := filepath.Join(*DaemonDir, "config.toml")
-
-	// 설정 파일이 존재하지 않으면 기본 설정 파일 생성
-	if _, err := os.Stat(daemonCfg); os.IsNotExist(err) {
-		fmt.Printf("[CONFIG] Config file not found at %s, creating default config file\n", daemonCfg)
-
-		if err := generateDefaultConfigFile(daemonCfg); err != nil {
-			return fmt.Errorf("failed to generate default config file: %w", err)
-		}
-
-		fmt.Printf("[CONFIG] Default config file created at %s\n", daemonCfg)
-	}
-
-	// 생성된 또는 기존 설정 파일 로드
-	if err := loadConfigFromFile(daemonCfg); err != nil {
-		return fmt.Errorf("failed to load config from %s: %w", daemonCfg, err)
-	}
-
-	fmt.Printf("[CONFIG] Successfully loaded config from %s\n", daemonCfg)
-	return nil
+func GasLimit() uint64 {
+	return globalConfig.Gas.Limit
 }
 
-// generateDefaultConfigFile creates a default config.toml file with proper values
-func generateDefaultConfigFile(configPath string) error {
-	if err := os.MkdirAll(*DaemonDir, 0755); err != nil {
-		return fmt.Errorf("failed to create keyring directory %s: %w", *DaemonDir, err)
-	}
-
-	defaultConfigContent := fmt.Sprintf(`# Oracle Daemon Configuration File
-# Generated automatically on startup
-
-# RPC endpoint for connecting to the blockchain node  
-rpc_endpoint = "%s"
-
-# Chain ID for the blockchain network
-chain_id = "%s"
-
-# Directory path for keyring storage (absolute path recommended)
-keyring_dir = "%s"
-
-# Key name for signing transactions
-key_name = "%s"
-
-# Gas price for transactions (format: amount + denomination)
-gas_price = "%s"
-
-# Gas limit for transactions
-gas_limit = %d
-`, *rpcEndpoint, *chainID, *DaemonDir, *keyName, *gasPrice, *gasLimit)
-
-	if err := os.WriteFile(configPath, []byte(defaultConfigContent), 0644); err != nil {
-		return fmt.Errorf("failed to write config file: %w", err)
-	}
-
-	return nil
-}
-
-// loadConfigFromFile load config from config.toml file
-func loadConfigFromFile(configPath string) error {
-	if _, err := os.Stat(configPath); os.IsNotExist(err) {
-		return fmt.Errorf("config file not found: %s", configPath)
-	}
-
-	v := viper.New()
-	v.SetConfigFile(configPath)
-	v.SetConfigType("toml")
-
-	if err := v.ReadInConfig(); err != nil {
-		return fmt.Errorf("failed to read config file: %w", err)
-	}
-
-	Config = &configure{
-		rpcEndpoint: v.GetString("rpc_endpoint"),
-		chainID:     v.GetString("chain_id"),
-		keyringDir:  v.GetString("keyring_dir"),
-		keyName:     v.GetString("key_name"),
-		gasPrice:    v.GetString("gas_price"),
-		gasLimit:    v.GetUint64("gas_limit"),
-	}
-
-	return nil
-}
-
-// ValidateConfig validates the current configuration values
-func ValidateConfig() error {
-	if Config == nil {
-		return fmt.Errorf("configuration not loaded")
-	}
-
-	// RPC endpoint 검증
-	if Config.rpcEndpoint == "" {
-		return fmt.Errorf("rpc_endpoint cannot be empty")
-	}
-
-	// Chain ID 검증
-	if Config.chainID == "" {
-		return fmt.Errorf("chain_id cannot be empty")
-	}
-
-	// Keyring 디렉토리 검증
-	if Config.keyringDir == "" {
-		return fmt.Errorf("keyring_dir cannot be empty")
-	}
-
-	// Keyring 디렉토리 존재 여부 확인 및 생성
-	// if err := os.MkdirAll(Config.keyringDir, 0755); err != nil {
-	// 	return fmt.Errorf("failed to create keyring directory %s: %w", Config.keyringDir, err)
-	// }
-
-	// Key name 검증
-	if Config.keyName == "" {
-		return fmt.Errorf("key_name cannot be empty")
-	}
-
-	// Gas price 검증
-	if Config.gasPrice == "" {
-		return fmt.Errorf("gas_price cannot be empty")
-	}
-
-	// Gas limit 검증
-	if Config.gasLimit == 0 {
-		return fmt.Errorf("gas_limit must be greater than 0")
-	}
-
-	return nil
+func GasPrices() string {
+	return globalConfig.Gas.Prices
 }

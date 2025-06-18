@@ -5,8 +5,6 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-
-	"github.com/GPTx-global/guru/oracle/config"
 )
 
 var customLog logger
@@ -19,17 +17,41 @@ type logger struct {
 }
 
 func InitLogger() {
-	customLog.dir = *config.DaemonDir
+	customLog = logger{
+		debug: log.New(os.Stdout, "[DEBUG] ", 0),
+		info:  log.New(os.Stdout, "[INFOM] ", 0),
+		err:   log.New(os.Stderr, "[ERROR] ", 0),
+		dir:   "",
+	}
+}
+
+func ResetLogger(oracleHome string) {
+	if oracleHome == "" {
+		osHome, err := os.UserHomeDir()
+		if err != nil {
+			Fatalf("Failed to get user home directory: %v", err)
+		}
+		customLog.dir = filepath.Join(osHome, ".oracled", "logs")
+	} else {
+		customLog.dir = filepath.Join(oracleHome, "logs")
+	}
+
+	if err := os.MkdirAll(customLog.dir, 0755); err != nil {
+		Fatalf("Failed to create log directory %s: %v", customLog.dir, err)
+	}
 
 	format := log.Ldate | log.Ltime | log.Lmicroseconds | log.Lshortfile
 	name := fmt.Sprintf("%s.%d.log", filepath.Base(os.Args[0]), os.Getpid())
-	file, err := os.Create(filepath.Join(customLog.dir, name))
+	path := filepath.Join(customLog.dir, name)
+	file, err := os.Create(path)
 	if err != nil {
-		log.Fatal(err)
+		Fatalf("Failed to create log file: %v", err)
 	}
 
+	Infof("From now on, all logs will be written to %s", path)
+
 	customLog.debug = log.New(file, "[DEBUG] ", format)
-	customLog.info = log.New(file, "[INFO] ", format)
+	customLog.info = log.New(file, "[INFOM] ", format)
 	customLog.err = log.New(file, "[ERROR] ", format)
 }
 

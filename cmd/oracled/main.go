@@ -14,16 +14,10 @@ import (
 )
 
 func main() {
-	if err := config.LoadConfig(); err != nil {
-		panic(fmt.Errorf("failed to load config: %w", err))
-	}
-
-	if err := config.ValidateConfig(); err != nil {
-		panic(fmt.Errorf("invalid configuration: %w", err))
-	}
-
-	config.PrintConfigInfo()
 	log.InitLogger()
+	config.Load()
+	config.Print()
+	log.ResetLogger(config.Home())
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()

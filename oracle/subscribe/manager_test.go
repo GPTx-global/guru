@@ -23,13 +23,12 @@ func TestSubscribeManagerTestSuite(t *testing.T) {
 func (suite *SubscribeManagerTestSuite) SetupSuite() {
 	tempDir := suite.T().TempDir()
 	flag.Set("daemon-dir", tempDir)
-	err := config.LoadConfig()
-	suite.Require().NoError(err)
+	config.Load()
 }
 
 func (suite *SubscribeManagerTestSuite) SetupTest() {
 	suite.manager = NewSubscribeManager(context.Background())
-	config.Config.SetAddress("my_test_address")
+
 }
 
 func (suite *SubscribeManagerTestSuite) TestNewSubscribeManager() {

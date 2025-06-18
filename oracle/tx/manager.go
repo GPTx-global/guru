@@ -33,10 +33,7 @@ func NewTxManager(clientCtx client.Context) *TxManager {
 		wg:           sync.WaitGroup{},
 		sequenceLock: sync.Mutex{},
 	}
-	addr := txm.clientCtx.GetFromAddress()
-	config.Config.SetAddress(addr.String())
-	fmt.Printf("Address: %s\n", addr)
-	acc, seq, err := txm.clientCtx.AccountRetriever.GetAccountNumberSequence(txm.clientCtx, addr)
+	acc, seq, err := txm.clientCtx.AccountRetriever.GetAccountNumberSequence(txm.clientCtx, config.Address())
 	if err != nil {
 		panic(err)
 	}
@@ -71,7 +68,7 @@ func (txm *TxManager) BuildSubmitTx() ([]byte, error) {
 
 	msgs = append(msgs, msg)
 
-	gasPrice, err := sdk.ParseDecCoin(config.Config.GasPrice())
+	gasPrice, err := sdk.ParseDecCoin(config.GasPrices())
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse gas price: %w", err)
 	}
@@ -84,8 +81,8 @@ func (txm *TxManager) BuildSubmitTx() ([]byte, error) {
 		WithTxConfig(txm.clientCtx.TxConfig).
 		WithAccountRetriever(txm.clientCtx.AccountRetriever).
 		WithKeybase(txm.clientCtx.Keyring).
-		WithChainID(config.Config.ChainID()).
-		WithGas(config.Config.GasLimit()).
+		WithChainID(config.ChainID()).
+		WithGas(config.GasLimit()).
 		WithGasAdjustment(1.2).
 		WithGasPrices(gasPrice.String()).
 		WithAccountNumber(txm.accountNumber).
@@ -97,7 +94,7 @@ func (txm *TxManager) BuildSubmitTx() ([]byte, error) {
 		return nil, fmt.Errorf("failed to build unsigned tx: %w", err)
 	}
 
-	if err := tx.Sign(factory, config.Config.KeyName(), txBuilder, true); err != nil {
+	if err := tx.Sign(factory, config.KeyName(), txBuilder, true); err != nil {
 		return nil, fmt.Errorf("failed to sign tx: %w", err)
 	}
 
