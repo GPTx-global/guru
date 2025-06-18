@@ -20,7 +20,7 @@ var (
 )
 
 var (
-	DaemonDir      = flag.String("daemon-dir", "", "daemon directory")
+	DaemonDir      = flag.String("daemon-dir", defaultDir(), "daemon directory")
 	keyringBackend = flag.String("keyring-backend", "test", "keyring backend")
 	rpcEndpoint    = flag.String("rpc-endpoint", "http://localhost:26657", "RPC endpoint for connecting to the blockchain node")
 	chainID        = flag.String("chain-id", "guru_3110-1", "Chain ID for the blockchain network")
@@ -143,10 +143,6 @@ func defaultDir() string {
 }
 
 func loadOrGenerateConfig() error {
-	if *DaemonDir == "" {
-		*DaemonDir = defaultDir()
-	}
-
 	// 데몬 디렉토리가 존재하지 않으면 생성
 	if err := os.MkdirAll(*DaemonDir, 0755); err != nil {
 		return fmt.Errorf("failed to create daemon directory %s: %w", *DaemonDir, err)

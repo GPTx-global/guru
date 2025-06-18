@@ -36,8 +36,8 @@ func executorClient() *http.Client {
 	return httpClient
 }
 
-// executeJob processes a job by fetching data from URL and extracting value by path
-func executeJob(job *types.Job) *types.JobResult {
+// executeJob processes a job by fetching data from URL and extracting value by path.
+var executeJob = func(job *types.Job) *types.JobResult {
 	if 1 < job.Nonce {
 		<-time.After(job.Delay)
 	}
