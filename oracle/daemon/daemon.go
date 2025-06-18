@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"slices"
+	"time"
 
 	"github.com/GPTx-global/guru/app"
 	"github.com/GPTx-global/guru/encoding"
@@ -132,16 +133,23 @@ func (d *Daemon) ServeOracle() error {
 	for {
 		txBytes, err := d.transactionManager.BuildSubmitTx()
 		if err != nil {
-			return fmt.Errorf("failed to build submit tx: %w", err)
+			log.Debugf("failed to build submit tx: %v", err)
+			continue
 		}
 
 		txResponse, err := d.transactionManager.BroadcastTx(txBytes)
 		if err != nil {
-			return fmt.Errorf("failed to broadcast tx: %w", err)
+			log.Debugf("failed to broadcast tx: %v, attempting to reconnect...", err)
+			if err := d.reconnect(); err != nil {
+				log.Debugf("failed to reconnect: %v", err)
+			}
+			time.Sleep(time.Second * 5)
+			continue
 		}
 
 		if txResponse.Code == 0 {
 			log.Debugf("tx success, Hash: \n\t[%s]", txResponse.TxHash)
+			d.transactionManager.IncrementSequenceNumber()
 		} else {
 			log.Debugf("tx failed: %s", txResponse.RawLog)
 
@@ -155,9 +163,32 @@ func (d *Daemon) ServeOracle() error {
 				}
 			}
 		}
-
-		// 성공/실패 관계없이 sequence number 증가
-		// 블록체인에서 sequence는 한번 사용되면 소모됨
-		d.transactionManager.IncrementSequenceNumber()
 	}
+}
+
+func (d *Daemon) reconnect() error {
+	log.Debugf("attempting to reconnect client")
+	if d.client.IsRunning() {
+		d.client.Stop()
+	}
+
+	clt, err := http.New(config.ChainEndpoint(), "/websocket")
+	if err != nil {
+		return fmt.Errorf("failed to create new client: %w", err)
+	}
+
+	err = clt.Start()
+	if err != nil {
+		return fmt.Errorf("failed to start new client: %w", err)
+	}
+	d.client = clt
+	d.clientCtx = d.clientCtx.WithClient(d.client)
+
+	err = d.subscribeManager.SetSubscribe(d.client)
+	if err != nil {
+		log.Debugf("failed to re-subscribe after reconnect: %v", err)
+	}
+
+	log.Debugf("client reconnected successfully")
+	return nil
 }

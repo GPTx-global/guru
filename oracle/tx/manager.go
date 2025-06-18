@@ -130,8 +130,7 @@ func (txm *TxManager) SyncSequenceNumber() error {
 	txm.sequenceLock.Lock()
 	defer txm.sequenceLock.Unlock()
 
-	addr := txm.clientCtx.GetFromAddress()
-	_, seq, err := txm.clientCtx.AccountRetriever.GetAccountNumberSequence(txm.clientCtx, addr)
+	_, seq, err := txm.clientCtx.AccountRetriever.GetAccountNumberSequence(txm.clientCtx, config.Address())
 	if err != nil {
 		return fmt.Errorf("failed to get account sequence: %w", err)
 	}
