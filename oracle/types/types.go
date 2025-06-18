@@ -83,6 +83,9 @@ func MakeJobs(event any) []*Job {
 					jobs = nil
 				}
 			}
+			if len(jobs) == 0 {
+				return nil
+			}
 		case tmtypes.EventDataNewBlock:
 			jobs = make([]*Job, len(event.Events[oracletypes.EventTypeCompleteOracleDataSet+"."+oracletypes.AttributeKeyRequestId]))
 			for i := range jobs {
@@ -102,9 +105,9 @@ func MakeJobs(event any) []*Job {
 					}
 				}
 			}
+		default:
+			return nil
 		}
-	default:
-		jobs = nil
 	}
 
 	if 0 < len(jobs) {

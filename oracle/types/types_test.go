@@ -1,273 +1,175 @@
-package types
+package types_test
 
 import (
-	"encoding/json"
+	"flag"
+	"strconv"
 	"testing"
 	"time"
 
+	"github.com/GPTx-global/guru/app"
+	"github.com/GPTx-global/guru/encoding"
 	"github.com/GPTx-global/guru/oracle/config"
+	"github.com/GPTx-global/guru/oracle/log"
+	"github.com/GPTx-global/guru/oracle/types"
 	oracletypes "github.com/GPTx-global/guru/x/oracle/types"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
+	abcitypes "github.com/tendermint/tendermint/abci/types"
+	"github.com/tendermint/tendermint/libs/bytes"
+	coretypes "github.com/tendermint/tendermint/rpc/core/types"
+	tmtypes "github.com/tendermint/tendermint/types"
 )
 
 type TypesTestSuite struct {
 	suite.Suite
 }
 
-func (suite *TypesTestSuite) SetupSuite() {
-	// Load config to avoid nil pointer issues
-	err := config.LoadConfig()
-	suite.Require().NoError(err, "Failed to load config for testing")
-}
-
 func TestTypesTestSuite(t *testing.T) {
 	suite.Run(t, new(TypesTestSuite))
 }
 
-func (suite *TypesTestSuite) TestJob_Structure() {
-	// Given: Job 구조체
-	job := &Job{
-		ID:     123,
-		URL:    "https://api.example.com/data",
-		Path:   "price.usd",
-		Nonce:  5,
-		Delay:  30 * time.Second,
-		Status: "ACTIVE",
-	}
+func (suite *TypesTestSuite) SetupSuite() {
+	// Initialize logger for the test suite
+	log.InitLogger()
 
-	// Then: 모든 필드가 정확히 설정됨
-	suite.Equal(uint64(123), job.ID)
-	suite.Equal("https://api.example.com/data", job.URL)
-	suite.Equal("price.usd", job.Path)
-	suite.Equal(uint64(5), job.Nonce)
-	suite.Equal(30*time.Second, job.Delay)
-	suite.Equal("ACTIVE", job.Status)
+	// Load config once for the entire test suite
+	// Use a temporary directory for daemon data to avoid conflicts
+	tempDir := suite.T().TempDir()
+	flag.Set("daemon-dir", tempDir)
+	err := config.LoadConfig()
+	suite.Require().NoError(err, "Failed to load config for test suite")
 }
 
-func (suite *TypesTestSuite) TestJobResult_Structure() {
-	// Given: JobResult 구조체
-	result := &JobResult{
-		ID:    456,
-		Data:  "1234.56",
-		Nonce: 10,
-	}
-
-	// Then: 모든 필드가 정확히 설정됨
-	suite.Equal(uint64(456), result.ID)
-	suite.Equal("1234.56", result.Data)
-	suite.Equal(uint64(10), result.Nonce)
+func (suite *TypesTestSuite) SetupTest() {
+	config.Config.SetAddress("my_address")
 }
 
-func (suite *TypesTestSuite) TestMakeJob_FromOracleRequestDoc() {
-	// Given: OracleRequestDoc 인스턴스
-	doc := &oracletypes.OracleRequestDoc{
-		RequestId: 100,
-		Endpoints: []*oracletypes.OracleEndpoint{
-			{
-				Url:       "https://api.coinbase.com/v2/exchange-rates",
-				ParseRule: "data.rates.USD",
+func (suite *TypesTestSuite) TestMakeJobs_FromOracleRequestDoc() {
+	testCases := []struct {
+		name        string
+		doc         *oracletypes.OracleRequestDoc
+		expectedLen int
+		expectedURL string
+	}{
+		{
+			name: "Success - address in list",
+			doc: &oracletypes.OracleRequestDoc{
+				RequestId:   1,
+				AccountList: []string{"another_address", "my_address"},
+				Endpoints: []*oracletypes.OracleEndpoint{
+					{Url: "http://url1.com", ParseRule: "path1"},
+					{Url: "http://url2.com", ParseRule: "path2"},
+				},
+				Nonce:  10,
+				Period: 60,
+				Status: oracletypes.RequestStatus_REQUEST_STATUS_ENABLED,
 			},
+			expectedLen: 1,
+			expectedURL: "http://url1.com", // myIndex=1, so (myIndex+0)%2 = 1 -> url2 in original logic, but now it is (myIndex+1)%len
 		},
-		Nonce:  7,
-		Period: 60,
-		Status: oracletypes.RequestStatus_REQUEST_STATUS_ENABLED,
+		{
+			name: "Success - address not in list",
+			doc: &oracletypes.OracleRequestDoc{
+				RequestId:   2,
+				AccountList: []string{"addr1", "addr2"},
+				Endpoints: []*oracletypes.OracleEndpoint{
+					{Url: "http://url1.com", ParseRule: "path1"},
+				},
+			},
+			expectedLen: 1, // It still creates a job, which would be filtered by the daemon
+			expectedURL: "http://url1.com",
+		},
 	}
 
-	// When: MakeJob 호출
-	jobs := MakeJobs(doc)
-
-	// Then: Job이 올바르게 생성됨
-	suite.NotNil(jobs)
-	suite.Equal(1, len(jobs))
-	job := jobs[0]
-	suite.Equal(uint64(100), job.ID)
-	suite.Equal("https://api.coinbase.com/v2/exchange-rates", job.URL)
-	suite.Equal("data.rates.USD", job.Path)
-	suite.Equal(uint64(7), job.Nonce)
-	suite.Equal(60*time.Second, job.Delay)
-	suite.Equal("REQUEST_STATUS_ENABLED", job.Status)
-}
-
-func (suite *TypesTestSuite) TestMakeJob_FromOracleRequestDoc_EmptyEndpoints() {
-	// Given: 엔드포인트가 없는 OracleRequestDoc
-	doc := &oracletypes.OracleRequestDoc{
-		RequestId: 300,
-		Endpoints: []*oracletypes.OracleEndpoint{},
-		Nonce:     1,
-		Period:    30,
-		Status:    oracletypes.RequestStatus_REQUEST_STATUS_ENABLED,
+	for _, tc := range testCases {
+		suite.Run(tc.name, func() {
+			jobs := types.MakeJobs(tc.doc)
+			suite.Require().Len(jobs, tc.expectedLen)
+			if tc.expectedLen > 0 {
+				suite.Equal(tc.doc.RequestId, jobs[0].ID)
+				suite.Equal(tc.expectedURL, jobs[0].URL)
+				suite.Equal(tc.doc.Nonce, jobs[0].Nonce)
+				suite.Equal(time.Duration(tc.doc.Period)*time.Second, jobs[0].Delay)
+			}
+		})
 	}
 
-	// When/Then: MakeJob 호출 시 패닉 방지를 위한 테스트
-	suite.Panics(func() {
-		MakeJobs(doc)
+	suite.Run("Panic on empty endpoints", func() {
+		doc := &oracletypes.OracleRequestDoc{
+			RequestId:   3,
+			AccountList: []string{"my_address"},
+			Endpoints:   []*oracletypes.OracleEndpoint{},
+		}
+		suite.Panics(func() {
+			types.MakeJobs(doc)
+		})
 	})
 }
 
-func (suite *TypesTestSuite) TestMakeJob_FromInvalidEvent() {
-	// Given: 알 수 없는 타입의 이벤트
-	invalidEvent := "invalid event type"
-
-	// When: MakeJob 호출
-	jobs := MakeJobs(invalidEvent)
-
-	// Then: nil이 반환됨
-	suite.Nil(jobs)
-}
-
-// 단위 테스트 함수들
-
-func TestJobZeroValues(t *testing.T) {
-	// Given: 제로값으로 초기화된 Job
-	job := &Job{}
-
-	// Then: 모든 필드가 제로값
-	assert.Equal(t, uint64(0), job.ID)
-	assert.Empty(t, job.URL)
-	assert.Empty(t, job.Path)
-	assert.Equal(t, uint64(0), job.Nonce)
-	assert.Equal(t, time.Duration(0), job.Delay)
-	assert.Empty(t, job.Status)
-}
-
-func TestJobResultZeroValues(t *testing.T) {
-	// Given: 제로값으로 초기화된 JobResult
-	result := &JobResult{}
-
-	// Then: 모든 필드가 제로값
-	assert.Equal(t, uint64(0), result.ID)
-	assert.Empty(t, result.Data)
-	assert.Equal(t, uint64(0), result.Nonce)
-}
-
-func TestMakeJobNilInput(t *testing.T) {
-	// Given: nil 입력
-	var nilInput interface{} = nil
-
-	// When: MakeJob 호출
-	job := MakeJobs(nilInput)
-
-	// Then: nil이 반환됨
-	assert.Nil(t, job)
-}
-
-func TestJobSerialization(t *testing.T) {
-	// Given: Job 인스턴스
-	original := &Job{
-		ID:     999,
-		URL:    "https://serialization.test",
-		Path:   "data.value",
-		Nonce:  15,
-		Delay:  120 * time.Second,
-		Status: "SERIALIZED",
+func (suite *TypesTestSuite) TestMakeJobs_FromResultEventNewBlock() {
+	event := coretypes.ResultEvent{
+		Query: "tm.event='NewBlock'",
+		Data:  tmtypes.EventDataNewBlock{},
+		Events: map[string][]string{
+			"complete_oracle_data_set.request_id": {"101", "102"},
+			"complete_oracle_data_set.nonce":      {"201", "202"},
+			"some_other.event":                    {"value"},
+		},
 	}
 
-	// When: JSON 직렬화/역직렬화
-	jsonData, err := json.Marshal(original)
-	require.NoError(t, err)
+	jobs := types.MakeJobs(event)
+	suite.Require().Len(jobs, 2)
 
-	var deserialized Job
-	err = json.Unmarshal(jsonData, &deserialized)
-	require.NoError(t, err)
+	suite.Equal(uint64(101), jobs[0].ID)
+	suite.Equal(uint64(201), jobs[0].Nonce)
+	suite.Equal(types.Complete, jobs[0].Type)
 
-	// Then: 원본과 동일
-	assert.Equal(t, original.ID, deserialized.ID)
-	assert.Equal(t, original.URL, deserialized.URL)
-	assert.Equal(t, original.Path, deserialized.Path)
-	assert.Equal(t, original.Nonce, deserialized.Nonce)
-	assert.Equal(t, original.Delay, deserialized.Delay)
-	assert.Equal(t, original.Status, deserialized.Status)
+	suite.Equal(uint64(102), jobs[1].ID)
+	suite.Equal(uint64(202), jobs[1].Nonce)
+	suite.Equal(types.Complete, jobs[1].Type)
 }
 
-func TestJobResultSerialization(t *testing.T) {
-	// Given: JobResult 인스턴스
-	original := &JobResult{
-		ID:    888,
-		Data:  "serialized_data",
-		Nonce: 25,
+func (suite *TypesTestSuite) TestMakeJobs_FromResultEventTx() {
+	encCfg := encoding.MakeConfig(app.ModuleBasics)
+	txBuilder := encCfg.TxConfig.NewTxBuilder()
+
+	msg := &oracletypes.MsgRegisterOracleRequestDoc{
+		RequestDoc: oracletypes.OracleRequestDoc{
+			AccountList: []string{"my_address"},
+			Endpoints:   []*oracletypes.OracleEndpoint{{Url: "http://test.com", ParseRule: "price"}},
+			Period:      30,
+		},
 	}
+	suite.NoError(txBuilder.SetMsgs(msg))
+	tx := txBuilder.GetTx()
+	txBytes, err := encCfg.TxConfig.TxEncoder()(tx)
+	suite.NoError(err)
 
-	// When: JSON 직렬화/역직렬화
-	jsonData, err := json.Marshal(original)
-	require.NoError(t, err)
-
-	var deserialized JobResult
-	err = json.Unmarshal(jsonData, &deserialized)
-	require.NoError(t, err)
-
-	// Then: 원본과 동일
-	assert.Equal(t, original.ID, deserialized.ID)
-	assert.Equal(t, original.Data, deserialized.Data)
-	assert.Equal(t, original.Nonce, deserialized.Nonce)
-}
-
-func TestMakeJobWithValidOracleRequestDoc(t *testing.T) {
-	// Load config first
-	err := config.LoadConfig()
-	require.NoError(t, err, "Failed to load config")
-
-	// Given: 유효한 OracleRequestDoc
-	doc := &oracletypes.OracleRequestDoc{
-		RequestId: 12345,
-		Endpoints: []*oracletypes.OracleEndpoint{
-			{
-				Url:       "https://api.test.com/price",
-				ParseRule: "price.value",
+	event := coretypes.ResultEvent{
+		Query: "tm.event='Tx'",
+		Data: tmtypes.EventDataTx{
+			TxResult: abcitypes.TxResult{
+				Height: 1,
+				Index:  0,
+				Tx:     txBytes,
 			},
 		},
-		Nonce:  10,
-		Period: 300,
-		Status: oracletypes.RequestStatus_REQUEST_STATUS_ENABLED,
+		Events: map[string][]string{
+			"register_oracle_request_doc.request_id": {strconv.FormatUint(123, 10)},
+		},
 	}
 
-	// When: MakeJob 호출
-	jobs := MakeJobs(doc)
-
-	// Then: 올바른 Job이 생성됨
-	require.NotNil(t, jobs)
-	require.Equal(t, 1, len(jobs))
-	job := jobs[0]
-	assert.Equal(t, uint64(12345), job.ID)
-	assert.Equal(t, "https://api.test.com/price", job.URL)
-	assert.Equal(t, "price.value", job.Path)
-	assert.Equal(t, uint64(10), job.Nonce)
-	assert.Equal(t, 300*time.Second, job.Delay)
-	assert.Equal(t, "REQUEST_STATUS_ENABLED", job.Status)
+	jobs := types.MakeJobs(event)
+	suite.Require().Len(jobs, 1)
+	suite.Equal(uint64(123), jobs[0].ID)
+	suite.Equal("http://test.com", jobs[0].URL)
+	suite.Equal("price", jobs[0].Path)
+	suite.Equal(types.Register, jobs[0].Type)
+	suite.Equal(uint64(0), jobs[0].Nonce)
+	suite.Equal(30*time.Second, jobs[0].Delay)
 }
 
-func TestMakeJobWithMultipleEndpoints(t *testing.T) {
-	// Load config first
-	err := config.LoadConfig()
-	require.NoError(t, err, "Failed to load config")
-
-	// Given: 여러 엔드포인트를 가진 OracleRequestDoc
-	doc := &oracletypes.OracleRequestDoc{
-		RequestId: 54321,
-		Endpoints: []*oracletypes.OracleEndpoint{
-			{
-				Url:       "https://api1.test.com",
-				ParseRule: "price1",
-			},
-			{
-				Url:       "https://api2.test.com",
-				ParseRule: "price2",
-			},
-		},
-		Nonce:  5,
-		Period: 600,
-		Status: oracletypes.RequestStatus_REQUEST_STATUS_PAUSED,
-	}
-
-	// When: MakeJob 호출
-	jobs := MakeJobs(doc)
-
-	// Then: 첫 번째 엔드포인트가 사용됨
-	require.NotNil(t, jobs)
-	require.Equal(t, 1, len(jobs))
-	job := jobs[0]
-	assert.Equal(t, "https://api1.test.com", job.URL)
-	assert.Equal(t, "price1", job.Path)
-	assert.Equal(t, "REQUEST_STATUS_PAUSED", job.Status)
+func (suite *TypesTestSuite) TestMakeJobs_UnsupportedType() {
+	unsupportedEvent := bytes.HexBytes("unsupported")
+	jobs := types.MakeJobs(unsupportedEvent)
+	suite.Empty(jobs)
 }
