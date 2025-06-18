@@ -223,3 +223,21 @@ func GasLimit() uint64 {
 func GasPrices() string {
 	return globalConfig.Gas.Prices
 }
+
+func SetForTesting(id, endpoint, keyName, keyringDir, keyringBackend, gasPrices string, gasLimit uint64) {
+	globalConfig = configData{
+		Chain: chainConfig{
+			ID:       id,
+			Endpoint: endpoint,
+		},
+		Key: keyConfig{
+			Name:           keyName,
+			KeyringDir:     keyringDir,
+			KeyringBackend: keyringBackend,
+		},
+		Gas: gasConfig{
+			Limit:  gasLimit,
+			Prices: gasPrices,
+		},
+	}
+}
