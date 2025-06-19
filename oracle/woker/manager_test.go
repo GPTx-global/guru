@@ -14,19 +14,19 @@ import (
 )
 
 // setup a test suite with a mock executor
-func setupManagerTest(t *testing.T) (*JobManager, chan *types.JobResult, context.CancelFunc, *func(job *types.Job) *types.JobResult) {
+func setupManagerTest(t *testing.T) (*JobManager, chan *types.JobResult, context.CancelFunc, *func(job *types.Job) (*types.JobResult, error)) {
 	log.InitLogger()
 	jm := NewJobManager()
 	resultQueue := make(chan *types.JobResult, 100)
 	ctx, cancel := context.WithCancel(context.Background())
 
-	var mockExec func(job *types.Job) *types.JobResult
+	var mockExec func(job *types.Job) (*types.JobResult, error)
 	originalExec := executeJob
-	executeJob = func(job *types.Job) *types.JobResult {
+	executeJob = func(job *types.Job) (*types.JobResult, error) {
 		if mockExec != nil {
 			return mockExec(job)
 		}
-		return nil
+		return nil, nil
 	}
 
 	jm.Start(ctx, resultQueue)
@@ -72,11 +72,11 @@ func TestJobManager_SubmitAndProcess(t *testing.T) {
 	var registered sync.WaitGroup
 	registered.Add(1)
 
-	*mockExec = func(job *types.Job) *types.JobResult {
+	*mockExec = func(job *types.Job) (*types.JobResult, error) {
 		if job.ID == 1 {
 			registered.Done()
 		}
-		return nil
+		return nil, nil
 	}
 
 	jm.SubmitJob(&types.Job{ID: 1, Type: types.Register})
@@ -135,9 +135,9 @@ func TestJobManager_WorkerLogic(t *testing.T) {
 		jm, resultQueue, _, mockExec := setupManagerTest(t)
 		jm.activeJobs[1] = &types.Job{ID: 1, Status: oracletypes.RequestStatus_REQUEST_STATUS_ENABLED.String(), Nonce: 5}
 
-		*mockExec = func(j *types.Job) *types.JobResult {
+		*mockExec = func(j *types.Job) (*types.JobResult, error) {
 			require.Equal(t, uint64(6), j.Nonce)
-			return &types.JobResult{ID: j.ID, Nonce: j.Nonce, Data: "data"}
+			return &types.JobResult{ID: j.ID, Nonce: j.Nonce, Data: "data"}, nil
 		}
 
 		jm.SubmitJob(&types.Job{ID: 1, Type: types.Complete, Nonce: 5})
@@ -156,9 +156,9 @@ func TestJobManager_WorkerLogic(t *testing.T) {
 		jm.activeJobs[1] = &types.Job{ID: 1, Status: oracletypes.RequestStatus_REQUEST_STATUS_DISABLED.String()}
 
 		called := false
-		*mockExec = func(j *types.Job) *types.JobResult {
+		*mockExec = func(j *types.Job) (*types.JobResult, error) {
 			called = true
-			return nil
+			return nil, nil
 		}
 		jm.SubmitJob(&types.Job{ID: 1, Type: types.Complete})
 
@@ -170,9 +170,9 @@ func TestJobManager_WorkerLogic(t *testing.T) {
 		jm, _, _, mockExec := setupManagerTest(t)
 
 		called := false
-		*mockExec = func(j *types.Job) *types.JobResult {
+		*mockExec = func(j *types.Job) (*types.JobResult, error) {
 			called = true
-			return nil
+			return nil, nil
 		}
 		jm.SubmitJob(&types.Job{ID: 1, Type: types.Complete})
 
@@ -190,10 +190,10 @@ func TestJobManager_Stop(t *testing.T) {
 	wg.Add(runtime.NumCPU())
 
 	originalExec := executeJob
-	executeJob = func(job *types.Job) *types.JobResult {
+	executeJob = func(job *types.Job) (*types.JobResult, error) {
 		time.Sleep(100 * time.Millisecond)
 		wg.Done()
-		return nil
+		return nil, nil
 	}
 	defer func() { executeJob = originalExec }()
 

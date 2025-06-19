@@ -40,6 +40,7 @@ func setupSubscribeManagerTest(t *testing.T) sdk.AccAddress {
 		keyring.BackendTest,
 		"100uatom",
 		300000,
+		3,
 	)
 
 	kr := config.Keyring()

@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/GPTx-global/guru/oracle/config"
 	"github.com/GPTx-global/guru/oracle/types"
 	"github.com/stretchr/testify/suite"
 )
@@ -18,6 +19,17 @@ type ExecutorSuite struct {
 }
 
 func (s *ExecutorSuite) SetupTest() {
+	config.SetForTesting(
+		"test-chain",
+		"http://localhost:26657",
+		"test-key",
+		"/tmp/oracled-test",
+		"test",
+		"1aguru",
+		300000,
+		3, // maxRetries
+	)
+
 	s.server = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		s.mu.Lock()
 		defer s.mu.Unlock()
@@ -56,7 +68,7 @@ func (s *ExecutorSuite) TestExecuteJob() {
 		name          string
 		job           *types.Job
 		mock          func()
-		expectResult  bool
+		expectError   bool
 		expectedData  string
 		expectedNonce uint64
 	}{
@@ -68,7 +80,7 @@ func (s *ExecutorSuite) TestExecuteJob() {
 				URL:   s.server.URL + "/success",
 				Path:  "data.price",
 			},
-			expectResult:  true,
+			expectError:   false,
 			expectedData:  "123.45",
 			expectedNonce: 1,
 		},
@@ -80,7 +92,7 @@ func (s *ExecutorSuite) TestExecuteJob() {
 				URL:   s.server.URL + "/server-error",
 				Path:  "data.price",
 			},
-			expectResult: false,
+			expectError: true,
 		},
 		{
 			name: "Parse JSON failed",
@@ -90,7 +102,7 @@ func (s *ExecutorSuite) TestExecuteJob() {
 				URL:   s.server.URL + "/invalid-json",
 				Path:  "data.price",
 			},
-			expectResult: false,
+			expectError: true,
 		},
 		{
 			name: "Extract data by path failed",
@@ -100,7 +112,7 @@ func (s *ExecutorSuite) TestExecuteJob() {
 				URL:   s.server.URL + "/success",
 				Path:  "data.nonexistent",
 			},
-			expectResult: false,
+			expectError: true,
 		},
 		{
 			name: "Delay for nonce > 1",
@@ -111,7 +123,7 @@ func (s *ExecutorSuite) TestExecuteJob() {
 				Path:  "data.price",
 				Delay: 10 * time.Millisecond,
 			},
-			expectResult:  true,
+			expectError:   false,
 			expectedData:  "123.45",
 			expectedNonce: 2,
 		},
@@ -124,20 +136,22 @@ func (s *ExecutorSuite) TestExecuteJob() {
 			}
 
 			startTime := time.Now()
-			result := executeJob(tc.job)
+			result, err := executeJob(tc.job)
 			elapsed := time.Since(startTime)
 
 			if tc.job.Nonce > 1 {
 				s.Require().GreaterOrEqual(elapsed, tc.job.Delay)
 			}
 
-			if tc.expectResult {
+			if tc.expectError {
+				s.Require().Error(err)
+				s.Require().Nil(result)
+			} else {
+				s.Require().NoError(err)
 				s.Require().NotNil(result)
 				s.Require().Equal(tc.job.ID, result.ID)
 				s.Require().Equal(tc.expectedData, result.Data)
 				s.Require().Equal(tc.expectedNonce, result.Nonce)
-			} else {
-				s.Require().Nil(result)
 			}
 		})
 	}
