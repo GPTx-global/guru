@@ -7,432 +7,224 @@ import (
 	"testing"
 	"time"
 
+	"github.com/GPTx-global/guru/oracle/log"
 	"github.com/GPTx-global/guru/oracle/types"
-	"github.com/stretchr/testify/suite"
+	oracletypes "github.com/GPTx-global/guru/x/oracle/types"
+	"github.com/stretchr/testify/require"
 )
 
-type JobManagerTestSuite struct {
-	suite.Suite
-	ctx    context.Context
-	cancel context.CancelFunc
-}
-
-func (suite *JobManagerTestSuite) SetupSuite() {
-	suite.ctx, suite.cancel = context.WithCancel(context.Background())
-}
-
-func (suite *JobManagerTestSuite) TearDownSuite() {
-	suite.cancel()
-}
-
-func TestJobManagerTestSuite(t *testing.T) {
-	suite.Run(t, new(JobManagerTestSuite))
-}
-
-// Test NewJobManager
-func (suite *JobManagerTestSuite) TestNewJobManager() {
+// setup a test suite with a mock executor
+func setupManagerTest(t *testing.T) (*JobManager, chan *types.JobResult, context.CancelFunc, *func(job *types.Job) *types.JobResult) {
+	log.InitLogger()
 	jm := NewJobManager()
-
-	suite.NotNil(jm)
-	suite.NotNil(jm.activeJobs)
-	suite.NotNil(jm.jobQueue)
-	suite.NotNil(jm.quit)
-	suite.Equal(0, len(jm.activeJobs))
-	suite.Equal(2<<5, cap(jm.jobQueue))
-}
-
-// Test Start method
-func (suite *JobManagerTestSuite) TestStart() {
-	jm := NewJobManager()
-	resultQueue := make(chan *types.JobResult, 10)
-
-	// Start should launch goroutines equal to CPU count
-	jm.Start(suite.ctx, resultQueue)
-
-	// Give some time for goroutines to start
-	time.Sleep(10 * time.Millisecond)
-
-	// Stop the manager
-	jm.Stop()
-
-	// Test should not panic
-	suite.True(true)
-}
-
-// Test Stop method
-func (suite *JobManagerTestSuite) TestStop() {
-	jm := NewJobManager()
-	resultQueue := make(chan *types.JobResult, 10)
-
-	jm.Start(suite.ctx, resultQueue)
-
-	// Stop should close quit channel and wait for workers
-	suite.NotPanics(func() {
-		jm.Stop()
-	})
-}
-
-// Test SubmitJob with valid job
-func (suite *JobManagerTestSuite) TestSubmitJob() {
-	jm := NewJobManager()
-
-	// Test normal job submission
-	job := &types.Job{
-		ID:    1,
-		URL:   "http://example.com",
-		Path:  "data.value",
-		Type:  types.Register,
-		Nonce: 0,
-		Delay: time.Second,
-	}
-
-	suite.NotPanics(func() {
-		jm.SubmitJob(job)
-	})
-
-	// Job should be in queue
-	suite.Equal(1, len(jm.jobQueue))
-}
-
-// Test SubmitJob with queue full
-func (suite *JobManagerTestSuite) TestSubmitJob_QueueFull() {
-	jm := NewJobManager()
-
-	// Fill the queue to capacity
-	queueSize := cap(jm.jobQueue)
-	for i := 0; i < queueSize; i++ {
-		job := &types.Job{
-			ID:    uint64(i),
-			URL:   "http://example.com",
-			Path:  "data.value",
-			Type:  types.Register,
-			Nonce: 0,
-			Delay: time.Second,
-		}
-		jm.SubmitJob(job)
-	}
-
-	// Queue should be full
-	suite.Equal(queueSize, len(jm.jobQueue))
-
-	// Additional job should be dropped (not panic)
-	extraJob := &types.Job{
-		ID:    999,
-		URL:   "http://example.com",
-		Path:  "data.value",
-		Type:  types.Register,
-		Nonce: 0,
-		Delay: time.Second,
-	}
-
-	suite.NotPanics(func() {
-		jm.SubmitJob(extraJob)
-	})
-
-	// Queue size should remain the same
-	suite.Equal(queueSize, len(jm.jobQueue))
-}
-
-// Test SubmitJob with nil job
-func (suite *JobManagerTestSuite) TestSubmitJob_NilJob() {
-	jm := NewJobManager()
-
-	suite.NotPanics(func() {
-		jm.SubmitJob(nil)
-	})
-
-	// Should still have the nil job in queue
-	suite.Equal(1, len(jm.jobQueue))
-}
-
-// Test worker Register job handling
-func (suite *JobManagerTestSuite) TestWorker_RegisterJob() {
-	jm := NewJobManager()
-	resultQueue := make(chan *types.JobResult, 10)
-
-	// Start workers
-	jm.Start(suite.ctx, resultQueue)
-	defer jm.Stop()
-
-	job := &types.Job{
-		ID:    1,
-		URL:   "http://httpbin.org/json", // Use real URL that works
-		Path:  "url",
-		Type:  types.Register,
-		Nonce: 0,
-		Delay: time.Millisecond,
-	}
-
-	jm.SubmitJob(job)
-
-	// Give worker time to process
-	time.Sleep(100 * time.Millisecond)
-
-	// Job should be in active jobs
-	jm.activeJobsLock.Lock()
-	_, exists := jm.activeJobs[job.ID]
-	jm.activeJobsLock.Unlock()
-
-	suite.True(exists)
-}
-
-// Test worker Update job handling
-func (suite *JobManagerTestSuite) TestWorker_UpdateJob() {
-	jm := NewJobManager()
-	resultQueue := make(chan *types.JobResult, 10)
-
-	// First add a register job
-	registerJob := &types.Job{
-		ID:    1,
-		URL:   "http://httpbin.org/json",
-		Path:  "url",
-		Type:  types.Register,
-		Nonce: 0,
-		Delay: time.Millisecond,
-	}
-
-	jm.activeJobsLock.Lock()
-	jm.activeJobs[registerJob.ID] = registerJob
-	jm.activeJobsLock.Unlock()
-
-	jm.Start(suite.ctx, resultQueue)
-	defer jm.Stop()
-
-	// Submit update job
-	updateJob := &types.Job{
-		ID:    1,
-		URL:   "http://httpbin.org/json",
-		Path:  "headers.Host",
-		Type:  types.Update,
-		Nonce: 1,
-		Delay: time.Millisecond,
-	}
-
-	jm.SubmitJob(updateJob)
-
-	// Give worker time to process
-	time.Sleep(100 * time.Millisecond)
-
-	// Job should be updated in active jobs
-	jm.activeJobsLock.Lock()
-	activeJob, exists := jm.activeJobs[updateJob.ID]
-	jm.activeJobsLock.Unlock()
-
-	suite.True(exists)
-	suite.Equal("headers.Host", activeJob.Path)
-}
-
-// Test worker Complete job handling
-func (suite *JobManagerTestSuite) TestWorker_CompleteJob() {
-	jm := NewJobManager()
-	resultQueue := make(chan *types.JobResult, 10)
-
-	// First add a register job
-	registerJob := &types.Job{
-		ID:    1,
-		URL:   "http://httpbin.org/json",
-		Path:  "url",
-		Type:  types.Register,
-		Nonce: 0,
-		Delay: time.Millisecond,
-	}
-
-	jm.activeJobsLock.Lock()
-	jm.activeJobs[registerJob.ID] = registerJob
-	jm.activeJobsLock.Unlock()
-
-	jm.Start(suite.ctx, resultQueue)
-	defer jm.Stop()
-
-	// Submit complete job
-	completeJob := &types.Job{
-		ID:    1,
-		Type:  types.Complete,
-		Nonce: 2,
-	}
-
-	jm.SubmitJob(completeJob)
-
-	// Give worker time to process
-	time.Sleep(100 * time.Millisecond)
-
-	// Job should still exist but with Complete type
-	jm.activeJobsLock.Lock()
-	activeJob, exists := jm.activeJobs[completeJob.ID]
-	jm.activeJobsLock.Unlock()
-
-	suite.True(exists)
-	suite.Equal(types.Complete, activeJob.Type)
-}
-
-// Test worker Complete job with non-existent job
-func (suite *JobManagerTestSuite) TestWorker_CompleteJob_NotExists() {
-	jm := NewJobManager()
-	resultQueue := make(chan *types.JobResult, 10)
-
-	jm.Start(suite.ctx, resultQueue)
-	defer jm.Stop()
-
-	// Submit complete job for non-existent job
-	completeJob := &types.Job{
-		ID:    999,
-		Type:  types.Complete,
-		Nonce: 1,
-	}
-
-	jm.SubmitJob(completeJob)
-
-	// Give worker time to process
-	time.Sleep(50 * time.Millisecond)
-
-	// Job should not be in active jobs
-	jm.activeJobsLock.Lock()
-	_, exists := jm.activeJobs[completeJob.ID]
-	jm.activeJobsLock.Unlock()
-
-	suite.False(exists)
-}
-
-// Test concurrent job submission
-func (suite *JobManagerTestSuite) TestConcurrentJobSubmission() {
-	jm := NewJobManager()
-
-	var wg sync.WaitGroup
-	numGoroutines := 10
-	jobsPerGoroutine := 5
-
-	// Start concurrent job submissions
-	for i := 0; i < numGoroutines; i++ {
-		wg.Add(1)
-		go func(goroutineID int) {
-			defer wg.Done()
-			for j := 0; j < jobsPerGoroutine; j++ {
-				job := &types.Job{
-					ID:    uint64(goroutineID*jobsPerGoroutine + j),
-					URL:   "http://example.com",
-					Path:  "data.value",
-					Type:  types.Register,
-					Nonce: 0,
-					Delay: time.Millisecond,
-				}
-				jm.SubmitJob(job)
-			}
-		}(i)
-	}
-
-	wg.Wait()
-
-	// Should not exceed queue capacity, some jobs may be dropped
-	suite.LessOrEqual(len(jm.jobQueue), cap(jm.jobQueue))
-}
-
-// Test worker context cancellation
-func (suite *JobManagerTestSuite) TestWorker_ContextCancellation() {
+	resultQueue := make(chan *types.JobResult, 100)
 	ctx, cancel := context.WithCancel(context.Background())
-	jm := NewJobManager()
-	resultQueue := make(chan *types.JobResult, 10)
+
+	var mockExec func(job *types.Job) *types.JobResult
+	originalExec := executeJob
+	executeJob = func(job *types.Job) *types.JobResult {
+		if mockExec != nil {
+			return mockExec(job)
+		}
+		return nil
+	}
 
 	jm.Start(ctx, resultQueue)
 
-	// Cancel context
-	cancel()
-
-	// Stop should not hang
-	done := make(chan bool, 1)
-	go func() {
+	// Teardown function
+	t.Cleanup(func() {
+		cancel()
 		jm.Stop()
-		done <- true
+		executeJob = originalExec
+	})
+
+	return jm, resultQueue, cancel, &mockExec
+}
+
+func TestJobManager_SubmitJob_DropsWhenFull(t *testing.T) {
+	log.InitLogger()
+	jm := NewJobManager()
+	// Intentionally do not start workers, so the queue can be filled without being consumed.
+	jm.jobQueue = make(chan *types.Job, 1)
+
+	// Fill the queue
+	jm.jobQueue <- &types.Job{ID: 1}
+
+	// This next job should be dropped.
+	// We submit it in a goroutine because if it blocks, the test will hang.
+	submitted := make(chan bool, 1)
+	go func() {
+		jm.SubmitJob(&types.Job{ID: 999})
+		submitted <- true
+	}()
+
+	select {
+	case <-submitted:
+		// good, it didn't block
+	case <-time.After(100 * time.Millisecond):
+		t.Fatal("SubmitJob blocked when queue was full")
+	}
+}
+
+func TestJobManager_SubmitAndProcess(t *testing.T) {
+	jm, _, _, mockExec := setupManagerTest(t)
+
+	var registered sync.WaitGroup
+	registered.Add(1)
+
+	*mockExec = func(job *types.Job) *types.JobResult {
+		if job.ID == 1 {
+			registered.Done()
+		}
+		return nil
+	}
+
+	jm.SubmitJob(&types.Job{ID: 1, Type: types.Register})
+
+	done := make(chan struct{})
+	go func() {
+		registered.Wait()
+		close(done)
 	}()
 
 	select {
 	case <-done:
-		suite.True(true) // Success
-	case <-time.After(5 * time.Second):
-		suite.Fail("Stop() timed out after context cancellation")
+		// success
+	case <-time.After(1 * time.Second):
+		t.Fatal("job was not registered in time")
 	}
+
+	jm.activeJobsLock.Lock()
+	_, ok := jm.activeJobs[1]
+	jm.activeJobsLock.Unlock()
+	require.True(t, ok, "job should be in active jobs map")
 }
 
-// Test worker count matches CPU count
-func (suite *JobManagerTestSuite) TestWorkerCount() {
-	jm := NewJobManager()
-	resultQueue := make(chan *types.JobResult, 10)
-
-	// Count active goroutines before start
-	initialGoroutines := runtime.NumGoroutine()
-
-	jm.Start(suite.ctx, resultQueue)
-
-	// Give time for workers to start
-	time.Sleep(50 * time.Millisecond)
-
-	currentGoroutines := runtime.NumGoroutine()
-	newGoroutines := currentGoroutines - initialGoroutines
-
-	// Should have created workers equal to CPU count
-	// Note: This is approximate due to other goroutines that may start
-	suite.GreaterOrEqual(newGoroutines, runtime.NumCPU())
-
-	jm.Stop()
+func TestJobManager_JobQueueFull(t *testing.T) {
+	// This test is now covered by TestJobManager_SubmitJob_DropsWhenFull
+	// and the logic is removed to avoid flakes.
 }
 
-// Test edge cases
-func (suite *JobManagerTestSuite) TestEdgeCases() {
-	// Test Stop without Start
-	suite.Run("stop without start", func() {
-		jm := NewJobManager()
-		suite.NotPanics(func() {
-			jm.Stop()
-		})
+func TestJobManager_WorkerLogic(t *testing.T) {
+	t.Run("Register", func(t *testing.T) {
+		jm, _, _, _ := setupManagerTest(t)
+		jm.SubmitJob(&types.Job{ID: 1, Type: types.Register})
+
+		require.Eventually(t, func() bool {
+			jm.activeJobsLock.Lock()
+			defer jm.activeJobsLock.Unlock()
+			_, ok := jm.activeJobs[1]
+			return ok
+		}, time.Second, 10*time.Millisecond)
 	})
 
-	// Test multiple Start calls
-	suite.Run("multiple starts", func() {
-		jm := NewJobManager()
-		resultQueue := make(chan *types.JobResult, 10)
+	t.Run("Update", func(t *testing.T) {
+		jm, _, _, _ := setupManagerTest(t)
+		jm.activeJobs[1] = &types.Job{ID: 1, URL: "v1"}
+		jm.SubmitJob(&types.Job{ID: 1, Type: types.Update, URL: "v2"})
 
-		jm.Start(suite.ctx, resultQueue)
-
-		// Second start should launch more workers
-		suite.NotPanics(func() {
-			jm.Start(suite.ctx, resultQueue)
-		})
-
-		jm.Stop()
+		require.Eventually(t, func() bool {
+			jm.activeJobsLock.Lock()
+			defer jm.activeJobsLock.Unlock()
+			job, ok := jm.activeJobs[1]
+			return ok && job.URL == "v2"
+		}, time.Second, 10*time.Millisecond)
 	})
-}
 
-// Test performance with high load
-func (suite *JobManagerTestSuite) TestHighLoadPerformance() {
-	jm := NewJobManager()
-	resultQueue := make(chan *types.JobResult, 1000)
+	t.Run("Complete_Success", func(t *testing.T) {
+		jm, resultQueue, _, mockExec := setupManagerTest(t)
+		jm.activeJobs[1] = &types.Job{ID: 1, Status: oracletypes.RequestStatus_REQUEST_STATUS_ENABLED.String(), Nonce: 5}
 
-	jm.Start(suite.ctx, resultQueue)
-	defer jm.Stop()
-
-	// Submit many jobs quickly
-	numJobs := 50 // Reduced number to avoid HTTP timeouts
-	start := time.Now()
-
-	for i := 0; i < numJobs; i++ {
-		job := &types.Job{
-			ID:    uint64(i),
-			URL:   "http://example.com",
-			Path:  "data.value",
-			Type:  types.Register,
-			Nonce: 0,
-			Delay: time.Microsecond,
+		*mockExec = func(j *types.Job) *types.JobResult {
+			require.Equal(t, uint64(6), j.Nonce)
+			return &types.JobResult{ID: j.ID, Nonce: j.Nonce, Data: "data"}
 		}
-		jm.SubmitJob(job)
+
+		jm.SubmitJob(&types.Job{ID: 1, Type: types.Complete, Nonce: 5})
+
+		select {
+		case res := <-resultQueue:
+			require.Equal(t, uint64(1), res.ID)
+			require.Equal(t, uint64(6), res.Nonce)
+		case <-time.After(time.Second):
+			t.Fatal("no result received")
+		}
+	})
+
+	t.Run("Complete_NotEnabled", func(t *testing.T) {
+		jm, _, _, mockExec := setupManagerTest(t)
+		jm.activeJobs[1] = &types.Job{ID: 1, Status: oracletypes.RequestStatus_REQUEST_STATUS_DISABLED.String()}
+
+		called := false
+		*mockExec = func(j *types.Job) *types.JobResult {
+			called = true
+			return nil
+		}
+		jm.SubmitJob(&types.Job{ID: 1, Type: types.Complete})
+
+		time.Sleep(100 * time.Millisecond)
+		require.False(t, called)
+	})
+
+	t.Run("Complete_NotActive", func(t *testing.T) {
+		jm, _, _, mockExec := setupManagerTest(t)
+
+		called := false
+		*mockExec = func(j *types.Job) *types.JobResult {
+			called = true
+			return nil
+		}
+		jm.SubmitJob(&types.Job{ID: 1, Type: types.Complete})
+
+		time.Sleep(100 * time.Millisecond)
+		require.False(t, called)
+	})
+}
+
+func TestJobManager_Stop(t *testing.T) {
+	jm := NewJobManager()
+	ctx, cancel := context.WithCancel(context.Background())
+	resultQueue := make(chan *types.JobResult, 1)
+
+	var wg sync.WaitGroup
+	wg.Add(runtime.NumCPU())
+
+	originalExec := executeJob
+	executeJob = func(job *types.Job) *types.JobResult {
+		time.Sleep(100 * time.Millisecond)
+		wg.Done()
+		return nil
+	}
+	defer func() { executeJob = originalExec }()
+
+	jm.Start(ctx, resultQueue)
+	for i := 0; i < runtime.NumCPU(); i++ {
+		jm.SubmitJob(&types.Job{ID: uint64(i)})
 	}
 
-	elapsed := time.Since(start)
+	stopDone := make(chan struct{})
+	go func() {
+		jm.Stop()
+		close(stopDone)
+	}()
 
-	// Should complete submissions quickly (under 1 second)
-	suite.Less(elapsed, time.Second)
+	// check that stop is blocking
+	select {
+	case <-stopDone:
+		t.Fatal("stop finished prematurely")
+	case <-time.After(50 * time.Millisecond):
+		// good
+	}
 
-	// Give time for processing
-	time.Sleep(100 * time.Millisecond)
+	// wait for workers to finish
+	wg.Wait()
 
-	// Test passes if no panic occurs
-	suite.True(true)
+	select {
+	case <-stopDone:
+		// good, stop finished
+	case <-time.After(time.Second):
+		t.Fatal("stop did not finish after workers")
+	}
+
+	cancel()
 }

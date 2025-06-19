@@ -114,5 +114,5 @@ func (sm *SubscribeManager) Subscribe() []*types.Job {
 func (sm *SubscribeManager) filterAccount(event coretypes.ResultEvent, prefix string) bool {
 	accounts := event.Events[prefix+"."+oracletypes.AttributeKeyAccountList][0]
 
-	return strings.Contains(accounts, config.Config.Address())
+	return strings.Contains(accounts, config.Address().String())
 }
