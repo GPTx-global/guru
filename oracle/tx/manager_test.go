@@ -57,6 +57,7 @@ func (m *mockTxConfig) TxEncoder() sdk.TxEncoder {
 // setupTxManagerTest creates a new TxManager with mocked dependencies for isolated testing.
 func setupTxManagerTest(t *testing.T) (*TxManager, *mockAccountRetriever) {
 	// 1. Initialize logger and config to avoid panics in underlying code
+
 	log.InitLogger()
 	config.SetForTesting(
 		"test-chain",
@@ -66,6 +67,7 @@ func setupTxManagerTest(t *testing.T) (*TxManager, *mockAccountRetriever) {
 		keyring.BackendTest,
 		"100uatom",
 		300000,
+		3,
 	)
 
 	// 2. Create an in-memory keyring with a test account
@@ -109,7 +111,7 @@ func TestNewTxManager_Panic(t *testing.T) {
 	// This test sets up a scenario where the account retriever fails,
 	// which should cause NewTxManager to panic.
 	log.InitLogger()
-	config.SetForTesting("test-chain", "", "test", "", keyring.BackendTest, "", 0)
+	config.SetForTesting("test-chain", "", "test", os.TempDir(), keyring.BackendTest, "", 0, 3)
 	kr := config.Keyring()
 	_, _, _ = kr.NewMnemonic(config.KeyName(), keyring.English, sdk.FullFundraiserPath, keyring.DefaultBIP39Passphrase, hd.Secp256k1)
 	addr := config.Address()

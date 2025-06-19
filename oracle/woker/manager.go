@@ -94,7 +94,11 @@ func (jm *JobManager) worker(ctx context.Context, resultQueue chan<- *types.JobR
 
 			jm.activeJobsLock.Unlock()
 			job.Nonce++
-			jr := executeJob(job)
+			jr, err := executeJob(job)
+			if err != nil {
+				log.Errorf("execute job %d failed: %v", job.ID, err)
+				continue
+			}
 			if jr != nil {
 				resultQueue <- jr
 			}
