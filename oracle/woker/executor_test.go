@@ -3,12 +3,15 @@ package woker
 import (
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"sync"
 	"testing"
 	"time"
 
 	"github.com/GPTx-global/guru/oracle/config"
+	"github.com/GPTx-global/guru/oracle/log"
 	"github.com/GPTx-global/guru/oracle/types"
+	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -19,16 +22,8 @@ type ExecutorSuite struct {
 }
 
 func (s *ExecutorSuite) SetupTest() {
-	config.SetForTesting(
-		"test-chain",
-		"http://localhost:26657",
-		"test-key",
-		"/tmp/oracled-test",
-		"test",
-		"1aguru",
-		300000,
-		3, // maxRetries
-	)
+	log.InitLogger()
+	config.SetForTesting("test-chain", "", "test", os.TempDir(), keyring.BackendTest, "", 0, 3)
 
 	s.server = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		s.mu.Lock()

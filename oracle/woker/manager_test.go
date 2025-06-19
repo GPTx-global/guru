@@ -2,56 +2,69 @@ package woker
 
 import (
 	"context"
+	"os"
 	"runtime"
 	"sync"
 	"testing"
 	"time"
 
+	"github.com/GPTx-global/guru/oracle/config"
 	"github.com/GPTx-global/guru/oracle/log"
 	"github.com/GPTx-global/guru/oracle/types"
 	oracletypes "github.com/GPTx-global/guru/x/oracle/types"
-	"github.com/stretchr/testify/require"
+	"github.com/cosmos/cosmos-sdk/crypto/keyring"
+	"github.com/stretchr/testify/suite"
 )
 
-// setup a test suite with a mock executor
-func setupManagerTest(t *testing.T) (*JobManager, chan *types.JobResult, context.CancelFunc, *func(job *types.Job) (*types.JobResult, error)) {
-	log.InitLogger()
-	jm := NewJobManager()
-	resultQueue := make(chan *types.JobResult, 100)
-	ctx, cancel := context.WithCancel(context.Background())
+type ManagerSuite struct {
+	suite.Suite
+	jm           *JobManager
+	resultQueue  chan *types.JobResult
+	cancel       context.CancelFunc
+	mockExec     func(job *types.Job) (*types.JobResult, error)
+	originalExec func(job *types.Job) (*types.JobResult, error)
+}
 
-	var mockExec func(job *types.Job) (*types.JobResult, error)
-	originalExec := executeJob
+func TestManagerSuite(t *testing.T) {
+	suite.Run(t, new(ManagerSuite))
+}
+
+func (s *ManagerSuite) SetupTest() {
+	log.InitLogger()
+	config.SetForTesting("test-chain", "", "test", os.TempDir(), keyring.BackendTest, "", 0, 3)
+
+	s.jm = NewJobManager()
+	s.resultQueue = make(chan *types.JobResult, 100)
+	ctx, cancel := context.WithCancel(context.Background())
+	s.cancel = cancel
+
+	s.originalExec = executeJob
 	executeJob = func(job *types.Job) (*types.JobResult, error) {
-		if mockExec != nil {
-			return mockExec(job)
+		if s.mockExec != nil {
+			return s.mockExec(job)
 		}
 		return nil, nil
 	}
 
-	jm.Start(ctx, resultQueue)
-
-	// Teardown function
-	t.Cleanup(func() {
-		cancel()
-		jm.Stop()
-		executeJob = originalExec
-	})
-
-	return jm, resultQueue, cancel, &mockExec
+	s.jm.Start(ctx, s.resultQueue)
 }
 
-func TestJobManager_SubmitJob_DropsWhenFull(t *testing.T) {
-	log.InitLogger()
+func (s *ManagerSuite) TearDownTest() {
+	s.cancel()
+	s.jm.Stop()
+	executeJob = s.originalExec
+	s.mockExec = nil
+}
+
+func (s *ManagerSuite) TestSubmitJob_DropsWhenFull() {
+	// This test requires a specific setup (unstarted manager), so we don't use the suite's s.jm
 	jm := NewJobManager()
-	// Intentionally do not start workers, so the queue can be filled without being consumed.
 	jm.jobQueue = make(chan *types.Job, 1)
 
 	// Fill the queue
 	jm.jobQueue <- &types.Job{ID: 1}
 
 	// This next job should be dropped.
-	// We submit it in a goroutine because if it blocks, the test will hang.
 	submitted := make(chan bool, 1)
 	go func() {
 		jm.SubmitJob(&types.Job{ID: 999})
@@ -62,24 +75,22 @@ func TestJobManager_SubmitJob_DropsWhenFull(t *testing.T) {
 	case <-submitted:
 		// good, it didn't block
 	case <-time.After(100 * time.Millisecond):
-		t.Fatal("SubmitJob blocked when queue was full")
+		s.T().Fatal("SubmitJob blocked when queue was full")
 	}
 }
 
-func TestJobManager_SubmitAndProcess(t *testing.T) {
-	jm, _, _, mockExec := setupManagerTest(t)
-
+func (s *ManagerSuite) TestSubmitAndProcess() {
 	var registered sync.WaitGroup
 	registered.Add(1)
 
-	*mockExec = func(job *types.Job) (*types.JobResult, error) {
+	s.mockExec = func(job *types.Job) (*types.JobResult, error) {
 		if job.ID == 1 {
 			registered.Done()
 		}
 		return nil, nil
 	}
 
-	jm.SubmitJob(&types.Job{ID: 1, Type: types.Register})
+	s.jm.SubmitJob(&types.Job{ID: 1, Type: types.Register})
 
 	done := make(chan struct{})
 	go func() {
@@ -91,111 +102,102 @@ func TestJobManager_SubmitAndProcess(t *testing.T) {
 	case <-done:
 		// success
 	case <-time.After(1 * time.Second):
-		t.Fatal("job was not registered in time")
+		s.T().Fatal("job was not registered in time")
 	}
 
-	jm.activeJobsLock.Lock()
-	_, ok := jm.activeJobs[1]
-	jm.activeJobsLock.Unlock()
-	require.True(t, ok, "job should be in active jobs map")
+	s.jm.activeJobsLock.Lock()
+	_, ok := s.jm.activeJobs[1]
+	s.jm.activeJobsLock.Unlock()
+	s.Require().True(ok, "job should be in active jobs map")
 }
 
-func TestJobManager_JobQueueFull(t *testing.T) {
-	// This test is now covered by TestJobManager_SubmitJob_DropsWhenFull
-	// and the logic is removed to avoid flakes.
+func (s *ManagerSuite) TestWorkerLogic_Register() {
+	s.jm.SubmitJob(&types.Job{ID: 1, Type: types.Register})
+
+	s.Require().Eventually(func() bool {
+		s.jm.activeJobsLock.Lock()
+		defer s.jm.activeJobsLock.Unlock()
+		_, ok := s.jm.activeJobs[1]
+		return ok
+	}, time.Second, 10*time.Millisecond)
 }
 
-func TestJobManager_WorkerLogic(t *testing.T) {
-	t.Run("Register", func(t *testing.T) {
-		jm, _, _, _ := setupManagerTest(t)
-		jm.SubmitJob(&types.Job{ID: 1, Type: types.Register})
+func (s *ManagerSuite) TestWorkerLogic_Update() {
+	s.jm.activeJobs[1] = &types.Job{ID: 1, URL: "v1"}
+	s.jm.SubmitJob(&types.Job{ID: 1, Type: types.Update, URL: "v2"})
 
-		require.Eventually(t, func() bool {
-			jm.activeJobsLock.Lock()
-			defer jm.activeJobsLock.Unlock()
-			_, ok := jm.activeJobs[1]
-			return ok
-		}, time.Second, 10*time.Millisecond)
-	})
-
-	t.Run("Update", func(t *testing.T) {
-		jm, _, _, _ := setupManagerTest(t)
-		jm.activeJobs[1] = &types.Job{ID: 1, URL: "v1"}
-		jm.SubmitJob(&types.Job{ID: 1, Type: types.Update, URL: "v2"})
-
-		require.Eventually(t, func() bool {
-			jm.activeJobsLock.Lock()
-			defer jm.activeJobsLock.Unlock()
-			job, ok := jm.activeJobs[1]
-			return ok && job.URL == "v2"
-		}, time.Second, 10*time.Millisecond)
-	})
-
-	t.Run("Complete_Success", func(t *testing.T) {
-		jm, resultQueue, _, mockExec := setupManagerTest(t)
-		jm.activeJobs[1] = &types.Job{ID: 1, Status: oracletypes.RequestStatus_REQUEST_STATUS_ENABLED.String(), Nonce: 5}
-
-		*mockExec = func(j *types.Job) (*types.JobResult, error) {
-			require.Equal(t, uint64(6), j.Nonce)
-			return &types.JobResult{ID: j.ID, Nonce: j.Nonce, Data: "data"}, nil
-		}
-
-		jm.SubmitJob(&types.Job{ID: 1, Type: types.Complete, Nonce: 5})
-
-		select {
-		case res := <-resultQueue:
-			require.Equal(t, uint64(1), res.ID)
-			require.Equal(t, uint64(6), res.Nonce)
-		case <-time.After(time.Second):
-			t.Fatal("no result received")
-		}
-	})
-
-	t.Run("Complete_NotEnabled", func(t *testing.T) {
-		jm, _, _, mockExec := setupManagerTest(t)
-		jm.activeJobs[1] = &types.Job{ID: 1, Status: oracletypes.RequestStatus_REQUEST_STATUS_DISABLED.String()}
-
-		called := false
-		*mockExec = func(j *types.Job) (*types.JobResult, error) {
-			called = true
-			return nil, nil
-		}
-		jm.SubmitJob(&types.Job{ID: 1, Type: types.Complete})
-
-		time.Sleep(100 * time.Millisecond)
-		require.False(t, called)
-	})
-
-	t.Run("Complete_NotActive", func(t *testing.T) {
-		jm, _, _, mockExec := setupManagerTest(t)
-
-		called := false
-		*mockExec = func(j *types.Job) (*types.JobResult, error) {
-			called = true
-			return nil, nil
-		}
-		jm.SubmitJob(&types.Job{ID: 1, Type: types.Complete})
-
-		time.Sleep(100 * time.Millisecond)
-		require.False(t, called)
-	})
+	s.Require().Eventually(func() bool {
+		s.jm.activeJobsLock.Lock()
+		defer s.jm.activeJobsLock.Unlock()
+		job, ok := s.jm.activeJobs[1]
+		return ok && job.URL == "v2"
+	}, time.Second, 10*time.Millisecond)
 }
 
-func TestJobManager_Stop(t *testing.T) {
+func (s *ManagerSuite) TestWorkerLogic_Complete_Success() {
+	s.jm.activeJobs[1] = &types.Job{ID: 1, Status: oracletypes.RequestStatus_REQUEST_STATUS_ENABLED.String(), Nonce: 5}
+
+	s.mockExec = func(j *types.Job) (*types.JobResult, error) {
+		s.Require().Equal(uint64(6), j.Nonce)
+		return &types.JobResult{ID: j.ID, Nonce: j.Nonce, Data: "data"}, nil
+	}
+
+	s.jm.SubmitJob(&types.Job{ID: 1, Type: types.Complete, Nonce: 5})
+
+	select {
+	case res := <-s.resultQueue:
+		s.Require().Equal(uint64(1), res.ID)
+		s.Require().Equal(uint64(6), res.Nonce)
+	case <-time.After(time.Second):
+		s.T().Fatal("no result received")
+	}
+}
+
+func (s *ManagerSuite) TestWorkerLogic_Complete_NotEnabled() {
+	s.jm.activeJobs[1] = &types.Job{ID: 1, Status: oracletypes.RequestStatus_REQUEST_STATUS_DISABLED.String()}
+
+	called := false
+	s.mockExec = func(j *types.Job) (*types.JobResult, error) {
+		called = true
+		return nil, nil
+	}
+	s.jm.SubmitJob(&types.Job{ID: 1, Type: types.Complete})
+
+	time.Sleep(100 * time.Millisecond)
+	s.Require().False(called)
+}
+
+func (s *ManagerSuite) TestWorkerLogic_Complete_NotActive() {
+	called := false
+	s.mockExec = func(j *types.Job) (*types.JobResult, error) {
+		called = true
+		return nil, nil
+	}
+	s.jm.SubmitJob(&types.Job{ID: 1, Type: types.Complete})
+
+	time.Sleep(100 * time.Millisecond)
+	s.Require().False(called)
+}
+
+func (s *ManagerSuite) TestStop() {
+	// This test has its own manager lifecycle, so it doesn't use the suite's jm.
 	jm := NewJobManager()
 	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
 	resultQueue := make(chan *types.JobResult, 1)
 
 	var wg sync.WaitGroup
 	wg.Add(runtime.NumCPU())
 
-	originalExec := executeJob
+	// Use local mock for this test
+	original := executeJob
 	executeJob = func(job *types.Job) (*types.JobResult, error) {
 		time.Sleep(100 * time.Millisecond)
 		wg.Done()
 		return nil, nil
 	}
-	defer func() { executeJob = originalExec }()
+	defer func() { executeJob = original }()
 
 	jm.Start(ctx, resultQueue)
 	for i := 0; i < runtime.NumCPU(); i++ {
@@ -211,7 +213,7 @@ func TestJobManager_Stop(t *testing.T) {
 	// check that stop is blocking
 	select {
 	case <-stopDone:
-		t.Fatal("stop finished prematurely")
+		s.T().Fatal("stop finished prematurely")
 	case <-time.After(50 * time.Millisecond):
 		// good
 	}
@@ -223,8 +225,6 @@ func TestJobManager_Stop(t *testing.T) {
 	case <-stopDone:
 		// good, stop finished
 	case <-time.After(time.Second):
-		t.Fatal("stop did not finish after workers")
+		s.T().Fatal("stop did not finish after workers")
 	}
-
-	cancel()
 }
