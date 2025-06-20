@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"context"
+	"encoding/json"
 	"strings"
 
 	"fmt"
@@ -50,6 +51,9 @@ func (k Keeper) RegisterOracleRequestDoc(c context.Context, doc *types.MsgRegist
 	// Increment the count
 	k.SetOracleRequestDocCount(ctx, count+1)
 
+	// Marshal the endpoints to a JSON string
+	endpointsJson, _ := json.Marshal(oracleRequestDoc.Endpoints)
+
 	// Emit event for registering oracle request document
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
@@ -60,7 +64,7 @@ func (k Keeper) RegisterOracleRequestDoc(c context.Context, doc *types.MsgRegist
 			sdk.NewAttribute(types.AttributeKeyDescription, oracleRequestDoc.Description),
 			sdk.NewAttribute(types.AttributeKeyPeriod, fmt.Sprint(oracleRequestDoc.Period)),
 			sdk.NewAttribute(types.AttributeKeyAccountList, strings.Join(oracleRequestDoc.AccountList, ",")),
-			sdk.NewAttribute(types.AttributeKeyEndpoints, fmt.Sprintf("%v", oracleRequestDoc.Endpoints)),
+			sdk.NewAttribute(types.AttributeKeyEndpoints, string(endpointsJson)),
 			sdk.NewAttribute(types.AttributeKeyAggregationRule, string(oracleRequestDoc.AggregationRule)),
 			sdk.NewAttribute(types.AttributeKeyStatus, string(oracleRequestDoc.Status)),
 		),
@@ -89,6 +93,9 @@ func (k Keeper) UpdateOracleRequestDoc(c context.Context, doc *types.MsgUpdateOr
 		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, err.Error())
 	}
 
+	// Marshal the endpoints to a JSON string
+	endpointsJson, _ := json.Marshal(doc.RequestDoc.Endpoints)
+
 	// Emit event for updating oracle request document
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
@@ -99,7 +106,7 @@ func (k Keeper) UpdateOracleRequestDoc(c context.Context, doc *types.MsgUpdateOr
 			sdk.NewAttribute(types.AttributeKeyDescription, doc.RequestDoc.Description),
 			sdk.NewAttribute(types.AttributeKeyPeriod, fmt.Sprint(doc.RequestDoc.Period)),
 			sdk.NewAttribute(types.AttributeKeyAccountList, strings.Join(doc.RequestDoc.AccountList, ",")),
-			sdk.NewAttribute(types.AttributeKeyEndpoints, fmt.Sprintf("%v", doc.RequestDoc.Endpoints)),
+			sdk.NewAttribute(types.AttributeKeyEndpoints, string(endpointsJson)),
 			sdk.NewAttribute(types.AttributeKeyAggregationRule, string(doc.RequestDoc.AggregationRule)),
 			sdk.NewAttribute(types.AttributeKeyStatus, string(doc.RequestDoc.Status)),
 			sdk.NewAttribute(types.AttributeKeyNonce, fmt.Sprint(doc.RequestDoc.Nonce)),
