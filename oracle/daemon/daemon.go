@@ -76,7 +76,7 @@ func New(ctx context.Context) (*Daemon, error) {
 
 // Start initializes and starts all daemon components including job manager, client, and event subscriptions
 func (d *Daemon) Start() error {
-	d.jobManager.Start(d.ctx, d.transactionManager.ResultQueue())
+	go d.jobManager.Start(d.ctx, d.transactionManager.ResultQueue())
 
 	err := d.client.Start()
 	if err != nil {
