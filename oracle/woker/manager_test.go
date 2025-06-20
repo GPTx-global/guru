@@ -46,8 +46,7 @@ func (s *ManagerSuite) SetupTest() {
 		return nil, nil
 	}
 
-	go s.jm.Start(ctx, s.resultQueue)
-	time.Sleep(100 * time.Millisecond)
+	s.jm.Start(ctx, s.resultQueue)
 }
 
 func (s *ManagerSuite) TearDownTest() {
@@ -200,8 +199,7 @@ func (s *ManagerSuite) TestStop() {
 	}
 	defer func() { executeJob = original }()
 
-	go jm.Start(ctx, resultQueue)
-	time.Sleep(100 * time.Millisecond)
+	jm.Start(ctx, resultQueue)
 	for i := 0; i < runtime.NumCPU(); i++ {
 		jm.SubmitJob(&types.Job{ID: uint64(i)})
 	}

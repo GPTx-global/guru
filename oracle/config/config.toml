@@ -9,4 +9,4 @@ keyring_backend = 'test'
 
 [gas]
 limit = 30000
-prices = '630000000aguru'
+prices = '630000000000aguru'

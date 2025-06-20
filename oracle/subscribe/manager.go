@@ -110,8 +110,6 @@ func (sm *SubscribeManager) Subscribe() *coretypes.ResultEvent {
 	// 	return &event
 	case <-sm.ctx.Done():
 		return nil
-	default:
-		return nil
 	}
 }
 
