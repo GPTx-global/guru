@@ -38,12 +38,12 @@ func (jm *JobManager) Start(ctx context.Context, resultQueue chan<- *types.JobRe
 		jm.wg.Add(1)
 		go jm.worker(ctx, resultQueue)
 	}
-	jm.wg.Wait()
 }
 
 // Stop gracefully shuts down all workers and waits for completion
 func (jm *JobManager) Stop() {
 	close(jm.quit)
+	jm.wg.Wait()
 }
 
 // SubmitJob adds a new job to the processing queue, drops job if queue is full
