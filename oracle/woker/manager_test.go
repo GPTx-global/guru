@@ -46,7 +46,8 @@ func (s *ManagerSuite) SetupTest() {
 		return nil, nil
 	}
 
-	s.jm.Start(ctx, s.resultQueue)
+	go s.jm.Start(ctx, s.resultQueue)
+	time.Sleep(100 * time.Millisecond)
 }
 
 func (s *ManagerSuite) TearDownTest() {
@@ -193,28 +194,27 @@ func (s *ManagerSuite) TestStop() {
 	// Use local mock for this test
 	original := executeJob
 	executeJob = func(job *types.Job) (*types.JobResult, error) {
-		time.Sleep(100 * time.Millisecond)
+		time.Sleep(10 * time.Millisecond)
 		wg.Done()
 		return nil, nil
 	}
 	defer func() { executeJob = original }()
 
-	jm.Start(ctx, resultQueue)
+	go jm.Start(ctx, resultQueue)
+	time.Sleep(100 * time.Millisecond)
 	for i := 0; i < runtime.NumCPU(); i++ {
 		jm.SubmitJob(&types.Job{ID: uint64(i)})
 	}
 
 	stopDone := make(chan struct{})
-	go func() {
-		jm.Stop()
-		close(stopDone)
-	}()
 
 	// check that stop is blocking
 	select {
 	case <-stopDone:
 		s.T().Fatal("stop finished prematurely")
 	case <-time.After(50 * time.Millisecond):
+		jm.Stop()
+		close(stopDone)
 		// good
 	}
 
