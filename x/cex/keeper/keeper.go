@@ -1,7 +1,7 @@
 package keeper
 
 import (
-	"fmt"
+	"encoding/binary"
 
 	errorsmod "cosmossdk.io/errors"
 	"cosmossdk.io/math"
@@ -10,7 +10,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/types/query"
 	"github.com/tendermint/tendermint/libs/log"
 )
 
@@ -135,152 +134,66 @@ func (k Keeper) SetModeratorAddress(ctx sdk.Context, moderator_address string) {
 	store.Set(types.KeyModeratorAddress, []byte(moderator_address))
 }
 
-func (k Keeper) GetExchange(ctx sdk.Context, id math.Int) (*types.Exchange, error) {
+// GetRatemeter returns the current ratemeter.
+func (k Keeper) GetRatemeter(ctx sdk.Context) (*types.Ratemeter, error) {
 	store := ctx.KVStore(k.storeKey)
-	exchangeStore := prefix.NewStore(store, types.KeyExchanges)
-
-	idBytes, err := id.Marshal()
-	if err != nil {
-		panic(fmt.Errorf("unable to marshal exchange id %v", err))
-	}
-
-	bz := exchangeStore.Get(idBytes)
+	bz := store.Get(types.KeyRatemeter)
 	if bz == nil {
-		return nil, nil
+		return nil, errorsmod.Wrapf(types.ErrNotFound, "ratemeter not found")
 	}
 
-	var exchange types.Exchange
-	k.cdc.MustUnmarshal(bz, &exchange)
+	var ratemeter types.Ratemeter
+	k.cdc.MustUnmarshal(bz, &ratemeter)
 
-	return &exchange, nil
+	return &ratemeter, nil
 }
 
-func (k Keeper) GetPaginatedExchanges(ctx sdk.Context, pagination *query.PageRequest) ([]types.Exchange, *query.PageResponse, error) {
+// SetRatemeter adds/updates the ratemeter.
+func (k Keeper) SetRatemeter(ctx sdk.Context, ratemeter *types.Ratemeter) {
 	store := ctx.KVStore(k.storeKey)
-	exchangeStore := prefix.NewStore(store, types.KeyExchanges)
-
-	exchanges := []types.Exchange{}
-
-	pageRes, err := query.Paginate(exchangeStore, pagination, func(key, value []byte) error {
-		var exchange types.Exchange
-		k.cdc.MustUnmarshal(value, &exchange)
-
-		// add the exchange to the list
-		exchanges = append(exchanges, exchange)
-		return nil
-	})
-	if err != nil {
-		return nil, nil, err
-	}
-	return exchanges, pageRes, nil
+	store.Set(types.KeyRatemeter, k.cdc.MustMarshal(ratemeter))
 }
 
-func (k Keeper) AddNewExchange(ctx sdk.Context, exchange *types.Exchange) error {
+func (k Keeper) GetAddressRequestCount(ctx sdk.Context, address string) uint64 {
 	store := ctx.KVStore(k.storeKey)
-	exchangeStore := prefix.NewStore(store, types.KeyExchanges)
+	addressRequestsStore := prefix.NewStore(store, types.GetAddressRequestCountPrefix(address))
+	iterator := sdk.KVStorePrefixIterator(addressRequestsStore, nil)
+	defer iterator.Close()
 
-	idBytes, err := exchange.Id.Marshal()
+	ratemeter, err := k.GetRatemeter(ctx)
 	if err != nil {
-		panic(fmt.Errorf("unable to marshal exchange id %v", err))
+		return 0
 	}
 
-	bz := exchangeStore.Get(idBytes)
-	if bz != nil {
-		return errorsmod.Wrapf(types.ErrInvalidExchangeId, "exchange already exists with id %s", exchange.Id)
-	}
+	now := ctx.BlockTime()
+	alignedStart := now.Truncate(ratemeter.RequestPeriod)
 
-	exchangeBytes := k.cdc.MustMarshal(exchange)
-	exchangeStore.Set(idBytes, exchangeBytes)
-
-	// update the next exchange id
-	nextId := k.GetNextExchangeId(ctx)
-	if nextId.LTE(exchange.Id) {
-		k.setNextExchangeId(ctx, exchange.Id.Add(math.NewInt(1)))
-	}
-
-	return nil
-}
-
-func (k Keeper) SetExchange(ctx sdk.Context, exchange *types.Exchange) error {
-	store := ctx.KVStore(k.storeKey)
-	exchangeStore := prefix.NewStore(store, types.KeyExchanges)
-
-	idBytes, err := exchange.Id.Marshal()
-	if err != nil {
-		panic(fmt.Errorf("unable to marshal exchange id %v", err))
-	}
-
-	bz := exchangeStore.Get(idBytes)
-	if bz != nil {
-		return errorsmod.Wrapf(types.ErrInvalidExchangeId, "exchange not found with id %s", exchange.Id)
-	}
-
-	exchangeBytes := k.cdc.MustMarshal(exchange)
-	exchangeStore.Set(idBytes, exchangeBytes)
-	return nil
-}
-
-func (k Keeper) GetExchangeAttribute(ctx sdk.Context, id math.Int, key string) (types.Attribute, error) {
-	exchange, err := k.GetExchange(ctx, id)
-	if err != nil {
-		return types.Attribute{}, errorsmod.Wrapf(types.ErrInvalidExchangeId, "exchange not found with id %s", id)
-	}
-
-	for _, attr := range exchange.Attributes {
-		if attr.Key == key {
-			return types.Attribute{Key: key, Value: attr.Value}, nil
+	for ; iterator.Valid(); iterator.Next() {
+		if binary.BigEndian.Uint64(iterator.Key()) == uint64(alignedStart.UnixNano()) {
+			return binary.BigEndian.Uint64(iterator.Value())
+		} else {
+			addressRequestsStore.Delete(iterator.Key())
 		}
 	}
 
-	return types.Attribute{}, errorsmod.Wrapf(types.ErrKeyNotFound, "key: %s", key)
+	return 0
 }
 
-func (k Keeper) SetExchangeAttribute(ctx sdk.Context, id math.Int, attribute types.Attribute) error {
-	exchange, err := k.GetExchange(ctx, id)
-	if err != nil {
-		return errorsmod.Wrapf(types.ErrInvalidExchangeId, "exchange not found with id %s", id)
-	}
-
-	if attribute.Key == types.KeyExchangeId || attribute.Key == types.KeyExchangeCoinAIBCDenom || attribute.Key == types.KeyExchangeCoinBIBCDenom {
-		return errorsmod.Wrapf(types.ErrConstantKey, "key: %s", attribute.Key)
-	}
-
-	ok := false
-	for idx, attr := range exchange.Attributes {
-		if attr.Key == attribute.Key {
-			exchange.Attributes[idx].Value = attribute.Value
-			ok = true
-			break
-		}
-	}
-	if !ok {
-		exchange.Attributes = append(exchange.Attributes, attribute)
-	}
-
-	return k.SetExchange(ctx, exchange)
-}
-
-func (k Keeper) GetNextExchangeId(ctx sdk.Context) math.Int {
+func (k Keeper) SetAddressRequestCount(ctx sdk.Context, address string, count uint64) error {
 	store := ctx.KVStore(k.storeKey)
-	bz := store.Get(types.KeyNextExchangeId)
-	if bz == nil {
-		return math.NewInt(1)
-	}
+	addressRequestsStore := prefix.NewStore(store, types.GetAddressRequestCountPrefix(address))
 
-	var id math.Int
-	err := id.Unmarshal(bz)
+	ratemeter, err := k.GetRatemeter(ctx)
 	if err != nil {
-		panic(fmt.Errorf("unable to unmarshal into exchange id %v", err))
+		return err
 	}
 
-	return id
-}
+	now := ctx.BlockTime()
+	alignedStart := now.Truncate(ratemeter.RequestPeriod)
 
-func (k Keeper) setNextExchangeId(ctx sdk.Context, id math.Int) {
-	store := ctx.KVStore(k.storeKey)
-	idBytes, err := id.Marshal()
-	if err != nil {
-		panic(fmt.Errorf("unable to marshal exchange id %v", err))
-	}
-	store.Set(types.KeyNextExchangeId, []byte(idBytes))
+	idBytes := make([]byte, 8)
+	binary.BigEndian.PutUint64(idBytes, uint64(alignedStart.UnixNano()))
+
+	addressRequestsStore.Set(idBytes, sdk.Uint64ToBigEndian(count))
+	return nil
 }

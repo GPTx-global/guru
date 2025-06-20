@@ -1,13 +1,16 @@
 package keeper
 
 import (
+	"context"
 	"fmt"
+	"strconv"
+	"strings"
 	"time"
 
 	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	cextypes "github.com/GPTx-global/guru/x/cex/types"
+	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	"github.com/cosmos/ibc-go/v6/modules/apps/exchange/types"
 
 	clienttypes "github.com/cosmos/ibc-go/v6/modules/core/02-client/types"
@@ -27,14 +30,33 @@ func (k Keeper) OnRecvPacket(ctx sdk.Context, packet channeltypes.Packet, data t
 		return k.OnRecvTransferPacket(ctx, packet, data)
 	}
 
-	return k.OnRecvExchangePacket(ctx, packet, data)
+	return k.OnRecvExchangePacket(sdk.WrapSDKContext(ctx), packet, data)
 }
 
 func (k Keeper) OnRecvTransferPacket(ctx sdk.Context, packet channeltypes.Packet, data types.FungibleTokenPacketData) error {
 	return k.Keeper.OnRecvPacket(ctx, packet, data)
 }
 
-func (k Keeper) OnRecvExchangePacket(ctx sdk.Context, packet channeltypes.Packet, data types.FungibleTokenPacketData) error {
+func (k Keeper) OnRecvExchangePacket(goCtx context.Context, packet channeltypes.Packet, data types.FungibleTokenPacketData) error {
+
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	// use a zero gas config to avoid extra costs for the relayers
+	kvGasCfg := ctx.KVGasConfig()
+	transientKVGasCfg := ctx.TransientKVGasConfig()
+
+	// use a zero gas config to avoid extra costs for the relayers
+	ctx = ctx.
+		WithKVGasConfig(storetypes.GasConfig{}).
+		WithTransientKVGasConfig(storetypes.GasConfig{})
+
+	defer func() {
+		// return the KV gas config to initial values
+		ctx = ctx.
+			WithKVGasConfig(kvGasCfg).
+			WithTransientKVGasConfig(transientKVGasCfg)
+	}()
+
 	exchangeId, ok := math.NewIntFromString(data.Args[0])
 	if !ok {
 		return fmt.Errorf("invalid exchange id: %s", data.Args[0])
@@ -55,52 +77,29 @@ func (k Keeper) OnRecvExchangePacket(ctx sdk.Context, packet channeltypes.Packet
 		return fmt.Errorf("invalid requested amount: %s", data.Amount)
 	}
 
-	exchange, err := k.cexKeeper.GetExchange(ctx, exchangeId)
-	if err != nil {
-		return fmt.Errorf("failed to get exchange: %w", err)
-	}
-
 	destReceiver := data.Receiver
 
-	err = cextypes.ValidateExchangeRequiredKeys(exchange)
+	cexPair, err := k.cexKeeper.GetExchangePair(ctx, exchangeId, data.Denom, "a"+getDenomFromAccAddress(data.Receiver))
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to get exchange pair: %w", err)
 	}
 
-	attributesMap := cextypes.AttributesToMap(exchange.Attributes)
-
-	var swapAmount math.Int
-	var destChainDenom string
-	var destChainPort string
-	var destChainChannel string
-	var rate sdk.Dec
-
-	fee, err := sdk.NewDecFromStr(attributesMap[cextypes.KeyExchangeFee])
-	if err != nil {
-		return fmt.Errorf("invalid fee: %s", attributesMap[cextypes.KeyExchangeFee])
+	count := k.cexKeeper.GetAddressRequestCount(ctx, data.Sender)
+	if count >= 10 {
+		return fmt.Errorf("address %s has made 10 requests in the last 10 minutes", data.Sender)
 	}
 
-	if attributesMap[cextypes.KeyExchangeCoinAShort] == data.Denom {
-		// For quote coin, divide by rate and subtract fee
-		rate, err = sdk.NewDecFromStr(attributesMap[cextypes.KeyExchangeAtoBRate])
-		if err != nil {
-			return fmt.Errorf("invalid rate: %s", attributesMap[cextypes.KeyExchangeAtoBRate])
-		}
-		destChainDenom = attributesMap[cextypes.KeyExchangeCoinBIBCDenom]
-		destChainPort = attributesMap[cextypes.KeyExchangeCoinBPort]
-		destChainChannel = attributesMap[cextypes.KeyExchangeCoinBChannel]
+	ratemeter, err := k.cexKeeper.GetRatemeter(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get ratemeter: %w", err)
+	}
 
-	} else if attributesMap[cextypes.KeyExchangeCoinBShort] == data.Denom {
-		// For base coin, multiply by rate and subtract fee
-		rate, err = sdk.NewDecFromStr(attributesMap[cextypes.KeyExchangeBtoARate])
-		if err != nil {
-			return fmt.Errorf("invalid rate: %s", attributesMap[cextypes.KeyExchangeBtoARate])
-		}
-		destChainDenom = attributesMap[cextypes.KeyExchangeCoinAIBCDenom]
-		destChainPort = attributesMap[cextypes.KeyExchangeCoinAPort]
-		destChainChannel = attributesMap[cextypes.KeyExchangeCoinAChannel]
-	} else {
-		return fmt.Errorf("coin a short denom %s or coin b short denom %s does not match expected %s", attributesMap[cextypes.KeyExchangeCoinAShort], attributesMap[cextypes.KeyExchangeCoinBShort], data.Denom)
+	if ratemeter.RequestCountLimit.LTE(math.NewInt(int64(count))) {
+		return fmt.Errorf("address %s has made %d requests in the last %s", data.Sender, count, ratemeter.RequestPeriod.String())
+	}
+
+	if reqAmount.GT(cexPair.Limit) {
+		return fmt.Errorf("amount %s is greater than the limit %s", data.Amount, cexPair.Limit.String())
 	}
 
 	// Calculate acceptable rate range
@@ -108,12 +107,12 @@ func (k Keeper) OnRecvExchangePacket(ctx sdk.Context, packet channeltypes.Packet
 	maxRate := reqRate.Add(reqSlippage)
 
 	// Check if current rate is within acceptable range
-	if rate.LT(minRate) || rate.GT(maxRate) {
-		return fmt.Errorf("exchange rate %s is outside acceptable range [%s, %s]", rate, minRate, maxRate)
+	if cexPair.Rate.LT(minRate) || cexPair.Rate.GT(maxRate) {
+		return fmt.Errorf("exchange rate %s is outside acceptable range [%s, %s]", cexPair.Rate, minRate, maxRate)
 	}
 
-	swapDec := rate.MulInt(reqAmount)
-	swapAmount = swapDec.Sub(swapDec.Mul(fee)).TruncateInt()
+	swapDec := cexPair.Rate.MulInt(reqAmount)
+	swapAmount := swapDec.Sub(swapDec.Mul(cexPair.Fee)).TruncateInt()
 
 	attributes := []sdk.Attribute{
 		sdk.NewAttribute("denom", data.Denom),
@@ -125,12 +124,13 @@ func (k Keeper) OnRecvExchangePacket(ctx sdk.Context, packet channeltypes.Packet
 		sdk.NewAttribute("requested_amount", reqAmount.String()),
 		sdk.NewAttribute("requested_rate", reqRate.String()),
 		sdk.NewAttribute("slippage", reqSlippage.String()),
-		sdk.NewAttribute("actual_rate", rate.String()),
-		sdk.NewAttribute("fee", fee.String()),
+		sdk.NewAttribute("actual_rate", cexPair.Rate.String()),
+		sdk.NewAttribute("fee", cexPair.Fee.String()),
 		sdk.NewAttribute("swap_amount", swapAmount.String()),
-		sdk.NewAttribute("dest_chain_denom", destChainDenom),
-		sdk.NewAttribute("dest_chain_port", destChainPort),
-		sdk.NewAttribute("dest_chain_channel", destChainChannel),
+		sdk.NewAttribute("dest_chain_denom", cexPair.ToIbcDenom),
+		sdk.NewAttribute("dest_chain_port", cexPair.PortId),
+		sdk.NewAttribute("dest_chain_channel", cexPair.ChannelId),
+		sdk.NewAttribute("request_count", strconv.FormatUint(count, 10)),
 	}
 	for i, arg := range data.Args {
 		attributes = append(attributes, sdk.NewAttribute(fmt.Sprintf("arg[%d]", i), arg))
@@ -143,17 +143,17 @@ func (k Keeper) OnRecvExchangePacket(ctx sdk.Context, packet channeltypes.Packet
 		),
 	)
 
-	data.Receiver = attributesMap[cextypes.KeyExchangeReserveAddress]
+	data.Receiver = cexPair.ReserveAddress
 	err = k.Keeper.OnRecvPacket(ctx, packet, data)
 	if err != nil {
 		return err
 	}
 
-	destMsg := types.NewMsgTeleport(destChainPort, destChainChannel, sdk.NewCoin(destChainDenom, swapAmount), attributesMap[cextypes.KeyExchangeReserveAddress], destReceiver, clienttypes.ZeroHeight(), uint64(time.Now().Add(10*time.Minute).UnixNano()), // clienttypes.NewHeight(0, 1000), 600000000000,
+	destMsg := types.NewMsgTeleport(cexPair.PortId, cexPair.ChannelId, sdk.NewCoin(cexPair.ToIbcDenom, swapAmount), cexPair.ReserveAddress, destReceiver, clienttypes.ZeroHeight(), uint64(time.Now().Add(10*time.Minute).UnixNano()), // clienttypes.NewHeight(0, 1000), 600000000000,
 		"swap coins through Guru station", []string{},
 	)
 
-	_, err = k.Keeper.Teleport(ctx, destMsg)
+	_, err = k.Keeper.Teleport(sdk.WrapSDKContext(ctx), destMsg)
 	if err != nil {
 		return err
 	}
@@ -165,5 +165,19 @@ func (k Keeper) OnRecvExchangePacket(ctx sdk.Context, packet channeltypes.Packet
 		),
 	)
 
+	err = k.cexKeeper.SetAddressRequestCount(ctx, data.Sender, count+1)
+	if err != nil {
+		return fmt.Errorf("failed to set address request count: %w", err)
+	}
+
 	return nil
+}
+
+func getDenomFromAccAddress(accAddress string) string {
+	// Bech32 addresses contain exactly one '1' separator.
+	parts := strings.SplitN(accAddress, "1", 2)
+	if len(parts) != 2 {
+		return ""
+	}
+	return parts[0]
 }

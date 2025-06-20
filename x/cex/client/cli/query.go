@@ -21,8 +21,9 @@ func GetQueryCmd() *cobra.Command {
 		GetCmdQueryModeratorAddress(),
 		GetCmdQueryAttributes(),
 		GetCmdQueryExchanges(),
-		GetCmdQueryAdmins(),
+		GetCmdQueryIsAdmin(),
 		GetCmdQueryNextExchangeId(),
+		GetCmdQueryRatemeter(),
 	)
 
 	return cexQueryCmd
@@ -107,11 +108,11 @@ func GetCmdQueryExchanges() *cobra.Command {
 	return cmd
 }
 
-func GetCmdQueryAdmins() *cobra.Command {
+func GetCmdQueryIsAdmin() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "admins",
-		Short: "Query the list of all admins",
-		Args:  cobra.NoArgs,
+		Use:   "is_admin [address]",
+		Short: "Query if the address is an admin",
+		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientQueryContext(cmd)
 			if err != nil {
@@ -119,9 +120,9 @@ func GetCmdQueryAdmins() *cobra.Command {
 			}
 			queryClient := types.NewQueryClient(clientCtx)
 
-			req := &types.QueryAdminsRequest{}
+			req := &types.QueryIsAdminRequest{Address: args[0]}
 
-			res, err := queryClient.Admins(cmd.Context(), req)
+			res, err := queryClient.IsAdmin(cmd.Context(), req)
 			if err != nil {
 				return err
 			}
@@ -148,6 +149,32 @@ func GetCmdQueryNextExchangeId() *cobra.Command {
 
 			req := &types.QueryNextExchangeIdRequest{}
 			res, err := queryClient.NextExchangeId(cmd.Context(), req)
+			if err != nil {
+				return err
+			}
+
+			return clientCtx.PrintProto(res)
+		},
+	}
+
+	flags.AddQueryFlagsToCmd(cmd)
+	return cmd
+}
+
+func GetCmdQueryRatemeter() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "ratemeter",
+		Short: "Query the ratemeter",
+		Args:  cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientQueryContext(cmd)
+			if err != nil {
+				return err
+			}
+			queryClient := types.NewQueryClient(clientCtx)
+
+			req := &types.QueryRatemeterRequest{}
+			res, err := queryClient.Ratemeter(cmd.Context(), req)
 			if err != nil {
 				return err
 			}

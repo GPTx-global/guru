@@ -17,20 +17,25 @@ const (
 	prefixExchanges
 	prefixAdmins
 	prefixNextExchangeId
+	prefixRatemeter
+	prefixAddressRequestCount
 )
 
 // KV Store key prefixes
 var (
-	KeyModeratorAddress = []byte{prefixModeratorAddress}
-	KeyExchanges        = []byte{prefixExchanges}
-	KeyAdmins           = []byte{prefixAdmins}
-	KeyNextExchangeId   = []byte{prefixNextExchangeId}
+	KeyModeratorAddress    = []byte{prefixModeratorAddress}
+	KeyExchanges           = []byte{prefixExchanges}
+	KeyAdmins              = []byte{prefixAdmins}
+	KeyNextExchangeId      = []byte{prefixNextExchangeId}
+	KeyRatemeter           = []byte{prefixRatemeter}
+	keyAddressRequestCount = []byte{prefixAddressRequestCount}
 )
 
 // default keys
 var (
 	KeyExchangeId             = "id"
 	KeyExchangeReserveAddress = "reserve_address"
+	KeyExchangeAdminAddress   = "admin_address"
 	KeyExchangeCoinAIBCDenom  = "coin_a_ibc_denom"
 	KeyExchangeCoinBIBCDenom  = "coin_b_ibc_denom"
 	KeyExchangeCoinAShort     = "coin_a_short_denom"
@@ -43,9 +48,12 @@ var (
 	KeyExchangeBtoARate       = "b_to_a_rate"
 	KeyExchangeStatus         = "status"
 	KeyExchangeFee            = "fee"
+	KeyExchangeAToBLimit      = "a_to_b_limit"
+	KeyExchangeBtoALimit      = "b_to_a_limit"
 	KeyExchangeAccumulatedFee = "accumulated_fee"
 	RequiredKeysExchange      = []*string{
 		&KeyExchangeReserveAddress,
+		&KeyExchangeAdminAddress,
 		&KeyExchangeCoinAIBCDenom,
 		&KeyExchangeCoinBIBCDenom,
 		&KeyExchangeCoinAShort,
@@ -57,9 +65,11 @@ var (
 		&KeyExchangeAtoBRate,
 		&KeyExchangeBtoARate,
 		&KeyExchangeFee,
+		&KeyExchangeAToBLimit,
+		&KeyExchangeBtoALimit,
 	}
 )
 
-// func GetCoinKey(ibcDenom string) []byte {
-// 	return append(KeyCoinPair, []byte(pairDenom)...)
-// }
+func GetAddressRequestCountPrefix(address string) []byte {
+	return append(keyAddressRequestCount, []byte(address)...)
+}

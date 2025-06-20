@@ -41,5 +41,9 @@ type BankKeeper interface {
 
 type CexKeeper interface {
 	GetExchange(ctx sdk.Context, id math.Int) (*cextypes.Exchange, error)
+	GetExchangePair(ctx sdk.Context, id math.Int, fromShortDenom, toShortDenom string) (*cextypes.Pair, error)
+	SetAddressRequestCount(ctx sdk.Context, address string, count uint64) error
+	GetAddressRequestCount(ctx sdk.Context, address string) uint64
+	GetRatemeter(ctx sdk.Context) (*cextypes.Ratemeter, error)
 	// GetExchangeAttribute(ctx sdk.Context, id math.Int, key string) (cextypes.Attribute, error)
 }

@@ -2,6 +2,7 @@ syntax = "proto3";
 package guru.cex.v1;
 
 import "gogoproto/gogo.proto";
+import "google/protobuf/duration.proto";
 import "cosmos/base/v1beta1/coin.proto";
 import "cosmos_proto/cosmos.proto";
 
@@ -15,6 +16,42 @@ message Attribute {
   string value = 2;
 }
 
+message SwapRequest {
+  uint64 timestamp = 1;
+  string amount = 2 [
+    (cosmos_proto.scalar) = "cosmos.Int", 
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int", 
+    (gogoproto.nullable) = false
+  ];
+  string cex_id = 3 [
+    (cosmos_proto.scalar) = "cosmos.Int", 
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int", 
+    (gogoproto.nullable) = false
+  ];
+  string from_denom = 4;
+  string to_denom = 5;
+}
+
+message Pair {
+  string reserve_address = 1;
+  string from_ibc_denom = 2;
+  string to_ibc_denom = 3;
+  string port_id = 4;
+  string channel_id = 5;
+  string rate = 6 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec", 
+    (gogoproto.nullable) = false
+  ];
+  string fee = 7 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec", 
+    (gogoproto.nullable) = false
+  ];
+  string limit = 8 [
+    (cosmos_proto.scalar) = "cosmos.Int", 
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int", 
+    (gogoproto.nullable) = false
+  ];
+}
 
 // CurrencyRate defines the action, current rate for exchange.
 message Exchange {
@@ -31,17 +68,17 @@ message Exchange {
   ];
 }
 
-message AdminExchanges {
-  repeated string ids = 1 [
+message Ratemeter {
+  // request limit for each address to swap
+  string request_count_limit = 1 [
     (cosmos_proto.scalar) = "cosmos.Int", 
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int", 
     (gogoproto.nullable) = false
-  ];
-}
-
-message Admin {
-  string address = 1;
-  AdminExchanges exchanges  = 2 [
-    (gogoproto.nullable) = false
+  ]; 
+  google.protobuf.Duration request_period = 2 [
+    (gogoproto.nullable) = false,
+    (gogoproto.stdduration) = true,
+    (gogoproto.jsontag) = "duration,omitempty",
+    (gogoproto.moretags) = "yaml:\"duration\""
   ];
 }

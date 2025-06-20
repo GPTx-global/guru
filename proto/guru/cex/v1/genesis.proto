@@ -8,10 +8,10 @@ option go_package = "github.com/GPTx-global/guru/x/cex/types";
 
 // GenesisState define the cex module's genesis state.
 message GenesisState {
-  // moderator address for mining/burning coins
+
   string moderator_address = 1;
 
-  repeated Exchange exchanges = 2 [(gogoproto.nullable) = false];
+  Ratemeter ratemeter = 2 [(gogoproto.nullable) = false];
 
-  repeated Admin admins = 3 [(gogoproto.nullable) = false];
+  repeated Exchange exchanges = 3 [(gogoproto.nullable) = false];
 }

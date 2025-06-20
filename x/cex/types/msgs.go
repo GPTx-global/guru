@@ -10,10 +10,50 @@ import (
 // cex message types
 const (
 	TypeMsgSwap             = ModuleName + "_swap"
+	TypeMsgRegisterAdmin    = ModuleName + "_register_admin"
+	TypeMsgRemoveAdmin      = ModuleName + "_remove_admin"
 	TypeMsgRegisterExchange = ModuleName + "_register_exchange"
 	TypeMsgUpdateExchange   = ModuleName + "_update_exchange"
+	TypeMsgUpdateRatemeter  = ModuleName + "_update_ratemeter"
 	TypeMsgChangeModerator  = ModuleName + "_change_moderator_address"
 )
+
+var _ sdk.Msg = &MsgChangeModerator{}
+
+// NewMsgChangeModerator - construct a msg.
+func NewMsgChangeModerator(modAddress, newModeratorAddress sdk.AccAddress) *MsgChangeModerator {
+	return &MsgChangeModerator{ModeratorAddress: modAddress.String(), NewModeratorAddress: newModeratorAddress.String()}
+}
+
+// Route Implements Msg.
+func (msg MsgChangeModerator) Route() string { return RouterKey }
+
+// Type Implements Msg.
+func (msg MsgChangeModerator) Type() string { return TypeMsgChangeModerator }
+
+// ValidateBasic Implements Msg.
+func (msg MsgChangeModerator) ValidateBasic() error {
+	if _, err := sdk.AccAddressFromBech32(msg.ModeratorAddress); err != nil {
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, " moderator address, %s", err)
+	}
+
+	if _, err := sdk.AccAddressFromBech32(msg.NewModeratorAddress); err != nil {
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, " new moderator address, %s", err)
+	}
+
+	return nil
+}
+
+// GetSignBytes Implements Msg.
+func (msg MsgChangeModerator) GetSignBytes() []byte {
+	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(&msg))
+}
+
+// GetSigners Implements Msg.
+func (msg MsgChangeModerator) GetSigners() []sdk.AccAddress {
+	authAddress, _ := sdk.AccAddressFromBech32(msg.ModeratorAddress)
+	return []sdk.AccAddress{authAddress}
+}
 
 var _ sdk.Msg = &MsgSwap{}
 
@@ -84,7 +124,7 @@ func NewMsgRegisterAdmin(modAddress, adminAddress sdk.AccAddress, exchangeId mat
 func (msg MsgRegisterAdmin) Route() string { return RouterKey }
 
 // Type Implements Msg.
-func (msg MsgRegisterAdmin) Type() string { return TypeMsgRegisterExchange }
+func (msg MsgRegisterAdmin) Type() string { return TypeMsgRegisterAdmin }
 
 // ValidateBasic Implements Msg.
 func (msg MsgRegisterAdmin) ValidateBasic() error {
@@ -123,7 +163,7 @@ func NewMsgRemoveAdmin(modAddress, adminAddress sdk.AccAddress) *MsgRemoveAdmin 
 func (msg MsgRemoveAdmin) Route() string { return RouterKey }
 
 // Type Implements Msg.
-func (msg MsgRemoveAdmin) Type() string { return TypeMsgRegisterExchange }
+func (msg MsgRemoveAdmin) Type() string { return TypeMsgRemoveAdmin }
 
 // ValidateBasic Implements Msg.
 func (msg MsgRemoveAdmin) ValidateBasic() error {
@@ -230,39 +270,42 @@ func (msg MsgUpdateExchange) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{authAddress}
 }
 
-var _ sdk.Msg = &MsgChangeModerator{}
+var _ sdk.Msg = &MsgUpdateRatemeter{}
 
-// NewMsgChangeModerator - construct a msg.
-func NewMsgChangeModerator(modAddress, newModeratorAddress sdk.AccAddress) *MsgChangeModerator {
-	return &MsgChangeModerator{ModeratorAddress: modAddress.String(), NewModeratorAddress: newModeratorAddress.String()}
+// NewMsgUpdateRatemeter - construct a msg.
+func NewMsgUpdateRatemeter(moderatorAddress sdk.AccAddress, ratemeter *Ratemeter) *MsgUpdateRatemeter {
+	return &MsgUpdateRatemeter{
+		ModeratorAddress: moderatorAddress.String(),
+		Ratemeter:        ratemeter,
+	}
 }
 
 // Route Implements Msg.
-func (msg MsgChangeModerator) Route() string { return RouterKey }
+func (msg MsgUpdateRatemeter) Route() string { return RouterKey }
 
 // Type Implements Msg.
-func (msg MsgChangeModerator) Type() string { return TypeMsgChangeModerator }
+func (msg MsgUpdateRatemeter) Type() string { return TypeMsgUpdateRatemeter }
 
 // ValidateBasic Implements Msg.
-func (msg MsgChangeModerator) ValidateBasic() error {
+func (msg MsgUpdateRatemeter) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(msg.ModeratorAddress); err != nil {
 		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, " moderator address, %s", err)
 	}
 
-	if _, err := sdk.AccAddressFromBech32(msg.NewModeratorAddress); err != nil {
-		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, " new moderator address, %s", err)
+	if err := ValidateRatemeter(msg.Ratemeter); err != nil {
+		return errorsmod.Wrapf(ErrInvalidExchange, "%s", err)
 	}
 
 	return nil
 }
 
 // GetSignBytes Implements Msg.
-func (msg MsgChangeModerator) GetSignBytes() []byte {
+func (msg MsgUpdateRatemeter) GetSignBytes() []byte {
 	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(&msg))
 }
 
 // GetSigners Implements Msg.
-func (msg MsgChangeModerator) GetSigners() []sdk.AccAddress {
-	authAddress, _ := sdk.AccAddressFromBech32(msg.ModeratorAddress)
-	return []sdk.AccAddress{authAddress}
+func (msg MsgUpdateRatemeter) GetSigners() []sdk.AccAddress {
+	moderatorAddress, _ := sdk.AccAddressFromBech32(msg.ModeratorAddress)
+	return []sdk.AccAddress{moderatorAddress}
 }

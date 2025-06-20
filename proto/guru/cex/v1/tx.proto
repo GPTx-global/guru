@@ -21,6 +21,7 @@ service Msg {
   rpc RegisterExchange(MsgRegisterExchange) returns (MsgRegisterExchangeResponse);
   rpc UpdateExchange(MsgUpdateExchange) returns (MsgUpdateExchangeResponse);
   rpc ChangeModerator(MsgChangeModerator) returns (MsgChangeModeratorResponse);
+  rpc UpdateRatemeter(MsgUpdateRatemeter) returns (MsgUpdateRatemeterResponse);
 }
 
 // msg declaration for swapping coins.
@@ -146,4 +147,22 @@ message MsgChangeModerator {
 
 // Response type for the Msg/ChangeModerator.
 message MsgChangeModeratorResponse {
+}
+
+// msg declaration for updating the rate.
+message MsgUpdateRatemeter {
+  option (cosmos.msg.v1.signer) = "moderator_address";
+
+  option (gogoproto.equal)           = false;
+  option (gogoproto.goproto_getters) = false;
+
+  string   moderator_address                 = 1 
+      [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  
+  // ratemeter
+  Ratemeter ratemeter = 2;
+}
+
+// Response type for the Msg/UpdateRate.
+message MsgUpdateRatemeterResponse {
 }

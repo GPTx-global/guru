@@ -24,15 +24,19 @@ service Query {
   }
 
   rpc Exchanges(QueryExchangesRequest) returns (QueryExchangesResponse) {
-    option (google.api.http).get = "/guru/cex/v1/list";
+    option (google.api.http).get = "/guru/cex/v1/exchanges";
   }
 
-  rpc Admins(QueryAdminsRequest) returns (QueryAdminsResponse) {
-    option (google.api.http).get = "/guru/cex/v1/list";
+  rpc IsAdmin(QueryIsAdminRequest) returns (QueryIsAdminResponse) {
+    option (google.api.http).get = "/guru/cex/v1/isadmin/{address}";
   }
 
   rpc NextExchangeId(QueryNextExchangeIdRequest) returns (QueryNextExchangeIdResponse) {
     option (google.api.http).get = "/guru/cex/v1/next_exchange_id";
+  }
+
+   rpc Ratemeter(QueryRatemeterRequest) returns (QueryRatemeterResponse) {
+    option (google.api.http).get = "/guru/cex/v1/ratemeter";
   }
 
 }
@@ -61,6 +65,7 @@ message QueryAttributesResponse {
 
 // Request type for the Query/CoinPair RPC method.
 message QueryExchangesRequest {
+  string id = 1;
 }
 
 // Response type for the Query/CoinPair RPC method.
@@ -71,14 +76,13 @@ message QueryExchangesResponse {
 }
 
 // Request type for the Query/CoinPair RPC method.
-message QueryAdminsRequest {
+message QueryIsAdminRequest {
+  string address  = 1;
 }
 
 // Response type for the Query/CoinPair RPC method.
-message QueryAdminsResponse {
-  repeated Admin admins = 1 [
-    (gogoproto.nullable)   = false
-  ];
+message QueryIsAdminResponse {
+  bool is_admin = 1;
 }
 
 // Request type for the Query/CoinPair RPC method.
@@ -90,6 +94,17 @@ message QueryNextExchangeIdResponse {
   string id = 1 [
     (cosmos_proto.scalar) = "cosmos.Int", 
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int", 
+    (gogoproto.nullable) = false
+  ];
+}
+
+// Request type for the Query/Coin RPC method.
+message QueryRatemeterRequest {
+}
+
+// Response type for the Query/Coin RPC method.
+message QueryRatemeterResponse {
+  Ratemeter ratemeter = 1 [
     (gogoproto.nullable) = false
   ];
 }

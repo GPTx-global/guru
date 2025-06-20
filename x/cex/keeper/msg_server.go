@@ -52,10 +52,21 @@ func (k Keeper) RegisterAdmin(goCtx context.Context, msg *types.MsgRegisterAdmin
 		return nil, err
 	}
 
-	if msg.ExchangeId.IsZero() {
-		k.AddNewAdmin(ctx, types.Admin{Address: msg.AdminAddress, Exchanges: types.AdminExchanges{}})
-	} else {
-		k.SetAdmin(ctx, msg.AdminAddress, msg.ExchangeId)
+	k.AddAdmin(ctx, msg.AdminAddress)
+
+	if !msg.ExchangeId.IsNil() && !msg.ExchangeId.IsZero() {
+		err = k.SetExchangeAttribute(ctx, msg.ExchangeId, types.Attribute{Key: types.KeyExchangeAdminAddress, Value: msg.AdminAddress})
+		if err != nil {
+			return nil, err
+		}
+		ctx.EventManager().EmitEvent(
+			sdk.NewEvent(
+				types.EventTypeUpdateExchange,
+				sdk.NewAttribute(types.AttributeKeyAdmin, msg.AdminAddress),
+				sdk.NewAttribute(types.AttributeKeyExchangeId, msg.ExchangeId.String()),
+				sdk.NewAttribute(types.AttributeKeyAttributes, fmt.Sprintf(`{"key": "%s", "value": "%s"}`, types.KeyExchangeAdminAddress, msg.AdminAddress)),
+			),
+		)
 	}
 
 	ctx.EventManager().EmitEvent(
@@ -107,10 +118,10 @@ func (k Keeper) RegisterExchange(goCtx context.Context, msg *types.MsgRegisterEx
 	// validate the ID
 	nextExchangeId := k.GetNextExchangeId(ctx)
 	if !msg.Exchange.Id.Equal(nextExchangeId) {
-		return nil, errorsmod.Wrapf(types.ErrInvalidExchangeId, "expected: %s, got: %s", nextExchangeId, msg.Exchange.Id)
+		return nil, errorsmod.Wrapf(types.ErrInvalidExchange, " wrong id. expected: %s, got: %s", nextExchangeId, msg.Exchange.Id)
 	}
 
-	if !k.IsAdmin(ctx, msg.AdminAddress) {
+	if !k.IsAdminRegistered(ctx, msg.AdminAddress) {
 		return nil, errorsmod.Wrapf(types.ErrWrongAdmin, "%s is not an admin", msg.AdminAddress)
 	}
 
@@ -118,9 +129,13 @@ func (k Keeper) RegisterExchange(goCtx context.Context, msg *types.MsgRegisterEx
 	if err != nil {
 		return nil, err
 	}
+	attributes := types.AttributesToMap(msg.Exchange.Attributes)
 
-	k.AddNewExchange(ctx, msg.Exchange)
-	k.SetAdmin(ctx, msg.AdminAddress, msg.Exchange.Id)
+	if msg.AdminAddress != attributes[types.KeyExchangeAdminAddress] {
+		return nil, errorsmod.Wrapf(types.ErrWrongAdmin, " only sender can be admin of the exchange")
+	}
+
+	k.AddExchange(ctx, msg.Exchange)
 
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
@@ -137,11 +152,21 @@ func (k Keeper) RegisterExchange(goCtx context.Context, msg *types.MsgRegisterEx
 func (k Keeper) UpdateExchange(goCtx context.Context, msg *types.MsgUpdateExchange) (*types.MsgUpdateExchangeResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	if !k.IsAdminOf(ctx, msg.AdminAddress, msg.Id) {
-		return nil, errorsmod.Wrapf(types.ErrWrongAdmin, "%s is not admin of exchange %d", msg.AdminAddress, msg.Id)
+	exchange, err := k.GetExchange(ctx, msg.Id)
+	if err != nil {
+		return nil, err
 	}
 
-	k.SetExchangeAttribute(ctx, msg.Id, types.Attribute{Key: msg.Key, Value: msg.Value})
+	attributes := types.AttributesToMap(exchange.Attributes)
+
+	if msg.AdminAddress != attributes[types.KeyExchangeAdminAddress] {
+		return nil, errorsmod.Wrapf(types.ErrWrongAdmin, " expected: %s, got: %s", attributes[types.KeyExchangeAdminAddress], msg.AdminAddress)
+	}
+
+	err = k.SetExchangeAttribute(ctx, msg.Id, types.Attribute{Key: msg.Key, Value: msg.Value})
+	if err != nil {
+		return nil, err
+	}
 
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
@@ -180,4 +205,32 @@ func (k Keeper) ChangeModerator(goCtx context.Context, msg *types.MsgChangeModer
 	)
 
 	return &types.MsgChangeModeratorResponse{}, nil
+}
+
+func (k Keeper) UpdateRatemeter(goCtx context.Context, msg *types.MsgUpdateRatemeter) (*types.MsgUpdateRatemeterResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	ratemeter, err := k.GetRatemeter(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	if !msg.Ratemeter.RequestCountLimit.IsNil() && !msg.Ratemeter.RequestCountLimit.IsZero() {
+		ratemeter.RequestCountLimit = msg.Ratemeter.RequestCountLimit
+	}
+	if msg.Ratemeter.RequestPeriod > 0 {
+		ratemeter.RequestPeriod = msg.Ratemeter.RequestPeriod
+	}
+
+	k.SetRatemeter(ctx, ratemeter)
+
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			types.EventTypeUpdateRatemeter,
+			sdk.NewAttribute("request_count_limit", ratemeter.RequestCountLimit.String()),
+			sdk.NewAttribute("request_period", ratemeter.RequestPeriod.String()),
+		),
+	)
+
+	return &types.MsgUpdateRatemeterResponse{}, nil
 }

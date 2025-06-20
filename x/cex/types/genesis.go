@@ -7,11 +7,11 @@ import (
 )
 
 // NewGenesisState creates a new GenesisState object
-func NewGenesisState(moderator_address string, exchanges []Exchange, admins []Admin) GenesisState {
+func NewGenesisState(moderator_address string, ratemeter Ratemeter, exchanges []Exchange) GenesisState {
 	return GenesisState{
 		ModeratorAddress: moderator_address,
+		Ratemeter:        ratemeter,
 		Exchanges:        exchanges,
-		Admins:           admins,
 	}
 }
 
@@ -19,8 +19,8 @@ func NewGenesisState(moderator_address string, exchanges []Exchange, admins []Ad
 func DefaultGenesisState() *GenesisState {
 	return &GenesisState{
 		ModeratorAddress: "",
+		Ratemeter:        DefaultRatemeter(),
 		Exchanges:        []Exchange{},
-		Admins:           []Admin{},
 	}
 }
 

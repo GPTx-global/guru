@@ -13,11 +13,9 @@ import (
 func InitGenesis(ctx sdk.Context, keeper keeper.Keeper, bk types.BankKeeper, data types.GenesisState) {
 	keeper.SetModeratorAddress(ctx, data.ModeratorAddress)
 	for _, exchange := range data.Exchanges {
-		keeper.AddNewExchange(ctx, &exchange)
+		keeper.AddExchange(ctx, &exchange)
 	}
-	for _, admin := range data.Admins {
-		keeper.AddNewAdmin(ctx, admin)
-	}
+	keeper.SetRatemeter(ctx, &data.Ratemeter)
 }
 
 // ExportGenesis returns a GenesisState for a given context and keeper.
@@ -27,9 +25,9 @@ func ExportGenesis(ctx sdk.Context, keeper keeper.Keeper) types.GenesisState {
 	if err != nil {
 		panic(fmt.Errorf("unable to fetch exchanges %v", err))
 	}
-	admins, _, err := keeper.GetPaginatedAdmins(ctx, &query.PageRequest{Limit: query.MaxLimit})
+	ratemeter, err := keeper.GetRatemeter(ctx)
 	if err != nil {
-		panic(fmt.Errorf("unable to fetch admins %v", err))
+		panic(fmt.Errorf("unable to fetch ratemeter %v", err))
 	}
-	return types.NewGenesisState(moderator_address, exchanges, admins)
+	return types.NewGenesisState(moderator_address, *ratemeter, exchanges)
 }

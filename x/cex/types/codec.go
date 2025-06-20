@@ -48,6 +48,7 @@ const (
 	registerExchangeName = "guru/MsgRegisterExchange"
 	updateExchangeName   = "guru/MsgUpdateExchange"
 	changeModeratorName  = "guru/MsgChangeModerator"
+	updateRatemeterName  = "guru/MsgUpdateRatemeter"
 )
 
 // NOTE: This is required for the GetSignBytes function
@@ -65,6 +66,7 @@ func RegisterInterfaces(registry codectypes.InterfaceRegistry) {
 		&MsgRegisterExchange{},
 		&MsgUpdateExchange{},
 		&MsgChangeModerator{},
+		&MsgUpdateRatemeter{},
 	)
 
 	msgservice.RegisterMsgServiceDesc(registry, &_Msg_serviceDesc)
@@ -79,4 +81,5 @@ func RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {
 	cdc.RegisterConcrete(&MsgRegisterExchange{}, registerExchangeName, nil)
 	cdc.RegisterConcrete(&MsgUpdateExchange{}, updateExchangeName, nil)
 	cdc.RegisterConcrete(&MsgChangeModerator{}, changeModeratorName, nil)
+	cdc.RegisterConcrete(&MsgUpdateRatemeter{}, updateRatemeterName, nil)
 }

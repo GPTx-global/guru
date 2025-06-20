@@ -26,7 +26,7 @@ func (k Keeper) Attributes(c context.Context, req *types.QueryAttributesRequest)
 	ctx := sdk.UnwrapSDKContext(c)
 	id, ok := math.NewIntFromString(req.Id)
 	if !ok {
-		return nil, errorsmod.Wrapf(types.ErrInvalidExchangeId, "%s", req.Id)
+		return nil, errorsmod.Wrapf(types.ErrInvalidExchange, " invalid id %s", req.Id)
 	}
 	attributes, err := k.GetExchangeAttribute(ctx, id, req.Key)
 	if err != nil {
@@ -41,20 +41,17 @@ func (k Keeper) Exchanges(c context.Context, req *types.QueryExchangesRequest) (
 	ctx := sdk.UnwrapSDKContext(c)
 	exchanges, _, err := k.GetPaginatedExchanges(ctx, &query.PageRequest{Limit: query.MaxLimit})
 	if err != nil {
-		return nil, errorsmod.Wrapf(types.ErrUnableToFetch, "exchanges %s", err)
+		return nil, errorsmod.Wrapf(types.ErrNotFound, " exchanges %s", err)
 	}
 
 	return &types.QueryExchangesResponse{Exchanges: exchanges}, nil
 }
 
-func (k Keeper) Admins(c context.Context, req *types.QueryAdminsRequest) (*types.QueryAdminsResponse, error) {
+func (k Keeper) IsAdmin(c context.Context, req *types.QueryIsAdminRequest) (*types.QueryIsAdminResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
-	admins, _, err := k.GetPaginatedAdmins(ctx, &query.PageRequest{Limit: query.MaxLimit})
-	if err != nil {
-		return nil, errorsmod.Wrapf(types.ErrUnableToFetch, "admins %s", err)
-	}
+	ok := k.IsAdminRegistered(ctx, req.Address)
 
-	return &types.QueryAdminsResponse{Admins: admins}, nil
+	return &types.QueryIsAdminResponse{IsAdmin: ok}, nil
 }
 
 // NextExchangeId returns the next exchange id (RegisterExchange msg should match this id).
@@ -63,4 +60,13 @@ func (k Keeper) NextExchangeId(c context.Context, _ *types.QueryNextExchangeIdRe
 	id := k.GetNextExchangeId(ctx)
 
 	return &types.QueryNextExchangeIdResponse{Id: id}, nil
+}
+
+func (k Keeper) Ratemeter(c context.Context, _ *types.QueryRatemeterRequest) (*types.QueryRatemeterResponse, error) {
+	ctx := sdk.UnwrapSDKContext(c)
+	ratemeter, err := k.GetRatemeter(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return &types.QueryRatemeterResponse{Ratemeter: *ratemeter}, nil
 }

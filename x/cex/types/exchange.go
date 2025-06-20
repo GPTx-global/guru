@@ -7,8 +7,12 @@ import (
 )
 
 func ValidateExchange(exchange *Exchange) error {
-	if exchange.Id.IsNil() || exchange.Id.IsZero() {
-		return errorsmod.Wrapf(ErrInvalidExchangeId, "zero or nil id not allowed")
+	if exchange.Id.IsNil() {
+		return errorsmod.Wrapf(ErrInvalidExchange, " id is nil")
+	}
+
+	if exchange.Id.IsZero() {
+		return errorsmod.Wrapf(ErrInvalidExchange, " id is zero")
 	}
 
 	for _, attribute := range exchange.Attributes {

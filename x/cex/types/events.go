@@ -9,6 +9,7 @@ const (
 	EventTypeRegisterExchange = ModuleName + "_register_exchange"
 	EventTypeUpdateExchange   = ModuleName + "_update_exchange"
 	EventTypeChangeModerator  = ModuleName + "_change_moderator_address"
+	EventTypeUpdateRatemeter  = ModuleName + "_update_ratemeter"
 
 	// event attributes
 	AttributeKeyAddress    = "address"

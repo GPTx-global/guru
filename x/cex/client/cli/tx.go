@@ -3,6 +3,7 @@ package cli
 import (
 	"fmt"
 	"io/ioutil"
+	"time"
 
 	"github.com/GPTx-global/guru/x/cex/types"
 	"github.com/cosmos/cosmos-sdk/client"
@@ -31,6 +32,7 @@ func GetTxCmd() *cobra.Command {
 	cmd.AddCommand(NewRegisterExchangeTxCmd())
 	cmd.AddCommand(NewUpdateExchangeTxCmd())
 	cmd.AddCommand(NewChangeModeratorTxCmd())
+	cmd.AddCommand(NewUpdateRatemeterTxCmd())
 	return cmd
 }
 
@@ -48,7 +50,7 @@ func NewSwapTxCmd() *cobra.Command {
 
 			id, ok := math.NewIntFromString(args[0])
 			if !ok {
-				return errorsmod.Wrapf(types.ErrInvalidExchangeId, "")
+				return errorsmod.Wrapf(types.ErrInvalidExchange, " invalid id")
 			}
 
 			amount, err := sdk.ParseCoinNormalized(args[3])
@@ -88,7 +90,7 @@ func NewRegisterAdminTxCmd() *cobra.Command {
 			if len(args) > 1 {
 				exchangeId, ok = math.NewIntFromString(args[1])
 				if !ok {
-					return errorsmod.Wrapf(types.ErrInvalidExchangeId, "")
+					return errorsmod.Wrapf(types.ErrInvalidExchange, " invalid id")
 				}
 			}
 
@@ -144,18 +146,6 @@ func NewRegisterExchangeTxCmd() *cobra.Command {
 			cdc := codec.NewProtoCodec(clientCtx.InterfaceRegistry)
 
 			var exchange types.Exchange
-			// if err := cdc.UnmarshalInterfaceJSON([]byte(args[0]), &exchange); err != nil {
-
-			// 	// check for file path if JSON input is not provided
-			// 	contents, err := ioutil.ReadFile(args[0])
-			// 	if err != nil {
-			// 		return errorsmod.Wrapf(types.ErrInvalidJsonFile, "%s", err)
-			// 	}
-
-			// 	if err := cdc.UnmarshalInterfaceJSON(contents, &exchange); err != nil {
-			// 		return errorsmod.Wrapf(types.ErrInvalidJsonFile, "%s", err)
-			// 	}
-			// }
 
 			if err := cdc.UnmarshalJSON([]byte(args[0]), &exchange); err != nil {
 				// If that fails, treat it as a filepath
@@ -166,6 +156,16 @@ func NewRegisterExchangeTxCmd() *cobra.Command {
 
 				if err := cdc.UnmarshalJSON(contents, &exchange); err != nil {
 					return errorsmod.Wrapf(types.ErrInvalidJsonFile, "%s", err)
+				}
+				ok := false
+				for idx, attr := range exchange.Attributes {
+					if attr.Key == types.KeyExchangeAdminAddress {
+						exchange.Attributes[idx].Value = clientCtx.GetFromAddress().String()
+						ok = true
+					}
+				}
+				if !ok {
+					exchange.Attributes = append(exchange.Attributes, types.Attribute{Key: types.KeyExchangeAdminAddress, Value: clientCtx.GetFromAddress().String()})
 				}
 			}
 
@@ -193,7 +193,7 @@ func NewUpdateExchangeTxCmd() *cobra.Command {
 
 			id, ok := math.NewIntFromString(args[0])
 			if !ok {
-				return errorsmod.Wrapf(types.ErrInvalidExchangeId, "")
+				return errorsmod.Wrapf(types.ErrInvalidExchange, " invalid id")
 			}
 
 			msg := types.NewMsgUpdateExchange(clientCtx.GetFromAddress(), id, args[1], args[2])
@@ -224,6 +224,37 @@ func NewChangeModeratorTxCmd() *cobra.Command {
 			}
 
 			msg := types.NewMsgChangeModerator(clientCtx.GetFromAddress(), newModAddr)
+
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
+		},
+	}
+
+	flags.AddTxFlagsToCmd(cmd)
+	return cmd
+}
+
+func NewUpdateRatemeterTxCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "update_ratemeter [request_count_limit] [request_period] --from [moderator_address]",
+		Short: "Update the ratemeter. request_period example: 10s, 1m, 1h, 1h30m. 24h",
+		Args:  cobra.ExactArgs(2),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return err
+			}
+
+			requestCountLimit, ok := math.NewIntFromString(args[0])
+			if !ok {
+				return errorsmod.Wrapf(types.ErrInvalidRatemeter, " invalid request count limit")
+			}
+
+			requestPeriod, err := time.ParseDuration(args[1])
+			if err != nil {
+				return errorsmod.Wrapf(types.ErrInvalidRatemeter, " invalid request period. %s", err)
+			}
+
+			msg := types.NewMsgUpdateRatemeter(clientCtx.GetFromAddress(), &types.Ratemeter{RequestCountLimit: requestCountLimit, RequestPeriod: requestPeriod})
 
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},
