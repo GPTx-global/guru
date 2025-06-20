@@ -10,10 +10,10 @@ import (
 	"github.com/GPTx-global/guru/oracle/config"
 	"github.com/GPTx-global/guru/oracle/log"
 	"github.com/GPTx-global/guru/oracle/types"
+	oracletypes "github.com/GPTx-global/guru/x/oracle/types"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	coretypes "github.com/tendermint/tendermint/rpc/core/types"
 	tmtypes "github.com/tendermint/tendermint/types"
@@ -27,28 +27,6 @@ const (
 	AttributeKeyAccountList           = "account_list"
 )
 
-// setupSubscribeManagerTest configures the necessary environment for the suite.
-// It initializes the logger and config, creates a test key, and returns
-// a configured address for filtering tests.
-func setupSubscribeManagerTest(t *testing.T) sdk.AccAddress {
-	log.InitLogger()
-	config.SetForTesting(
-		"test-chain",
-		"http://localhost:26657",
-		"test-validator",
-		os.TempDir(),
-		keyring.BackendTest,
-		"100uatom",
-		300000,
-	)
-
-	kr := config.Keyring()
-	_, _, err := kr.NewMnemonic(config.KeyName(), keyring.English, sdk.FullFundraiserPath, keyring.DefaultBIP39Passphrase, hd.Secp256k1)
-	require.NoError(t, err, "failed to create test key")
-
-	return config.Address()
-}
-
 type SubscribeManagerSuite struct {
 	suite.Suite
 	sm           *SubscribeManager
@@ -61,7 +39,14 @@ type SubscribeManagerSuite struct {
 }
 
 func (s *SubscribeManagerSuite) SetupSuite() {
-	s.testAddr = setupSubscribeManagerTest(s.T())
+	log.InitLogger()
+	config.SetForTesting("test-chain", "", "test", os.TempDir(), keyring.BackendTest, "", 0)
+
+	kr := config.Keyring()
+	_, _, err := kr.NewMnemonic(config.KeyName(), keyring.English, sdk.FullFundraiserPath, keyring.DefaultBIP39Passphrase, hd.Secp256k1)
+	s.Require().NoError(err, "failed to create test key")
+
+	s.testAddr = config.Address()
 }
 
 func (s *SubscribeManagerSuite) SetupTest() {
@@ -74,7 +59,7 @@ func (s *SubscribeManagerSuite) SetupTest() {
 	s.completeChan = make(chan coretypes.ResultEvent, 1)
 	s.sm.subscriptions[registerMsg] = s.registerChan
 	s.sm.subscriptions[updateMsg] = s.updateChan
-	s.sm.subscriptions[completeMsg] = s.completeChan
+	s.sm.subscriptions[oracletypes.EventTypeCompleteOracleDataSet] = s.completeChan
 }
 
 func (s *SubscribeManagerSuite) TearDownTest() {
@@ -124,7 +109,10 @@ func (s *SubscribeManagerSuite) TestSubscribe_RegisterEventSuccess() {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		receivedJobs = s.sm.Subscribe()
+		event := s.sm.Subscribe()
+		if event != nil {
+			receivedJobs = types.MakeJobs(*event)
+		}
 	}()
 
 	registerEvent := coretypes.ResultEvent{
@@ -150,7 +138,10 @@ func (s *SubscribeManagerSuite) TestSubscribe_RegisterEventFiltered() {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		receivedJobs = s.sm.Subscribe()
+		event := s.sm.Subscribe()
+		if event != nil {
+			receivedJobs = types.MakeJobs(*event)
+		}
 	}()
 
 	filteredEvent := coretypes.ResultEvent{
@@ -173,7 +164,10 @@ func (s *SubscribeManagerSuite) TestSubscribe_UpdateEvent() {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		receivedJobs = s.sm.Subscribe()
+		event := s.sm.Subscribe()
+		if event != nil {
+			receivedJobs = types.MakeJobs(*event)
+		}
 	}()
 
 	updateEvent := coretypes.ResultEvent{
@@ -197,7 +191,10 @@ func (s *SubscribeManagerSuite) TestSubscribe_CompleteEvent() {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		receivedJobs = s.sm.Subscribe()
+		event := s.sm.Subscribe()
+		if event != nil {
+			receivedJobs = types.MakeJobs(*event)
+		}
 	}()
 
 	completeEvent := coretypes.ResultEvent{
@@ -225,7 +222,10 @@ func (s *SubscribeManagerSuite) TestSubscribe_ContextCanceled() {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		receivedJobs = sm.Subscribe()
+		event := sm.Subscribe()
+		if event != nil {
+			receivedJobs = types.MakeJobs(*event)
+		}
 	}()
 
 	cancel()

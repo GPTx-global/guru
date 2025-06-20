@@ -37,28 +37,25 @@ func executorClient() *http.Client {
 }
 
 // executeJob processes a job by fetching data from URL and extracting value by path.
-var executeJob = func(job *types.Job) *types.JobResult {
+var executeJob = func(job *types.Job) (*types.JobResult, error) {
 	if 1 < job.Nonce {
 		<-time.After(job.Delay)
 	}
 
 	rawData, err := fetchRawData(job.URL)
 	if err != nil {
-		fmt.Printf("failed to fetch raw data: %v\n", err)
-		return nil
+		return nil, fmt.Errorf("failed to fetch raw data: %w", err)
 	}
 
 	var parsedData map[string]any
 	parsedData, err = parseJSON(rawData)
 	if err != nil {
-		fmt.Printf("failed to parse JSON: %v\n", err)
-		return nil
+		return nil, fmt.Errorf("failed to parse JSON: %w", err)
 	}
 
 	extractedValue, err := extractDataByPath(parsedData, job.Path)
 	if err != nil {
-		fmt.Printf("failed to extract data by path: %v\n", err)
-		return nil
+		return nil, fmt.Errorf("failed to extract data by path: %w", err)
 	}
 
 	fmt.Printf("[EXECUTOR] ID: %5d, Nonce: %5d, Data: %s\n", job.ID, job.Nonce, extractedValue)
@@ -69,36 +66,54 @@ var executeJob = func(job *types.Job) *types.JobResult {
 		Nonce: job.Nonce,
 	}
 
-	return jr
+	return jr, nil
 }
 
-// fetchRawData makes HTTP GET request to the specified URL and returns response body
+// fetchRawData makes HTTP GET request to the specified URL and returns response body.
+// It implements a retry mechanism with exponential backoff for transient errors.
 func fetchRawData(url string) ([]byte, error) {
-	req, err := http.NewRequest("GET", url, nil)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create request: %w", err)
+	var i uint64
+	for i = 0; ; i++ {
+		if 0 < i {
+			delay := time.Second // Exponential backoff: 1s, 2s
+			fmt.Printf("Request to %s failed. Retrying in %v... (Attempt %d)\n", url, delay, i+1)
+			time.Sleep(delay)
+		}
+
+		req, err := http.NewRequest("GET", url, nil)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create request: %w", err) // Non-retryable
+		}
+
+		req.Header.Set("User-Agent", "Oracle-Daemon/1.0")
+		req.Header.Set("Accept", "application/json")
+
+		res, err := executorClient().Do(req)
+		if err != nil {
+			continue // Retry on network-level errors
+		}
+
+		if res.StatusCode == http.StatusOK {
+			body, readErr := io.ReadAll(res.Body)
+			res.Body.Close()
+			if readErr != nil {
+				// This is unlikely but if it happens, it's better to not retry.
+				return nil, fmt.Errorf("failed to read response body: %w", readErr)
+			}
+			return body, nil // Success
+		}
+
+		// Retry on 5xx server errors
+		if res.StatusCode >= 500 {
+			res.Body.Close()
+			continue
+		}
+
+		// For any other non-OK status, fail immediately (e.g., 4xx client errors)
+		body, _ := io.ReadAll(res.Body)
+		res.Body.Close()
+		return nil, fmt.Errorf("unexpected status: %s (%s)", res.Status, string(body))
 	}
-
-	req.Header.Set("User-Agent", "Oracle-Daemon/1.0")
-	req.Header.Set("Accept", "application/json")
-
-	res, err := executorClient().Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("failed to fetch raw data: %w", err)
-	}
-
-	defer res.Body.Close()
-
-	if res.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("unexpected status: %s", res.Status)
-	}
-
-	body, err := io.ReadAll(res.Body)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read response body: %w", err)
-	}
-
-	return body, nil
 }
 
 // parseJSON parses raw JSON data into a map, handles both objects and arrays
@@ -154,6 +169,7 @@ func extractDataByPath(data map[string]any, path string) (string, error) {
 		default:
 			return "", fmt.Errorf("cannot traverse '%s' in type %T", part, current)
 		}
+
 	}
 
 	return fmt.Sprintf("%v", current), nil
@@ -172,6 +188,5 @@ func parseArrayIndex(s string) (int, error) {
 		}
 		result = result*10 + int(char-'0')
 	}
-
 	return result, nil
 }

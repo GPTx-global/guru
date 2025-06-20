@@ -8,7 +8,6 @@ import (
 
 	"github.com/GPTx-global/guru/oracle/config"
 	"github.com/GPTx-global/guru/oracle/log"
-	"github.com/GPTx-global/guru/oracle/types"
 	oracletypes "github.com/GPTx-global/guru/x/oracle/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/tendermint/tendermint/rpc/client/http"
@@ -18,7 +17,6 @@ import (
 var (
 	registerMsg = "/guru.oracle.v1.MsgRegisterOracleRequestDoc"
 	updateMsg   = "/guru.oracle.v1.MsgUpdateOracleRequestDoc"
-	completeMsg = "complete_oracle_data_set"
 )
 
 type SubscribeManager struct {
@@ -74,12 +72,19 @@ func (sm *SubscribeManager) SetSubscribe(client *http.HTTP) error {
 	}
 	sm.subscriptions[updateMsg] = ch
 
-	completeQuery := fmt.Sprintf("tm.event='NewBlock' AND %s.request_id EXISTS", completeMsg)
-	ch, err = client.Subscribe(sm.ctx, completeMsg, completeQuery, sm.channelSize)
+	completeQuery := fmt.Sprintf("tm.event='NewBlock' AND %s.%s EXISTS", oracletypes.EventTypeCompleteOracleDataSet, oracletypes.AttributeKeyRequestId)
+	ch, err = client.Subscribe(sm.ctx, oracletypes.EventTypeCompleteOracleDataSet, completeQuery, sm.channelSize)
 	if err != nil {
-		return fmt.Errorf("failed to subscribe to %s: %w", completeMsg, err)
+		return fmt.Errorf("failed to subscribe to %s: %w", oracletypes.EventTypeCompleteOracleDataSet, err)
 	}
-	sm.subscriptions[completeMsg] = ch
+	sm.subscriptions[oracletypes.EventTypeCompleteOracleDataSet] = ch
+
+	// minGasPriceQuery := fmt.Sprintf("tm.event='NewBlock' AND %s.%s EXISTS", feemarkettypes.EventTypeChangeMinGasPrice, feemarkettypes.AttributeKeyMinGasPrice)
+	// ch, err = client.Subscribe(sm.ctx, feemarkettypes.EventTypeChangeMinGasPrice, minGasPriceQuery, sm.channelSize)
+	// if err != nil {
+	// 	return fmt.Errorf("failed to subscribe to %s: %w", feemarkettypes.EventTypeChangeMinGasPrice, err)
+	// }
+	// sm.subscriptions[feemarkettypes.EventTypeChangeMinGasPrice] = ch
 
 	log.Debugf("end setting subscribe")
 
@@ -87,7 +92,7 @@ func (sm *SubscribeManager) SetSubscribe(client *http.HTTP) error {
 }
 
 // Subscribe listens for events from all subscribed channels and converts them to jobs
-func (sm *SubscribeManager) Subscribe() []*types.Job {
+func (sm *SubscribeManager) Subscribe() *coretypes.ResultEvent {
 	sm.subscriptionsLock.RLock()
 	defer sm.subscriptionsLock.RUnlock()
 
@@ -96,16 +101,13 @@ func (sm *SubscribeManager) Subscribe() []*types.Job {
 		if !sm.filterAccount(event, oracletypes.EventTypeRegisterOracleRequestDoc) {
 			return nil
 		}
-		// TODO: daemon account에 할달되었는지 확인 + 할당된 경우 어느 account가 어느 작업을 수행하는지 확인
-		// id, _ := strconv.ParseUint(event.Events[oracletypes.EventTypeRegisterOracleRequestDoc+"."+oracletypes.AttributeKeyRequestId][0], 10, 64)
-		// nonce, _ := strconv.ParseUint(event.Events[oracletypes.EventTypeRegisterOracleRequestDoc+"."+oracletypes.AttributeKeyNonce][0], 10, 64)
-		// fmt.Printf("[MONITOR-REGISTER] ID: %5d, Nonce: %5d\n", id, nonce)
-
-		return types.MakeJobs(event)
+		return &event
 	case event := <-sm.subscriptions[updateMsg]:
-		return types.MakeJobs(event)
-	case event := <-sm.subscriptions[completeMsg]:
-		return types.MakeJobs(event)
+		return &event
+	case event := <-sm.subscriptions[oracletypes.EventTypeCompleteOracleDataSet]:
+		return &event
+	// case event := <-sm.subscriptions[feemarkettypes.EventTypeChangeMinGasPrice]:
+	// 	return &event
 	case <-sm.ctx.Done():
 		return nil
 	}
