@@ -14,6 +14,7 @@ import (
 	"github.com/GPTx-global/guru/oracle/tx"
 	"github.com/GPTx-global/guru/oracle/types"
 	"github.com/GPTx-global/guru/oracle/woker"
+	feemarkettypes "github.com/GPTx-global/guru/x/feemarket/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/tendermint/tendermint/rpc/client/http"
@@ -115,7 +116,14 @@ func (d *Daemon) Stop() {
 // Monitor continuously listens for new events and processes them as jobs
 func (d *Daemon) Monitor() {
 	for {
-		if jobs := d.subscribeManager.Subscribe(); jobs != nil {
+		event := d.subscribeManager.Subscribe()
+		if event == nil {
+			continue
+		}
+		if gasPrice, ok := event.Events[feemarkettypes.EventTypeChangeMinGasPrice+"."+feemarkettypes.AttributeKeyMinGasPrice]; ok {
+			d.transactionManager.SetMinGasPrice(gasPrice[0])
+		}
+		if jobs := types.MakeJobs(*event); jobs != nil {
 			d.ProcessJob(jobs)
 		}
 	}
@@ -133,33 +141,33 @@ func (d *Daemon) ServeOracle() error {
 	for {
 		txBytes, err := d.transactionManager.BuildSubmitTx()
 		if err != nil {
-			log.Debugf("failed to build submit tx: %v", err)
+			log.Errorf("failed to build submit tx: %v", err)
 			continue
 		}
 
 		txResponse, err := d.transactionManager.BroadcastTx(txBytes)
 		if err != nil {
-			log.Debugf("failed to broadcast tx: %v, attempting to reconnect...", err)
+			log.Errorf("failed to broadcast tx: %v, attempting to reconnect...", err)
 			if err := d.reconnect(); err != nil {
-				log.Debugf("failed to reconnect: %v", err)
+				log.Errorf("failed to reconnect: %v", err)
 			}
 			time.Sleep(time.Second * 5)
 			continue
 		}
 
 		if txResponse.Code == 0 {
-			log.Debugf("tx success, Hash: \n\t[%s]", txResponse.TxHash)
+			log.Infof("tx success, Hash: \n\t[%s]", txResponse.TxHash)
 			d.transactionManager.IncrementSequenceNumber()
 		} else {
-			log.Debugf("tx failed: %s", txResponse.RawLog)
+			log.Errorf("tx failed: %s", txResponse.RawLog)
 
 			// sequence mismatch 에러인 경우 sequence 동기화 시도
 			if txResponse.Code == 32 { // sequence mismatch error code
 				log.Debugf("sequence mismatch error, attempting to sync sequence number")
 				if err := d.transactionManager.SyncSequenceNumber(); err != nil {
-					log.Debugf("failed to sync sequence: %v", err)
+					log.Errorf("failed to sync sequence: %v", err)
 				} else {
-					log.Debugf("sequence number synchronized")
+					log.Infof("sequence number synchronized")
 				}
 			}
 		}

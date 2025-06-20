@@ -31,7 +31,7 @@ func TestManagerSuite(t *testing.T) {
 
 func (s *ManagerSuite) SetupTest() {
 	log.InitLogger()
-	config.SetForTesting("test-chain", "", "test", os.TempDir(), keyring.BackendTest, "", 0, 3)
+	config.SetForTesting("test-chain", "", "test", os.TempDir(), keyring.BackendTest, "", 0)
 
 	s.jm = NewJobManager()
 	s.resultQueue = make(chan *types.JobResult, 100)
