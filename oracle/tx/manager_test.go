@@ -67,7 +67,7 @@ func TestTxManagerSuite(t *testing.T) {
 
 func (s *TxManagerSuite) SetupTest() {
 	log.InitLogger()
-	config.SetForTesting("test-chain", "http://localhost:26657", "test-validator", os.TempDir(), keyring.BackendTest, "100uatom", 300000, 3)
+	config.SetForTesting("test-chain", "http://localhost:26657", "test-validator", os.TempDir(), keyring.BackendTest, "100uatom", 300000)
 
 	kr := config.Keyring()
 	_, _, err := kr.NewMnemonic(config.KeyName(), keyring.English, sdk.FullFundraiserPath, keyring.DefaultBIP39Passphrase, hd.Secp256k1)

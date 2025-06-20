@@ -23,7 +23,6 @@ type configData struct {
 	Chain chainConfig `toml:"chain"`
 	Key   keyConfig   `toml:"key"`
 	Gas   gasConfig   `toml:"gas"`
-	App   appConfig   `toml:"app"`
 }
 
 type chainConfig struct {
@@ -40,10 +39,6 @@ type keyConfig struct {
 type gasConfig struct {
 	Limit  uint64 `toml:"limit"`
 	Prices string `toml:"prices"`
-}
-
-type appConfig struct {
-	MaxRetries int `toml:"max_retries"`
 }
 
 func Load() {
@@ -101,9 +96,6 @@ func createDefaultConfig(path string) error {
 			Limit:  30000,
 			Prices: "630000000000aguru",
 		},
-		App: appConfig{
-			MaxRetries: 3,
-		},
 	}
 
 	data, err := toml.Marshal(globalConfig)
@@ -147,10 +139,6 @@ func validateConfig() error {
 		return fmt.Errorf("gas prices is required")
 	}
 
-	if globalConfig.App.MaxRetries < 1 {
-		return fmt.Errorf("max retries must be greater than 0")
-	}
-
 	return nil
 }
 
@@ -164,7 +152,6 @@ func Print() {
 	log.Infof("%-15s: %s", "Address", Address().String())
 	log.Infof("%-15s: %d", "Gas Limit", GasLimit())
 	log.Infof("%-15s: %s", "Gas Prices", GasPrices())
-	log.Infof("%-15s: %d", "Max Retries", MaxRetries())
 }
 
 func Home() string {
@@ -237,11 +224,7 @@ func GasPrices() string {
 	return globalConfig.Gas.Prices
 }
 
-func MaxRetries() int {
-	return globalConfig.App.MaxRetries
-}
-
-func SetForTesting(id, endpoint, keyName, keyringDir, keyringBackend, gasPrices string, gasLimit uint64, maxRetries int) {
+func SetForTesting(id, endpoint, keyName, keyringDir, keyringBackend, gasPrices string, gasLimit uint64) {
 	globalConfig = configData{
 		Chain: chainConfig{
 			ID:       id,
@@ -255,9 +238,6 @@ func SetForTesting(id, endpoint, keyName, keyringDir, keyringBackend, gasPrices 
 		Gas: gasConfig{
 			Limit:  gasLimit,
 			Prices: gasPrices,
-		},
-		App: appConfig{
-			MaxRetries: maxRetries,
 		},
 	}
 }

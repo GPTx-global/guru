@@ -17,9 +17,10 @@ import (
 type TxManager struct {
 	sequenceNumber uint64
 	accountNumber  uint64
-	sequenceLock   sync.Mutex
 	resultQueue    chan *types.JobResult
+	minGasPrice    string
 	clientCtx      client.Context
+	lock           sync.RWMutex
 	quit           chan struct{}
 	wg             sync.WaitGroup
 }
@@ -27,11 +28,12 @@ type TxManager struct {
 // NewTxManager creates a new transaction manager with initialized account information
 func NewTxManager(clientCtx client.Context) *TxManager {
 	txm := &TxManager{
-		clientCtx:    clientCtx,
-		resultQueue:  make(chan *types.JobResult, 2<<10),
-		quit:         make(chan struct{}),
-		wg:           sync.WaitGroup{},
-		sequenceLock: sync.Mutex{},
+		clientCtx:   clientCtx,
+		resultQueue: make(chan *types.JobResult, 2<<10),
+		quit:        make(chan struct{}),
+		wg:          sync.WaitGroup{},
+		lock:        sync.RWMutex{},
+		minGasPrice: config.GasPrices(),
 	}
 	acc, seq, err := txm.clientCtx.AccountRetriever.GetAccountNumberSequence(txm.clientCtx, config.Address())
 	if err != nil {
@@ -50,10 +52,11 @@ func (txm *TxManager) ResultQueue() chan<- *types.JobResult {
 
 // BuildSubmitTx builds a transaction for submitting oracle data to the blockchain
 func (txm *TxManager) BuildSubmitTx() ([]byte, error) {
-	log.Debugf("start building submit tx")
-	msgs := make([]sdk.Msg, 0, 1)
-
+	// txm.lock.Lock()
+	// defer txm.lock.Unlock()
 	jobResult := <-txm.resultQueue
+	msgs := make([]sdk.Msg, 0, 1)
+	log.Debugf("start building submit tx")
 
 	msg := &oracletypes.MsgSubmitOracleData{
 		AuthorityAddress: txm.clientCtx.GetFromAddress().String(),
@@ -68,14 +71,12 @@ func (txm *TxManager) BuildSubmitTx() ([]byte, error) {
 
 	msgs = append(msgs, msg)
 
-	gasPrice, err := sdk.ParseDecCoin(config.GasPrices())
+	txm.lock.RLock()
+	gasPrice, err := sdk.ParseDecCoin(txm.minGasPrice)
+	txm.lock.RUnlock()
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse gas price: %w", err)
 	}
-
-	// sequence number 사용 전체 과정을 보호
-	txm.sequenceLock.Lock()
-	defer txm.sequenceLock.Unlock()
 
 	factory := tx.Factory{}.
 		WithTxConfig(txm.clientCtx.TxConfig).
@@ -120,15 +121,15 @@ func (txm *TxManager) BroadcastTx(txBytes []byte) (*sdk.TxResponse, error) {
 
 // IncrementSequenceNumber safely increments the sequence number for the next transaction
 func (txm *TxManager) IncrementSequenceNumber() {
-	txm.sequenceLock.Lock()
+	// txm.lock.Lock()
 	txm.sequenceNumber++
-	txm.sequenceLock.Unlock()
+	// txm.lock.Unlock()
 }
 
 // SyncSequenceNumber synchronizes the sequence number with the blockchain
 func (txm *TxManager) SyncSequenceNumber() error {
-	txm.sequenceLock.Lock()
-	defer txm.sequenceLock.Unlock()
+	// txm.lock.Lock()
+	// defer txm.lock.Unlock()
 
 	_, seq, err := txm.clientCtx.AccountRetriever.GetAccountNumberSequence(txm.clientCtx, config.Address())
 	if err != nil {
@@ -138,4 +139,15 @@ func (txm *TxManager) SyncSequenceNumber() error {
 	log.Debugf("sequence updated: %d -> %d", txm.sequenceNumber, seq)
 	txm.sequenceNumber = seq
 	return nil
+}
+
+func (txm *TxManager) SetMinGasPrice(minGasPrice string) {
+	if minGasPrice == "" {
+		return
+	}
+
+	txm.lock.Lock()
+	txm.minGasPrice = fmt.Sprintf("%s%s", minGasPrice, "aguru")
+	txm.lock.Unlock()
+	log.Debugf("min gas price updated: %s", txm.minGasPrice)
 }

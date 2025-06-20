@@ -9,7 +9,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/GPTx-global/guru/oracle/config"
 	"github.com/GPTx-global/guru/oracle/types"
 )
 
@@ -73,16 +72,11 @@ var executeJob = func(job *types.Job) (*types.JobResult, error) {
 // fetchRawData makes HTTP GET request to the specified URL and returns response body.
 // It implements a retry mechanism with exponential backoff for transient errors.
 func fetchRawData(url string) ([]byte, error) {
-	var (
-		lastErr      error
-		maxRetries   = config.MaxRetries()
-		initialDelay = 1 * time.Second
-	)
-
-	for i := 0; i < maxRetries; i++ {
-		if i > 0 {
-			delay := initialDelay * time.Duration(1<<(i-1)) // Exponential backoff: 1s, 2s
-			fmt.Printf("Request to %s failed. Retrying in %v... (Attempt %d/%d)\n", url, delay, i+1, maxRetries)
+	var i uint64
+	for i = 0; ; i++ {
+		if 0 < i {
+			delay := time.Second // Exponential backoff: 1s, 2s
+			fmt.Printf("Request to %s failed. Retrying in %v... (Attempt %d)\n", url, delay, i+1)
 			time.Sleep(delay)
 		}
 
@@ -96,7 +90,6 @@ func fetchRawData(url string) ([]byte, error) {
 
 		res, err := executorClient().Do(req)
 		if err != nil {
-			lastErr = fmt.Errorf("request failed on attempt %d: %w", i+1, err)
 			continue // Retry on network-level errors
 		}
 
@@ -112,8 +105,6 @@ func fetchRawData(url string) ([]byte, error) {
 
 		// Retry on 5xx server errors
 		if res.StatusCode >= 500 {
-			body, _ := io.ReadAll(res.Body)
-			lastErr = fmt.Errorf("server error on attempt %d: %s (%s)", i+1, res.Status, string(body))
 			res.Body.Close()
 			continue
 		}
@@ -123,9 +114,6 @@ func fetchRawData(url string) ([]byte, error) {
 		res.Body.Close()
 		return nil, fmt.Errorf("unexpected status: %s (%s)", res.Status, string(body))
 	}
-
-	// All retries failed
-	return nil, fmt.Errorf("failed to fetch data after %d attempts: %w", maxRetries, lastErr)
 }
 
 // parseJSON parses raw JSON data into a map, handles both objects and arrays
