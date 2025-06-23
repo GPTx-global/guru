@@ -63,23 +63,33 @@ func (jm *JobManager) worker(ctx context.Context, resultQueue chan<- *types.JobR
 	for {
 		select {
 		case job := <-jm.jobQueue:
-			jm.activeJobsLock.Lock()
-
 			switch job.Type {
 			case types.Register:
 				log.Debugf("register job %d", job.ID)
+				jm.activeJobsLock.Lock()
 				if _, ok := jm.activeJobs[job.ID]; !ok {
 					jm.activeJobs[job.ID] = job
 				}
+				jm.activeJobsLock.Unlock()
 			case types.Update:
 				log.Debugf("update job %d", job.ID)
-				// TODO: logic to update job
-				jm.activeJobs[job.ID] = job
+				jm.activeJobsLock.Lock()
+				if _, ok := jm.activeJobs[job.ID]; !ok {
+					jm.activeJobs[job.ID] = job
+				}
+				jm.activeJobs[job.ID].URL = job.URL
+				jm.activeJobs[job.ID].Path = job.Path
+				jm.activeJobs[job.ID].Status = job.Status
+				jm.activeJobs[job.ID].Delay = job.Delay
+				jm.activeJobsLock.Unlock()
+				continue
 			case types.Complete:
 				log.Debugf("complete job %d", job.ID)
+				jm.activeJobsLock.Lock()
 				if existingJob, ok := jm.activeJobs[job.ID]; ok {
 					if existingJob.Status != oracletypes.RequestStatus_REQUEST_STATUS_ENABLED.String() {
 						log.Debugf("job %d is not enabled", job.ID)
+						jm.activeJobsLock.Unlock()
 						continue
 					}
 					nonce := max(job.Nonce, existingJob.Nonce)
@@ -87,12 +97,13 @@ func (jm *JobManager) worker(ctx context.Context, resultQueue chan<- *types.JobR
 					job.Nonce = nonce
 				} else {
 					log.Debugf("job %d is not MINE!!", job.ID)
+					jm.activeJobsLock.Unlock()
 					continue
 				}
 				job.Type = types.Complete
+				jm.activeJobsLock.Unlock()
 			}
 
-			jm.activeJobsLock.Unlock()
 			job.Nonce++
 			jr, err := executeJob(job)
 			if err != nil {
