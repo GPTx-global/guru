@@ -117,9 +117,6 @@ func (d *Daemon) Stop() {
 func (d *Daemon) Monitor() {
 	for {
 		event := d.subscribeManager.Subscribe()
-		if event == nil {
-			continue
-		}
 		if gasPrice, ok := event.Events[feemarkettypes.EventTypeChangeMinGasPrice+"."+feemarkettypes.AttributeKeyMinGasPrice]; ok {
 			d.transactionManager.SetMinGasPrice(gasPrice[0])
 		}
