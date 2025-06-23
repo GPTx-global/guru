@@ -111,7 +111,7 @@ func (s *SubscribeManagerSuite) TestSubscribe_RegisterEventSuccess() {
 		defer wg.Done()
 		event := s.sm.Subscribe()
 		if event != nil {
-			receivedJobs = types.MakeJobs(*event)
+			receivedJobs = types.MakeJob(*event)
 		}
 	}()
 
@@ -140,7 +140,7 @@ func (s *SubscribeManagerSuite) TestSubscribe_RegisterEventFiltered() {
 		defer wg.Done()
 		event := s.sm.Subscribe()
 		if event != nil {
-			receivedJobs = types.MakeJobs(*event)
+			receivedJobs = types.MakeJob(*event)
 		}
 	}()
 
@@ -166,7 +166,7 @@ func (s *SubscribeManagerSuite) TestSubscribe_UpdateEvent() {
 		defer wg.Done()
 		event := s.sm.Subscribe()
 		if event != nil {
-			receivedJobs = types.MakeJobs(*event)
+			receivedJobs = types.MakeJob(*event)
 		}
 	}()
 
@@ -193,7 +193,7 @@ func (s *SubscribeManagerSuite) TestSubscribe_CompleteEvent() {
 		defer wg.Done()
 		event := s.sm.Subscribe()
 		if event != nil {
-			receivedJobs = types.MakeJobs(*event)
+			receivedJobs = types.MakeJob(*event)
 		}
 	}()
 
@@ -224,7 +224,7 @@ func (s *SubscribeManagerSuite) TestSubscribe_ContextCanceled() {
 		defer wg.Done()
 		event := sm.Subscribe()
 		if event != nil {
-			receivedJobs = types.MakeJobs(*event)
+			receivedJobs = types.MakeJob(*event)
 		}
 	}()
 

@@ -8,6 +8,7 @@ import (
 
 	"github.com/GPTx-global/guru/oracle/config"
 	"github.com/GPTx-global/guru/oracle/log"
+	feemarkettypes "github.com/GPTx-global/guru/x/feemarket/types"
 	oracletypes "github.com/GPTx-global/guru/x/oracle/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/tendermint/tendermint/rpc/client/http"
@@ -17,6 +18,11 @@ import (
 var (
 	registerMsg = "/guru.oracle.v1.MsgRegisterOracleRequestDoc"
 	updateMsg   = "/guru.oracle.v1.MsgUpdateOracleRequestDoc"
+
+	register    = oracletypes.EventTypeRegisterOracleRequestDoc + "." + oracletypes.AttributeKeyRequestId
+	update      = oracletypes.EventTypeUpdateOracleRequestDoc + "." + oracletypes.AttributeKeyRequestId
+	complete    = oracletypes.EventTypeCompleteOracleDataSet + "." + oracletypes.AttributeKeyRequestId
+	minGasPrice = feemarkettypes.EventTypeChangeMinGasPrice + "." + feemarkettypes.AttributeKeyMinGasPrice
 )
 
 type SubscribeManager struct {
@@ -24,6 +30,9 @@ type SubscribeManager struct {
 	subscriptionsLock sync.RWMutex
 	channelSize       int
 	ctx               context.Context
+
+	newTxChan    <-chan coretypes.ResultEvent
+	newBlockChan <-chan coretypes.ResultEvent
 }
 
 // NewSubscribeManager creates a new subscription manager for blockchain events
@@ -31,8 +40,10 @@ func NewSubscribeManager(ctx context.Context) *SubscribeManager {
 	return &SubscribeManager{
 		subscriptions:     make(map[string]<-chan coretypes.ResultEvent),
 		subscriptionsLock: sync.RWMutex{},
-		channelSize:       2 << 10,
+		channelSize:       2 << 9,
 		ctx:               ctx,
+		newTxChan:         nil,
+		newBlockChan:      nil,
 	}
 }
 
@@ -86,9 +97,33 @@ func (sm *SubscribeManager) SetSubscribe(client *http.HTTP) error {
 	// }
 	// sm.subscriptions[feemarkettypes.EventTypeChangeMinGasPrice] = ch
 
+	txQuery := fmt.Sprintf("tm.event='Tx' AND (%s EXISTS OR %s EXISTS)", register, update)
+	sm.newTxChan, err = client.Subscribe(sm.ctx, "newTx", txQuery, 1<<10)
+	if err != nil {
+		return fmt.Errorf("failed to subscribe to %s: %w", "newTx", err)
+	}
+
+	blockQuery := fmt.Sprintf("tm.event='NewBlock' AND (%s EXISTS OR %s EXISTS)", complete, minGasPrice)
+	sm.newBlockChan, err = client.Subscribe(sm.ctx, "newBlock", blockQuery, 1<<10)
+	if err != nil {
+		return fmt.Errorf("failed to subscribe to %s: %w", "newBlock", err)
+	}
+
 	log.Debugf("end setting subscribe")
 
 	return nil
+}
+
+// SubscribeEvent listens for events from all subscribed channels and converts them to jobs
+func (sm *SubscribeManager) SubscribeEvent() coretypes.ResultEvent {
+	select {
+	case event := <-sm.newTxChan:
+		return event
+	case event := <-sm.newBlockChan:
+		return event
+	case <-sm.ctx.Done():
+		return coretypes.ResultEvent{}
+	}
 }
 
 // Subscribe listens for events from all subscribed channels and converts them to jobs

@@ -1,6 +1,7 @@
 package types
 
 import (
+	"encoding/json"
 	"slices"
 	"strconv"
 	"strings"
@@ -10,10 +11,28 @@ import (
 	"github.com/GPTx-global/guru/encoding"
 	"github.com/GPTx-global/guru/oracle/config"
 	"github.com/GPTx-global/guru/oracle/log"
+	feemarkettypes "github.com/GPTx-global/guru/x/feemarket/types"
 	oracletypes "github.com/GPTx-global/guru/x/oracle/types"
 	coretypes "github.com/tendermint/tendermint/rpc/core/types"
 	tmtypes "github.com/tendermint/tendermint/types"
 )
+
+type Job struct {
+	ID       uint64
+	URL      string
+	Path     string
+	Type     JobType
+	Nonce    uint64
+	Delay    time.Duration
+	Status   string
+	GasPrice string
+}
+
+type JobResult struct {
+	ID    uint64
+	Data  string
+	Nonce uint64
+}
 
 type JobType byte
 
@@ -21,20 +40,194 @@ const (
 	Register JobType = iota
 	Update
 	Complete
+	GasPrice
 )
 
-type Job struct {
-	ID     uint64
-	URL    string
-	Path   string
-	Type   JobType
-	Nonce  uint64
-	Delay  time.Duration
-	Status string
+var (
+	registerID          = oracletypes.EventTypeRegisterOracleRequestDoc + "." + oracletypes.AttributeKeyRequestId
+	registerAccountList = oracletypes.EventTypeRegisterOracleRequestDoc + "." + oracletypes.AttributeKeyAccountList
+	registerEndpoints   = oracletypes.EventTypeRegisterOracleRequestDoc + "." + oracletypes.AttributeKeyEndpoints
+	registerPeriod      = oracletypes.EventTypeRegisterOracleRequestDoc + "." + oracletypes.AttributeKeyPeriod
+	registerStatus      = oracletypes.EventTypeRegisterOracleRequestDoc + "." + oracletypes.AttributeKeyStatus
+
+	updateID          = oracletypes.EventTypeUpdateOracleRequestDoc + "." + oracletypes.AttributeKeyRequestId
+	updateAccountList = oracletypes.EventTypeUpdateOracleRequestDoc + "." + oracletypes.AttributeKeyAccountList
+	updateEndpoints   = oracletypes.EventTypeUpdateOracleRequestDoc + "." + oracletypes.AttributeKeyEndpoints
+	updatePeriod      = oracletypes.EventTypeUpdateOracleRequestDoc + "." + oracletypes.AttributeKeyPeriod
+	updateStatus      = oracletypes.EventTypeUpdateOracleRequestDoc + "." + oracletypes.AttributeKeyStatus
+
+	completeID    = oracletypes.EventTypeCompleteOracleDataSet + "." + oracletypes.AttributeKeyRequestId
+	completeNonce = oracletypes.EventTypeCompleteOracleDataSet + "." + oracletypes.AttributeKeyNonce
+
+	minGasPrice = feemarkettypes.EventTypeChangeMinGasPrice + "." + feemarkettypes.AttributeKeyMinGasPrice
+)
+
+func MakeJobs(event coretypes.ResultEvent) []*Job {
+	// if _, ok := event.Data.(tmtypes.EventDataNewBlock); !ok {
+	// 	return nil
+	// }
+
+	log.Debugf("start making jobs")
+
+	jobs := make([]*Job, 0)
+	eventsMap := event.Events
+
+	if _, ok := eventsMap[updateID]; ok {
+		jobs = append(jobs, makeUpdateJobs(eventsMap)...)
+	}
+	if _, ok := eventsMap[registerID]; ok {
+		jobs = append(jobs, makeRegisterJobs(eventsMap)...)
+	}
+	if _, ok := eventsMap[minGasPrice]; ok {
+		jobs = append(jobs, makeMinGasPriceJobs(eventsMap)...)
+	}
+	if _, ok := eventsMap[completeID]; ok {
+		jobs = append(jobs, makeCompleteJobs(eventsMap)...)
+	}
+
+	log.Debugf("end making jobs, %d", len(jobs))
+
+	if len(jobs) == 0 {
+		return nil
+	}
+
+	return jobs
 }
 
-// MakeJobs creates a Job instance from various event types (OracleRequestDoc or blockchain events)
-func MakeJobs(event any) []*Job {
+func makeRegisterJobs(eventMap map[string][]string) []*Job {
+	jobs := make([]*Job, 0)
+
+	for i, id := range eventMap[registerID] {
+		if !validateAddress(eventMap[registerAccountList][i]) {
+			log.Debugf("register job %s is not for me", id)
+			continue
+		}
+
+		requestID, err := strconv.ParseUint(id, 10, 64)
+		if err != nil {
+			log.Errorf("failed to parse requestID: %v", err)
+			continue
+		}
+
+		endpoints := []*oracletypes.OracleEndpoint{}
+		err = json.Unmarshal([]byte(eventMap[registerEndpoints][i]), &endpoints)
+		if err != nil {
+			log.Errorf("failed to unmarshal endpoints: %v", err)
+			continue
+		}
+
+		myIndex := slices.Index(eventMap[registerAccountList], config.Address().String())
+		index := (myIndex + 1) % len(endpoints)
+
+		period, err := strconv.ParseUint(eventMap[registerPeriod][i], 10, 64)
+		if err != nil {
+			log.Errorf("failed to parse period: %v", err)
+			continue
+		}
+
+		jobs = append(jobs, &Job{
+			ID:     requestID,
+			URL:    endpoints[index].Url,
+			Path:   endpoints[index].ParseRule,
+			Type:   Register,
+			Nonce:  0,
+			Delay:  time.Duration(period) * time.Second,
+			Status: eventMap[registerStatus][i],
+		})
+	}
+
+	return jobs
+}
+
+func makeUpdateJobs(eventMap map[string][]string) []*Job {
+	jobs := make([]*Job, 0)
+
+	for i, id := range eventMap[updateID] {
+		if !validateAddress(eventMap[updateAccountList][i]) {
+			log.Debugf("update job %s is not for me", id)
+			continue
+		}
+
+		requestID, err := strconv.ParseUint(id, 10, 64)
+		if err != nil {
+			log.Errorf("failed to parse requestID: %v", err)
+			continue
+		}
+
+		endpoints := []*oracletypes.OracleEndpoint{}
+		err = json.Unmarshal([]byte(eventMap[updateEndpoints][i]), &endpoints)
+		if err != nil {
+			log.Errorf("failed to unmarshal endpoints: %v", err)
+			continue
+		}
+
+		myIndex := slices.Index(eventMap[updateAccountList], config.Address().String())
+		index := (myIndex + 1) % len(endpoints)
+
+		period, err := strconv.ParseUint(eventMap[updatePeriod][i], 10, 64)
+		if err != nil {
+			log.Errorf("failed to parse period: %v", err)
+			continue
+		}
+
+		jobs = append(jobs, &Job{
+			ID:     requestID,
+			URL:    endpoints[index].Url,
+			Path:   endpoints[index].ParseRule,
+			Type:   Update,
+			Delay:  time.Duration(period) * time.Second,
+			Status: eventMap[updateStatus][i],
+		})
+	}
+
+	return jobs
+}
+
+func makeCompleteJobs(eventMap map[string][]string) []*Job {
+	jobs := make([]*Job, 0)
+
+	for i, id := range eventMap[completeID] {
+		requestID, err := strconv.ParseUint(id, 10, 64)
+		if err != nil {
+			log.Errorf("failed to parse requestID: %v", err)
+			continue
+		}
+
+		nonce, err := strconv.ParseUint(eventMap[completeNonce][i], 10, 64)
+		if err != nil {
+			log.Errorf("failed to parse nonce: %v", err)
+			continue
+		}
+
+		jobs = append(jobs, &Job{
+			ID:    requestID,
+			Nonce: nonce,
+			Type:  Complete,
+		})
+	}
+
+	return jobs
+}
+
+func makeMinGasPriceJobs(eventMap map[string][]string) []*Job {
+	jobs := make([]*Job, 0)
+
+	for _, gasPrice := range eventMap[minGasPrice] {
+		jobs = append(jobs, &Job{
+			Type:     GasPrice,
+			GasPrice: gasPrice,
+		})
+	}
+
+	return jobs
+}
+
+func validateAddress(accountList string) bool {
+	return strings.Contains(accountList, config.Address().String())
+}
+
+// MakeJob creates a Job instance from various event types (OracleRequestDoc or blockchain events)
+func MakeJob(event any) []*Job {
 	log.Debugf("start making jobs")
 	jobs := make([]*Job, 0)
 
@@ -119,10 +312,4 @@ func MakeJobs(event any) []*Job {
 	log.Debugf("end making jobs, %d", len(jobs))
 
 	return jobs
-}
-
-type JobResult struct {
-	ID    uint64
-	Data  string
-	Nonce uint64
 }

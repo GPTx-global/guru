@@ -93,7 +93,7 @@ label:
 			fmt.Printf("skipping job %d because it is not in the account list\n", doc.RequestId)
 			continue label
 		}
-		if jobs := types.MakeJobs(doc); jobs != nil {
+		if jobs := types.MakeJob(doc); jobs != nil {
 			d.ProcessJob(jobs)
 		}
 	}
@@ -113,6 +113,15 @@ func (d *Daemon) Stop() {
 	d.ctx.Done()
 }
 
+func (d *Daemon) MonitorEvent() {
+	for {
+		event := d.subscribeManager.SubscribeEvent()
+		if jobs := types.MakeJobs(event); jobs != nil {
+			d.ProcessJob(jobs)
+		}
+	}
+}
+
 // Monitor continuously listens for new events and processes them as jobs
 func (d *Daemon) Monitor() {
 	for {
@@ -123,7 +132,7 @@ func (d *Daemon) Monitor() {
 		if gasPrice, ok := event.Events[feemarkettypes.EventTypeChangeMinGasPrice+"."+feemarkettypes.AttributeKeyMinGasPrice]; ok {
 			d.transactionManager.SetMinGasPrice(gasPrice[0])
 		}
-		if jobs := types.MakeJobs(*event); jobs != nil {
+		if jobs := types.MakeJob(*event); jobs != nil {
 			d.ProcessJob(jobs)
 		}
 	}
@@ -132,7 +141,9 @@ func (d *Daemon) Monitor() {
 // ProcessJob submits a job to the job manager for execution
 func (d *Daemon) ProcessJob(jobs []*types.Job) {
 	for _, job := range jobs {
-		d.jobManager.SubmitJob(job)
+		if job != nil {
+			d.jobManager.SubmitJob(job)
+		}
 	}
 }
 

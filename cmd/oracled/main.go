@@ -31,7 +31,8 @@ func main() {
 		panic(fmt.Errorf("failed to start daemon: %w", err))
 	}
 
-	go daemon.Monitor()
+	// go daemon.Monitor()
+	go daemon.MonitorEvent()
 	go daemon.ServeOracle()
 	fmt.Println("==daemon started==")
 

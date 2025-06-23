@@ -24,7 +24,7 @@ func NewJobManager() *JobManager {
 	jm := &JobManager{
 		activeJobs:     make(map[uint64]*types.Job),
 		activeJobsLock: sync.Mutex{},
-		jobQueue:       make(chan *types.Job, 2<<5),
+		jobQueue:       make(chan *types.Job, 1<<9),
 		quit:           make(chan struct{}),
 		wg:             sync.WaitGroup{},
 	}
@@ -73,13 +73,16 @@ func (jm *JobManager) worker(ctx context.Context, resultQueue chan<- *types.JobR
 				}
 			case types.Update:
 				log.Debugf("update job %d", job.ID)
+				jm.activeJobsLock.Unlock()
 				// TODO: logic to update job
-				jm.activeJobs[job.ID] = job
+				// jm.activeJobs[job.ID] = job
+				continue
 			case types.Complete:
 				log.Debugf("complete job %d", job.ID)
 				if existingJob, ok := jm.activeJobs[job.ID]; ok {
 					if existingJob.Status != oracletypes.RequestStatus_REQUEST_STATUS_ENABLED.String() {
 						log.Debugf("job %d is not enabled", job.ID)
+						jm.activeJobsLock.Unlock()
 						continue
 					}
 					nonce := max(job.Nonce, existingJob.Nonce)
@@ -87,9 +90,14 @@ func (jm *JobManager) worker(ctx context.Context, resultQueue chan<- *types.JobR
 					job.Nonce = nonce
 				} else {
 					log.Debugf("job %d is not MINE!!", job.ID)
+					jm.activeJobsLock.Unlock()
 					continue
 				}
 				job.Type = types.Complete
+			case types.GasPrice:
+				log.Debugf("gas price job %s", job.GasPrice)
+				jm.activeJobsLock.Unlock()
+				continue
 			}
 
 			jm.activeJobsLock.Unlock()
