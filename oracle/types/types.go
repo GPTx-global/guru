@@ -80,7 +80,20 @@ func MakeJobs(event any) []*Job {
 						Status: oracleMsg.RequestDoc.Status.String(),
 					})
 				case *oracletypes.MsgUpdateOracleRequestDoc:
-					jobs = nil
+					myIndex := slices.Index(oracleMsg.RequestDoc.AccountList, config.Address().String())
+					index := (myIndex + 1) % len(oracleMsg.RequestDoc.Endpoints)
+					requestID, err := strconv.ParseUint(event.Events[oracletypes.EventTypeUpdateOracleRequestDoc+"."+oracletypes.AttributeKeyRequestId][0], 10, 64)
+					if err != nil {
+						return nil
+					}
+					jobs = append(jobs, &Job{
+						ID:     requestID,
+						URL:    oracleMsg.RequestDoc.Endpoints[index].Url,
+						Path:   oracleMsg.RequestDoc.Endpoints[index].ParseRule,
+						Type:   Update,
+						Delay:  time.Duration(oracleMsg.RequestDoc.Period) * time.Second,
+						Status: oracleMsg.RequestDoc.Status.String(),
+					})
 				}
 			}
 			if len(jobs) == 0 {
