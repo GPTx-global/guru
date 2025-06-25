@@ -1,4 +1,4 @@
-package woker
+package scheduler
 
 import (
 	"encoding/json"
@@ -37,30 +37,30 @@ func executorClient() *http.Client {
 }
 
 // executeJob processes a job by fetching data from URL and extracting value by path.
-var executeJob = func(job *types.Job) (*types.JobResult, error) {
+func executeJob(job types.Job) (types.JobResult, error) {
 	if 1 < job.Nonce {
 		<-time.After(job.Delay)
 	}
 
 	rawData, err := fetchRawData(job.URL)
 	if err != nil {
-		return nil, fmt.Errorf("failed to fetch raw data: %w", err)
+		return types.JobResult{}, fmt.Errorf("failed to fetch raw data: %w", err)
 	}
 
 	var parsedData map[string]any
 	parsedData, err = parseJSON(rawData)
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse JSON: %w", err)
+		return types.JobResult{}, fmt.Errorf("failed to parse JSON: %w", err)
 	}
 
 	extractedValue, err := extractDataByPath(parsedData, job.Path)
 	if err != nil {
-		return nil, fmt.Errorf("failed to extract data by path: %w", err)
+		return types.JobResult{}, fmt.Errorf("failed to extract data by path: %w", err)
 	}
 
-	fmt.Printf("[EXECUTOR] ID: %5d, Nonce: %5d, Data: %s\n", job.ID, job.Nonce, extractedValue)
+	fmt.Printf("[EXECUTOR] ID: %5d, Nonce: %5d, Data: %5s\n", job.ID, job.Nonce, extractedValue)
 
-	jr := &types.JobResult{
+	jr := types.JobResult{
 		ID:    job.ID,
 		Data:  extractedValue,
 		Nonce: job.Nonce,

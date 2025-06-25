@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sync"
 
 	"github.com/GPTx-global/guru/app"
 	"github.com/GPTx-global/guru/crypto/hd"
@@ -17,7 +18,10 @@ import (
 
 var home = flag.String("home", homeDir(), "oracle daemon home directory")
 
-var globalConfig configData
+var (
+	globalConfig configData
+	mu           sync.Mutex
+)
 
 type configData struct {
 	Chain chainConfig `toml:"chain"`
@@ -221,7 +225,22 @@ func GasLimit() uint64 {
 }
 
 func GasPrices() string {
+	mu.Lock()
+	defer mu.Unlock()
+
 	return globalConfig.Gas.Prices
+}
+
+func SetGasPrice(gasPrice string) {
+	mu.Lock()
+	defer mu.Unlock()
+
+	globalConfig.Gas.Prices = gasPrice
+	log.Debugf("gas price updated: %s", gasPrice)
+}
+
+func ChannelSize() int {
+	return 1 << 10
 }
 
 func SetForTesting(id, endpoint, keyName, keyringDir, keyringBackend, gasPrices string, gasLimit uint64) {
