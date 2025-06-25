@@ -139,7 +139,7 @@ func (d *Daemon) Monitor() {
 }
 
 func (d *Daemon) ServeResult() {
-	for result := range d.scheduler.Result() {
+	for result := range d.scheduler.Results() {
 		factory, txBuilder, err := d.submitter.BuildTransaction(result)
 		if err != nil {
 			log.Errorf("failed to build transaction: %v", err)
@@ -155,72 +155,6 @@ func (d *Daemon) ServeResult() {
 		err = d.submitter.BroadcastTransaction(txBytes)
 		if err != nil {
 			log.Errorf("failed to broadcast transaction: %v", err)
-			continue
 		}
 	}
 }
-
-// // ServeOracle continuously builds and broadcasts oracle data submission transactions
-// func (d *Daemon) ServeOracle() error {
-// 	for {
-// 		txBytes, err := d.transactionManager.BuildSubmitTx()
-// 		if err != nil {
-// 			log.Errorf("failed to build submit tx: %v", err)
-// 			continue
-// 		}
-
-// 		txResponse, err := d.transactionManager.BroadcastTx(txBytes)
-// 		if err != nil {
-// 			log.Errorf("failed to broadcast tx: %v, attempting to reconnect...", err)
-// 			if err := d.reconnect(); err != nil {
-// 				log.Errorf("failed to reconnect: %v", err)
-// 			}
-// 			time.Sleep(time.Second * 5)
-// 			continue
-// 		}
-
-// 		if txResponse.Code == 0 {
-// 			log.Infof("tx success, Hash: \n\t[%s]", txResponse.TxHash)
-// 			d.transactionManager.IncrementSequenceNumber()
-// 		} else {
-// 			log.Errorf("tx failed: %s", txResponse.RawLog)
-
-// 			// sequence mismatch 에러인 경우 sequence 동기화 시도
-// 			if txResponse.Code == 32 { // sequence mismatch error code
-// 				log.Debugf("sequence mismatch error, attempting to sync sequence number")
-// 				if err := d.transactionManager.SyncSequenceNumber(); err != nil {
-// 					log.Errorf("failed to sync sequence: %v", err)
-// 				} else {
-// 					log.Infof("sequence number synchronized")
-// 				}
-// 			}
-// 		}
-// 	}
-// }
-
-// func (d *Daemon) reconnect() error {
-// 	log.Debugf("attempting to reconnect client")
-// 	if d.client.IsRunning() {
-// 		d.client.Stop()
-// 	}
-
-// 	clt, err := http.New(config.ChainEndpoint(), "/websocket")
-// 	if err != nil {
-// 		return fmt.Errorf("failed to create new client: %w", err)
-// 	}
-
-// 	err = clt.Start()
-// 	if err != nil {
-// 		return fmt.Errorf("failed to start new client: %w", err)
-// 	}
-// 	d.client = clt
-// 	d.clientCtx = d.clientCtx.WithClient(d.client)
-
-// 	err = d.subscribeManager.SetSubscribe(d.client)
-// 	if err != nil {
-// 		log.Debugf("failed to re-subscribe after reconnect: %v", err)
-// 	}
-
-// 	log.Debugf("client reconnected successfully")
-// 	return nil
-// }
