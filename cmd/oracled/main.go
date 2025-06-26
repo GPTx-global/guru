@@ -20,7 +20,6 @@ func main() {
 	log.ResetLogger(config.Home())
 
 	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
 
 	daemon, err := daemon.New(ctx)
 	if err != nil {
@@ -31,9 +30,12 @@ func main() {
 		panic(fmt.Errorf("failed to start daemon: %w", err))
 	}
 
-	go daemon.Monitor()
-	go daemon.ServeOracle()
-	fmt.Println("==daemon started==")
+	fmt.Println()
+	fmt.Printf("\t------------------\n")
+	fmt.Printf("\t| daemon started |\n")
+	fmt.Printf("\t------------------\n")
+	fmt.Println()
+	fmt.Printf("%2s/%-5s: %s\n", "id", "nonce", "data")
 
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
@@ -41,5 +43,5 @@ func main() {
 	<-c
 	cancel()
 	daemon.Stop()
-	time.Sleep(3 * time.Second)
+	time.Sleep(1 * time.Second)
 }
