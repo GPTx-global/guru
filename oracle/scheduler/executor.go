@@ -67,7 +67,7 @@ func executeJob(job types.Job) (types.JobResult, error) {
 	}
 
 	// Log the execution for debugging
-	fmt.Printf("[EXECUTOR] ID: %5d, Nonce: %5d, Data: %5s\n", job.ID, job.Nonce, extractedValue)
+	fmt.Printf("%2d/%-5d: %s\n", job.ID, job.Nonce, extractedValue)
 
 	// Create and return the job result
 	jobResult := types.JobResult{

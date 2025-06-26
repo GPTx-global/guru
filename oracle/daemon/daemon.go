@@ -55,7 +55,7 @@ func New(ctx context.Context) (*Daemon, error) {
 		WithClient(d.client).
 		WithFromAddress(config.Address()).
 		WithFromName(config.KeyName()).
-		WithBroadcastMode("sync")
+		WithBroadcastMode("block") // sync
 
 	d.monitor = monitor.New(d.clientCtx, d.ctx)
 	d.scheduler = scheduler.New()

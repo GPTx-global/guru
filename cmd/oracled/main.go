@@ -35,6 +35,7 @@ func main() {
 	fmt.Printf("\t| daemon started |\n")
 	fmt.Printf("\t------------------\n")
 	fmt.Println()
+	fmt.Printf("%2s/%-5s: %s\n", "id", "nonce", "data")
 
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)

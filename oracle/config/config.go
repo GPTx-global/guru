@@ -236,7 +236,7 @@ func SetGasPrice(gasPrice string) {
 	defer mu.Unlock()
 
 	globalConfig.Gas.Prices = gasPrice
-	log.Debugf("gas price updated: %s", gasPrice)
+	// log.Debugf("gas price updated: %s", gasPrice)
 }
 
 func ChannelSize() int {
