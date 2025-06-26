@@ -58,6 +58,19 @@ func (s *Submitter) BuildTransaction(jobResult types.JobResult) (tx.Factory, cli
 		return tx.Factory{}, nil, fmt.Errorf("failed to parse gas price: %w", err)
 	}
 
+	var sequence uint64
+	switch s.clientContext.BroadcastMode {
+	case "sync":
+		sequence = s.sequenceNumber
+	case "block":
+		_, sequence, err = s.clientContext.AccountRetriever.GetAccountNumberSequence(s.clientContext, config.Address())
+		if err != nil {
+			for err != nil {
+				_, sequence, err = s.clientContext.AccountRetriever.GetAccountNumberSequence(s.clientContext, config.Address())
+			}
+		}
+	}
+
 	// Create transaction factory with all necessary settings
 	factory := tx.Factory{}.
 		WithTxConfig(s.clientContext.TxConfig).
@@ -65,10 +78,10 @@ func (s *Submitter) BuildTransaction(jobResult types.JobResult) (tx.Factory, cli
 		WithKeybase(s.clientContext.Keyring).
 		WithChainID(config.ChainID()).
 		WithGas(config.GasLimit()).
-		WithGasAdjustment(1.2). // 20% gas adjustment for safety
+		WithGasAdjustment(1.3). // 20% gas adjustment for safety
 		WithGasPrices(gasPrice.String()).
 		WithAccountNumber(s.accountNumber).
-		WithSequence(s.sequenceNumber).
+		WithSequence(sequence).
 		WithSignMode(signing.SignMode_SIGN_MODE_DIRECT)
 
 	// Build unsigned transaction
@@ -107,22 +120,27 @@ func (s *Submitter) BroadcastTransaction(txBytes []byte) error {
 		return fmt.Errorf("failed to broadcast transaction: %w", err)
 	}
 
-	// Handle successful transaction
+	// Successful transaction
 	if res.Code == 0 {
 		log.Debugf("transaction broadcasted successfully: %s", res.TxHash)
 		s.sequenceNumber++ // Increment sequence for next transaction
-	} else {
-		// Handle failed transaction by resyncing sequence number
-		_, newSequence, err := s.clientContext.AccountRetriever.GetAccountNumberSequence(s.clientContext, config.Address())
-		if err != nil {
-			return fmt.Errorf("failed to get account number sequence: %w", err)
-		}
 
-		log.Debugf("sequence number synchronized: %d -> %d", s.sequenceNumber, newSequence)
-		s.sequenceNumber = newSequence
-
-		return fmt.Errorf("transaction failed with code %d: %s", res.Code, res.RawLog)
+		return nil
 	}
 
-	return nil
+	// Failed transaction
+	failedSequence := s.sequenceNumber
+	_, s.sequenceNumber, err = s.clientContext.AccountRetriever.GetAccountNumberSequence(s.clientContext, config.Address())
+	if err != nil {
+		return fmt.Errorf("failed to get account number sequence: %w", err)
+	}
+
+	switch res.Code {
+	case 18:
+		log.Debugf("already certified")
+	case 32:
+		log.Debugf("sequence number synchronized: %d -> %d", failedSequence, s.sequenceNumber)
+	}
+
+	return fmt.Errorf("code: %d, raw log: %s, tx hash: %s", res.Code, res.RawLog, res.TxHash)
 }
