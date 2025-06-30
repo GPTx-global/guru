@@ -17,6 +17,7 @@ package client
 
 import (
 	"bufio"
+	"os"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
@@ -26,6 +27,7 @@ import (
 
 	clientkeys "github.com/GPTx-global/guru/client/keys"
 	"github.com/GPTx-global/guru/crypto/hd"
+	evmoskeyring "github.com/GPTx-global/guru/crypto/keyring"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 )
 
@@ -49,6 +51,8 @@ The keyring supports the following backends:
     pass        Uses the pass command line utility to store and retrieve keys.
     test        Stores keys insecurely to disk. It does not prompt for a password to be unlocked
                 and it should be use only for testing purposes.
+    kms-aws     Uses AWS Key Management Service (KMS) for enterprise-grade key management.
+                Requires AWS credentials and appropriate IAM permissions.
 
 kwallet and pass backends depend on external tools. Refer to their respective documentation for more
 information:
@@ -90,17 +94,61 @@ The pass backend requires GnuPG: https://gnupg.org/
 
 	cmd.PersistentFlags().String(flags.FlagHome, defaultNodeHome, "The application home directory")
 	cmd.PersistentFlags().String(flags.FlagKeyringDir, "", "The client Keyring directory; if omitted, the default 'home' directory will be used")
-	cmd.PersistentFlags().String(flags.FlagKeyringBackend, keyring.BackendOS, "Select keyring's backend (os|file|test)")
+	cmd.PersistentFlags().String(flags.FlagKeyringBackend, keyring.BackendOS, "Select keyring's backend (os|file|test|kms-aws)")
 	cmd.PersistentFlags().String(cli.OutputFlag, "text", "Output format (text|json)")
 	return cmd
 }
 
 func runAddCmd(cmd *cobra.Command, args []string) error {
 	clientCtx := client.GetClientContextFromCmd(cmd).WithKeyringOptions(hd.EthSecp256k1Option())
+
+	// AWS KMS backend를 위한 특별 처리
+	backend, _ := cmd.Flags().GetString(flags.FlagKeyringBackend)
+	if backend == "kms-aws" {
+		clientCtx, err := setupKMSKeyring(cmd, clientCtx)
+		if err != nil {
+			return err
+		}
+		buf := bufio.NewReader(clientCtx.Input)
+		return clientkeys.RunAddCmd(clientCtx, cmd, args, buf)
+	}
+
+	// 표준 backend들을 위한 기본 처리
 	clientCtx, err := client.ReadPersistentCommandFlags(clientCtx, cmd.Flags())
 	if err != nil {
 		return err
 	}
 	buf := bufio.NewReader(clientCtx.Input)
 	return clientkeys.RunAddCmd(clientCtx, cmd, args, buf)
+}
+
+// setupKMSKeyring AWS KMS keyring 설정
+func setupKMSKeyring(cmd *cobra.Command, clientCtx client.Context) (client.Context, error) {
+	// AWS KMS 설정 검증
+	if err := evmoskeyring.ValidateKMSConfig(); err != nil {
+		return clientCtx, err
+	}
+
+	// AWS 리전 가져오기
+	region := os.Getenv(evmoskeyring.EnvAWSRegion)
+	if region == "" {
+		region = "us-east-1" // 기본값
+	}
+
+	// KMS wrapper 생성
+	kmsWrapper, err := evmoskeyring.NewKMSKeyringWrapper(region)
+	if err != nil {
+		return clientCtx, err
+	}
+
+	// Client context에 KMS keyring 설정
+	clientCtx = clientCtx.WithKeyring(kmsWrapper)
+
+	// 기타 필요한 flags 처리
+	clientCtx, err = client.ReadPersistentCommandFlags(clientCtx, cmd.Flags())
+	if err != nil {
+		return clientCtx, err
+	}
+
+	return clientCtx, nil
 }

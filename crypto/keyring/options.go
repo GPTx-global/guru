@@ -58,3 +58,15 @@ func Option() keyring.Option {
 		options.LedgerSigSkipDERConv = SkipDERConversion
 	}
 }
+
+// KMSOption AWS KMS keyring backend 옵션
+func KMSOption() keyring.Option {
+	return func(options *keyring.Options) {
+		options.SupportedAlgos = keyring.SigningAlgoList{hd.EthSecp256k1}
+		options.SupportedAlgosLedger = keyring.SigningAlgoList{hd.EthSecp256k1}
+		options.LedgerDerivation = func() (cosmosLedger.SECP256K1, error) { return LedgerDerivation() }
+		options.LedgerCreateKey = CreatePubkey
+		options.LedgerAppName = AppName
+		options.LedgerSigSkipDERConv = SkipDERConversion
+	}
+}

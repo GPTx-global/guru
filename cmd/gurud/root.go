@@ -38,6 +38,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/pruning"
 	"github.com/cosmos/cosmos-sdk/client/rpc"
+	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	sdkserver "github.com/cosmos/cosmos-sdk/server"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
 	"github.com/cosmos/cosmos-sdk/simapp/params"
@@ -68,6 +69,39 @@ const (
 	EnvPrefix = "GURU"
 )
 
+// setupGlobalKMSHandling AWS KMS backend를 위한 전역 처리
+func setupGlobalKMSHandling(clientCtx client.Context, cmd *cobra.Command) (client.Context, error) {
+	// keyring-backend 플래그 확인
+	backend, _ := cmd.Flags().GetString(flags.FlagKeyringBackend)
+	if backend == evmoskr.BackendKMS {
+		// AWS KMS 설정 검증
+		if err := evmoskr.ValidateKMSConfig(); err != nil {
+			return clientCtx, err
+		}
+
+		// AWS 리전 가져오기
+		region := os.Getenv(evmoskr.EnvAWSRegion)
+		if region == "" {
+			region = "us-east-1" // 기본값
+		}
+
+		// KMS wrapper 생성
+		kmsWrapper, err := evmoskr.NewKMSKeyringWrapper(region)
+		if err != nil {
+			return clientCtx, err
+		}
+
+		// Client context에 KMS keyring 설정
+		clientCtx = clientCtx.WithKeyring(kmsWrapper)
+
+		// keyring-backend 플래그를 "test"로 임시 변경하여
+		// ReadPersistentCommandFlags에서 keyring을 다시 초기화하지 않도록 함
+		cmd.Flags().Set(flags.FlagKeyringBackend, keyring.BackendTest)
+	}
+
+	return clientCtx, nil
+}
+
 // NewRootCmd creates a new root command for gurud. It is called once in the
 // main function.
 func NewRootCmd() (*cobra.Command, params.EncodingConfig) {
@@ -95,7 +129,14 @@ func NewRootCmd() (*cobra.Command, params.EncodingConfig) {
 			cmd.SetOut(cmd.OutOrStdout())
 			cmd.SetErr(cmd.ErrOrStderr())
 
-			initClientCtx, err := client.ReadPersistentCommandFlags(initClientCtx, cmd.Flags())
+			// AWS KMS backend 전역 처리
+			var err error
+			initClientCtx, err = setupGlobalKMSHandling(initClientCtx, cmd)
+			if err != nil {
+				return err
+			}
+
+			initClientCtx, err = client.ReadPersistentCommandFlags(initClientCtx, cmd.Flags())
 			if err != nil {
 				return err
 			}
