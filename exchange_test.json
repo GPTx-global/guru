@@ -1,0 +1,69 @@
+{
+    "id": "1",
+    "attributes": [
+        {
+            "key": "admin_address",
+            "value": "guru16dpm4ysj6g865kpvhdey9a9qalpej306kjmwzj"
+        },
+        {
+            "key": "reserve_address",
+            "value": "guru1ggul5tg2y80p9slpeqnw9nzy8k6wrnx0ekmr25"
+        },
+        {
+            "key": "coin_a_ibc_denom",
+            "value": "ibc/F3CAC1552411B7B2B093AE360B0AD88DD672B8E2DDB4EF055AC25F8FCC5308B3"
+        },
+        {
+            "key": "coin_a_short_denom",
+            "value": "ausdx"
+        },
+        {
+            "key": "coin_b_ibc_denom",
+            "value": "ibc/08E48DE8289E677585DB3DF394A48DA7C5091A464431BC5C00BB58C35DC6CBB5"
+        },
+        {
+            "key": "coin_b_short_denom",
+            "value": "aphpx"
+        },
+        {
+            "key": "coin_a_port",
+            "value": "transwap"
+        },
+        {
+            "key": "coin_b_port",
+            "value": "transwap"
+        },
+        {
+            "key": "coin_a_channel",
+            "value": "channel-0"
+        },
+        {
+            "key": "coin_b_channel",
+            "value": "channel-1"
+        },
+        {
+            "key": "status",
+            "value": "active"
+        },
+        {
+            "key": "a_to_b_rate",
+            "value": "55.71"
+        },
+        {
+            "key": "b_to_a_rate",
+            "value": "0.01795"
+        },
+        {
+            "key": "fee",
+            "value": "0.005"
+        },
+        {
+            "key": "a_to_b_limit",
+            "value": "1000000000000000000000"
+        },
+        {
+            "key": "b_to_a_limit",
+            "value": "5000000000000000000000"
+        }
+    ]
+}

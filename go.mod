@@ -205,6 +205,7 @@ replace (
 	github.com/cosmos/cosmos-sdk => github.com/GPTx-global/cosmos-sdk v0.46.13-ledger.3-guru.2
 	// use GPTx-global ibc-go repo
 	github.com/cosmos/ibc-go/v6 => github.com/GPTx-global/ibc-go/v6 v6.1.1-guru.2
+	// github.com/cosmos/ibc-go/v6 => /Users/tillo-gurufin/Desktop/code/chain/ibc-go/1/ibc-go/
 	// use GPTx-global geth fork
 	github.com/ethereum/go-ethereum => github.com/GPTx-global/go-ethereum v1.10.26-evmos-rc4-guru.2
 

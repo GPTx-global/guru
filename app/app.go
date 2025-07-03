@@ -106,8 +106,6 @@ import (
 
 	ibctestingtypes "github.com/cosmos/ibc-go/v6/testing/types"
 
-	ibcexchange "github.com/cosmos/ibc-go/v6/modules/apps/exchange"
-	ibcexchangetypes "github.com/cosmos/ibc-go/v6/modules/apps/exchange/types"
 	ibctransfer "github.com/cosmos/ibc-go/v6/modules/apps/transfer"
 	ibctransfertypes "github.com/cosmos/ibc-go/v6/modules/apps/transfer/types"
 	ibc "github.com/cosmos/ibc-go/v6/modules/core"
@@ -164,8 +162,12 @@ import (
 	"github.com/GPTx-global/guru/x/ibc/transfer"
 	transferkeeper "github.com/GPTx-global/guru/x/ibc/transfer/keeper"
 
-	"github.com/GPTx-global/guru/x/ibc/transwap"
-	transwapkeeper "github.com/GPTx-global/guru/x/ibc/transwap/keeper"
+	// "github.com/GPTx-global/guru/x/ibc/transwap"
+	// transwapkeeper "github.com/GPTx-global/guru/x/ibc/transwap/keeper"
+
+	"github.com/GPTx-global/guru/x/transwap"
+	transwapkeeper "github.com/GPTx-global/guru/x/transwap/keeper"
+	transwaptypes "github.com/GPTx-global/guru/x/transwap/types"
 
 	// Force-load the tracer engines to trigger registration due to Go-Ethereum v1.10.15 changes
 	_ "github.com/ethereum/go-ethereum/eth/tracers/js"
@@ -224,7 +226,7 @@ var (
 		upgrade.AppModuleBasic{},
 		evidence.AppModuleBasic{},
 		transfer.AppModuleBasic{AppModuleBasic: &ibctransfer.AppModuleBasic{}},
-		transwap.AppModuleBasic{AppModuleBasic: &ibcexchange.AppModuleBasic{}},
+		transwap.AppModuleBasic{},
 		vesting.AppModuleBasic{},
 		evm.AppModuleBasic{},
 		feemarket.AppModuleBasic{},
@@ -242,7 +244,7 @@ var (
 		stakingtypes.NotBondedPoolName: {authtypes.Burner, authtypes.Staking},
 		govtypes.ModuleName:            {authtypes.Burner},
 		ibctransfertypes.ModuleName:    {authtypes.Minter, authtypes.Burner},
-		ibcexchangetypes.ModuleName:    {authtypes.Minter, authtypes.Burner},
+		transwaptypes.ModuleName:       {authtypes.Minter, authtypes.Burner},
 		icatypes.ModuleName:            nil,
 		evmtypes.ModuleName:            {authtypes.Minter, authtypes.Burner}, // used for secure addition and subtraction of balance using module account
 		inflationtypes.ModuleName:      {authtypes.Minter},
@@ -362,7 +364,7 @@ func NewEvmos(
 		evidencetypes.StoreKey, capabilitytypes.StoreKey,
 		feegrant.StoreKey, authzkeeper.StoreKey,
 		// ibc keys
-		ibchost.StoreKey, ibctransfertypes.StoreKey, ibcexchangetypes.StoreKey,
+		ibchost.StoreKey, ibctransfertypes.StoreKey, transwaptypes.StoreKey,
 		// ica keys
 		icahosttypes.StoreKey,
 		// ethermint keys
@@ -405,7 +407,7 @@ func NewEvmos(
 
 	scopedIBCKeeper := app.CapabilityKeeper.ScopeToModule(ibchost.ModuleName)
 	scopedTransferKeeper := app.CapabilityKeeper.ScopeToModule(ibctransfertypes.ModuleName)
-	scopedExchangeKeeper := app.CapabilityKeeper.ScopeToModule(ibcexchangetypes.ModuleName)
+	scopedExchangeKeeper := app.CapabilityKeeper.ScopeToModule(transwaptypes.ModuleName)
 	scopedICAHostKeeper := app.CapabilityKeeper.ScopeToModule(icahosttypes.SubModuleName)
 
 	// Applications that wish to enforce statically created ScopedKeepers should call `Seal` after creating
@@ -537,7 +539,7 @@ func NewEvmos(
 	)
 
 	app.ExchangeKeeper = transwapkeeper.NewKeeper(
-		appCodec, keys[ibcexchangetypes.StoreKey], app.GetSubspace(ibcexchangetypes.ModuleName),
+		appCodec, keys[transwaptypes.StoreKey], app.GetSubspace(transwaptypes.ModuleName),
 		app.IBCKeeper.ChannelKeeper,
 		app.IBCKeeper.ChannelKeeper,
 		&app.IBCKeeper.PortKeeper,
@@ -598,7 +600,7 @@ func NewEvmos(
 	ibcRouter.
 		AddRoute(icahosttypes.SubModuleName, icaHostIBCModule).
 		AddRoute(ibctransfertypes.ModuleName, transferStack).
-		AddRoute(ibcexchangetypes.ModuleName, exchangeStack)
+		AddRoute(transwaptypes.ModuleName, exchangeStack)
 
 	app.IBCKeeper.SetRouter(ibcRouter)
 
@@ -676,7 +678,7 @@ func NewEvmos(
 		ibchost.ModuleName,
 		// no-op modules
 		ibctransfertypes.ModuleName,
-		ibcexchangetypes.ModuleName,
+		transwaptypes.ModuleName,
 		icatypes.ModuleName,
 		authtypes.ModuleName,
 		banktypes.ModuleName,
@@ -705,7 +707,7 @@ func NewEvmos(
 		// no-op modules
 		ibchost.ModuleName,
 		ibctransfertypes.ModuleName,
-		ibcexchangetypes.ModuleName,
+		transwaptypes.ModuleName,
 		icatypes.ModuleName,
 		capabilitytypes.ModuleName,
 		authtypes.ModuleName,
@@ -750,7 +752,7 @@ func NewEvmos(
 		genutiltypes.ModuleName,
 		evidencetypes.ModuleName,
 		ibctransfertypes.ModuleName,
-		ibcexchangetypes.ModuleName,
+		transwaptypes.ModuleName,
 		icatypes.ModuleName,
 		authz.ModuleName,
 		feegrant.ModuleName,
@@ -1090,7 +1092,7 @@ func initParamsKeeper(
 	paramsKeeper.Subspace(govtypes.ModuleName).WithKeyTable(govv1.ParamKeyTable())
 	paramsKeeper.Subspace(crisistypes.ModuleName)
 	paramsKeeper.Subspace(ibctransfertypes.ModuleName)
-	paramsKeeper.Subspace(ibcexchangetypes.ModuleName)
+	paramsKeeper.Subspace(transwaptypes.ModuleName)
 	paramsKeeper.Subspace(ibchost.ModuleName)
 	paramsKeeper.Subspace(icahosttypes.SubModuleName)
 	// ethermint subspaces
