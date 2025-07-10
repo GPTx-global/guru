@@ -171,51 +171,46 @@ func (im IBCModule) OnRecvPacket(
 ) ibcexported.Acknowledgement {
 	ack := channeltypes.NewResultAcknowledgement([]byte{byte(1)})
 
-	var transferData types.FungibleTokenPacketData
-	var exchangeData types.ExchangeTokenPacketData
+	var data types.FungibleTokenPacketData
 	var ackErr error
-	var eventAttributes []sdk.Attribute
-
-	// Try to decode as ExchangeTokenPacketData first
-	if err := types.ModuleCdc.UnmarshalJSON(packet.GetData(), &exchangeData); err == nil {
-		// Successfully decoded exchange packet
-		if err := im.keeper.OnRecvExchangePacket(ctx, packet, exchangeData); err != nil {
-			ack = channeltypes.NewErrorAcknowledgement(err)
-			ackErr = err
-		}
-
-		eventAttributes = []sdk.Attribute{
-			sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
-			sdk.NewAttribute(sdk.AttributeKeySender, exchangeData.Packet.Sender),
-			sdk.NewAttribute(types.AttributeKeyReceiver, exchangeData.Packet.Receiver),
-			sdk.NewAttribute(types.AttributeKeyDenom, exchangeData.Packet.Denom),
-			sdk.NewAttribute(types.AttributeKeyAmount, exchangeData.Packet.Amount.String()),
-			sdk.NewAttribute(types.AttributeKeyMemo, exchangeData.Packet.Memo),
-			sdk.NewAttribute(types.AttributeKeyCexId, exchangeData.CexId.String()),
-			sdk.NewAttribute(types.AttributeKeyRate, exchangeData.Rate.String()),
-			sdk.NewAttribute(types.AttributeKeySlippage, exchangeData.Slippage.String()),
-			sdk.NewAttribute(types.AttributeKeyAckSuccess, fmt.Sprintf("%t", ack.Success())),
-		}
-	} else if err := types.ModuleCdc.UnmarshalJSON(packet.GetData(), &transferData); err == nil {
-		// Successfully decoded standard ICS-20 transfer packet
-		if err := im.keeper.OnRecvTransferPacket(ctx, packet, transferData); err != nil {
-			ack = channeltypes.NewErrorAcknowledgement(err)
-			ackErr = err
-		}
-
-		eventAttributes = []sdk.Attribute{
-			sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
-			sdk.NewAttribute(sdk.AttributeKeySender, transferData.Sender),
-			sdk.NewAttribute(types.AttributeKeyReceiver, transferData.Receiver),
-			sdk.NewAttribute(types.AttributeKeyDenom, transferData.Denom),
-			sdk.NewAttribute(types.AttributeKeyAmount, transferData.Amount.String()),
-			sdk.NewAttribute(types.AttributeKeyMemo, transferData.Memo),
-			sdk.NewAttribute(types.AttributeKeyAckSuccess, fmt.Sprintf("%t", ack.Success())),
-		}
-	} else {
-		// Could not decode as either packet type
-		ackErr = sdkerrors.Wrapf(sdkerrors.ErrInvalidType, "cannot unmarshal packet into known data types")
+	if err := types.ModuleCdc.UnmarshalJSON(packet.GetData(), &data); err != nil {
+		ackErr = sdkerrors.Wrapf(sdkerrors.ErrInvalidType, "cannot unmarshal ICS-20 transfer packet data")
 		ack = channeltypes.NewErrorAcknowledgement(ackErr)
+	}
+
+	// only attempt the application logic if the packet data
+	// was successfully decoded
+	if ack.Success() {
+		var err error
+		if data.Type == types.PacketTypeExchange {
+			err = im.keeper.OnRecvExchangePacket(ctx, packet, data)
+		} else if data.Type == types.PacketTypeTransfer {
+			err = im.keeper.OnRecvTransferPacket(ctx, packet, data)
+		} else {
+			err = sdkerrors.Wrapf(sdkerrors.ErrInvalidType, "invalid packet type")
+		}
+		if err != nil {
+			ack = channeltypes.NewErrorAcknowledgement(err)
+			ackErr = err
+		}
+	}
+
+	eventAttributes := []sdk.Attribute{
+		sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
+		sdk.NewAttribute(sdk.AttributeKeySender, data.Sender),
+		sdk.NewAttribute(types.AttributeKeyReceiver, data.Receiver),
+		sdk.NewAttribute(types.AttributeKeyDenom, data.Denom),
+		sdk.NewAttribute(types.AttributeKeyAmount, data.Amount),
+		sdk.NewAttribute(types.AttributeKeyMemo, data.Memo),
+		sdk.NewAttribute(types.AttributeKeyAckSuccess, fmt.Sprintf("%t", ack.Success())),
+	}
+
+	if data.Type == types.PacketTypeExchange {
+		eventAttributes = append(eventAttributes, []sdk.Attribute{
+			sdk.NewAttribute(types.AttributeKeyCexId, data.CexId),
+			sdk.NewAttribute(types.AttributeKeyRate, data.Rate),
+			sdk.NewAttribute(types.AttributeKeySlippage, data.Slippage),
+		}...)
 	}
 
 	if ackErr != nil {
@@ -244,74 +239,41 @@ func (im IBCModule) OnAcknowledgementPacket(
 	if err := types.ModuleCdc.UnmarshalJSON(acknowledgement, &ack); err != nil {
 		return sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "cannot unmarshal ICS-20 transfer packet acknowledgement: %v", err)
 	}
-
-	var eventAttributes []sdk.Attribute
-	var transferData types.FungibleTokenPacketData
-	var exchangeData types.ExchangeTokenPacketData
-
-	errTransfer := types.ModuleCdc.UnmarshalJSON(packet.GetData(), &transferData)
-	errExchange := types.ModuleCdc.UnmarshalJSON(packet.GetData(), &exchangeData)
-
-	if errTransfer != nil && errExchange != nil {
-		return sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "cannot unmarshal ICS-20 transfer packet data: %s, %s", errTransfer, errExchange)
+	var data types.FungibleTokenPacketData
+	if err := types.ModuleCdc.UnmarshalJSON(packet.GetData(), &data); err != nil {
+		return sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "cannot unmarshal ICS-20 transfer packet data: %s", err.Error())
 	}
 
-	if errTransfer == nil && errExchange == nil {
-		return sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "data should not unmarshall to both types")
+	var err error
+	if data.Type == types.PacketTypeExchange {
+		err = im.keeper.OnAcknowledgementExchangePacket(ctx, packet, data, ack)
+	} else if data.Type == types.PacketTypeTransfer {
+		err = im.keeper.OnAcknowledgementTransferPacket(ctx, packet, data, ack)
+	} else {
+		err = sdkerrors.Wrapf(sdkerrors.ErrInvalidType, "invalid packet type")
+	}
+	if err != nil {
+		return err
 	}
 
-	if errTransfer == nil {
-		if err := im.keeper.OnAcknowledgementTransferPacket(ctx, packet, transferData, ack); err != nil {
-			return err
-		}
-		eventAttributes = []sdk.Attribute{
-			sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
-			sdk.NewAttribute(sdk.AttributeKeySender, transferData.Sender),
-			sdk.NewAttribute(types.AttributeKeyReceiver, transferData.Receiver),
-			sdk.NewAttribute(types.AttributeKeyDenom, transferData.Denom),
-			sdk.NewAttribute(types.AttributeKeyAmount, transferData.Amount.String()),
-			sdk.NewAttribute(types.AttributeKeyMemo, transferData.Memo),
-		}
-	} else if errExchange == nil {
-		if err := im.keeper.OnAcknowledgementExchangePacket(ctx, packet, exchangeData, ack); err != nil {
-			return err
-		}
-		eventAttributes = []sdk.Attribute{
-			sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
-			sdk.NewAttribute(sdk.AttributeKeySender, exchangeData.Packet.Sender),
-			sdk.NewAttribute(types.AttributeKeyReceiver, exchangeData.Packet.Receiver),
-			sdk.NewAttribute(types.AttributeKeyDenom, exchangeData.Packet.Denom),
-			sdk.NewAttribute(types.AttributeKeyAmount, exchangeData.Packet.Amount.String()),
-			sdk.NewAttribute(types.AttributeKeyMemo, exchangeData.Packet.Memo),
-			sdk.NewAttribute(types.AttributeKeyCexId, exchangeData.CexId.String()),
-			sdk.NewAttribute(types.AttributeKeyRate, exchangeData.Rate.String()),
-			sdk.NewAttribute(types.AttributeKeySlippage, exchangeData.Slippage.String()),
-		}
+	eventAttributes := []sdk.Attribute{
+		sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
+		sdk.NewAttribute(sdk.AttributeKeySender, data.Sender),
+		sdk.NewAttribute(types.AttributeKeyReceiver, data.Receiver),
+		sdk.NewAttribute(types.AttributeKeyDenom, data.Denom),
+		sdk.NewAttribute(types.AttributeKeyAmount, data.Amount),
+		sdk.NewAttribute(types.AttributeKeyMemo, data.Memo),
+		sdk.NewAttribute(types.AttributeKeyAck, ack.String()),
 	}
 
-	// var data types.FungibleTokenPacketData
-	// if err := types.ModuleCdc.UnmarshalJSON(packet.GetData(), &data); err != nil {
-	// 	return sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "cannot unmarshal ICS-20 transfer packet data: %s", err.Error())
-	// }
+	if data.Type == types.PacketTypeExchange {
+		eventAttributes = append(eventAttributes, []sdk.Attribute{
+			sdk.NewAttribute(types.AttributeKeyCexId, data.CexId),
+			sdk.NewAttribute(types.AttributeKeyRate, data.Rate),
+			sdk.NewAttribute(types.AttributeKeySlippage, data.Slippage),
+		}...)
+	}
 
-	// if err := im.keeper.OnAcknowledgementPacket(ctx, packet, data, ack); err != nil {
-	// 	return err
-	// }
-
-	// ctx.EventManager().EmitEvent(
-	// 	sdk.NewEvent(
-	// 		types.EventTypePacket,
-	// sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
-	// sdk.NewAttribute(sdk.AttributeKeySender, data.Sender),
-	// sdk.NewAttribute(types.AttributeKeyReceiver, data.Receiver),
-	// sdk.NewAttribute(types.AttributeKeyDenom, data.Denom),
-	// sdk.NewAttribute(types.AttributeKeyAmount, data.Amount.String()),
-	// sdk.NewAttribute(types.AttributeKeyMemo, data.Memo),
-	// 		sdk.NewAttribute(types.AttributeKeyAck, ack.String()),
-	// 	),
-	// )
-
-	eventAttributes = append(eventAttributes, sdk.NewAttribute(types.AttributeKeyAck, ack.String()))
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
 			types.EventTypePacket,
@@ -337,6 +299,7 @@ func (im IBCModule) OnAcknowledgementPacket(
 	}
 
 	return nil
+
 }
 
 // OnTimeoutPacket implements the IBCModule interface
@@ -345,66 +308,38 @@ func (im IBCModule) OnTimeoutPacket(
 	packet channeltypes.Packet,
 	relayer sdk.AccAddress,
 ) error {
-	// var data types.FungibleTokenPacketData
-	// if err := types.ModuleCdc.UnmarshalJSON(packet.GetData(), &data); err != nil {
-	// 	return sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "cannot unmarshal ICS-20 transfer packet data: %s", err.Error())
-	// }
-	// // refund tokens
-	// if err := im.keeper.OnTimeoutPacket(ctx, packet, data); err != nil {
-	// 	return err
-	// }
-
-	// ctx.EventManager().EmitEvent(
-	// 	sdk.NewEvent(
-	// 		types.EventTypeTimeout,
-	// 		sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
-	// 		sdk.NewAttribute(types.AttributeKeyRefundReceiver, data.Sender),
-	// 		sdk.NewAttribute(types.AttributeKeyRefundDenom, data.Denom),
-	// 		sdk.NewAttribute(types.AttributeKeyRefundAmount, data.Amount.String()),
-	// 		sdk.NewAttribute(types.AttributeKeyMemo, data.Memo),
-	// 	),
-	// )
-
-	var transferData types.FungibleTokenPacketData
-	var exchangeData types.ExchangeTokenPacketData
-	var eventAttributes []sdk.Attribute
-
-	errTransfer := types.ModuleCdc.UnmarshalJSON(packet.GetData(), &transferData)
-	errExchange := types.ModuleCdc.UnmarshalJSON(packet.GetData(), &exchangeData)
-
-	if errTransfer != nil && errExchange != nil {
-		return sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "cannot unmarshal ICS-20 transfer packet data: %s, %s", errTransfer, errExchange)
+	var data types.FungibleTokenPacketData
+	if err := types.ModuleCdc.UnmarshalJSON(packet.GetData(), &data); err != nil {
+		return sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "cannot unmarshal ICS-20 transfer packet data: %s", err.Error())
 	}
 
-	if errTransfer == nil && errExchange == nil {
-		return sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "data should not unmarshall to both types")
+	// refund tokens
+	var err error
+	if data.Type == types.PacketTypeExchange {
+		err = im.keeper.OnTimeoutExchangePacket(ctx, packet, data)
+	} else if data.Type == types.PacketTypeTransfer {
+		err = im.keeper.OnTimeoutTransferPacket(ctx, packet, data)
+	} else {
+		err = sdkerrors.Wrapf(sdkerrors.ErrInvalidType, "invalid packet type")
+	}
+	if err != nil {
+		return err
 	}
 
-	if errTransfer == nil {
-		if err := im.keeper.OnTimeoutTransferPacket(ctx, packet, transferData); err != nil {
-			return err
-		}
-		eventAttributes = []sdk.Attribute{
-			sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
-			sdk.NewAttribute(types.AttributeKeyRefundReceiver, transferData.Sender),
-			sdk.NewAttribute(types.AttributeKeyRefundDenom, transferData.Denom),
-			sdk.NewAttribute(types.AttributeKeyRefundAmount, transferData.Amount.String()),
-			sdk.NewAttribute(types.AttributeKeyMemo, transferData.Memo),
-		}
-	} else if errExchange == nil {
-		if err := im.keeper.OnTimeoutExchangePacket(ctx, packet, exchangeData); err != nil {
-			return err
-		}
-		eventAttributes = []sdk.Attribute{
-			sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
-			sdk.NewAttribute(types.AttributeKeyRefundReceiver, exchangeData.Packet.Sender),
-			sdk.NewAttribute(types.AttributeKeyRefundDenom, exchangeData.Packet.Denom),
-			sdk.NewAttribute(types.AttributeKeyRefundAmount, exchangeData.Packet.Amount.String()),
-			sdk.NewAttribute(types.AttributeKeyMemo, exchangeData.Packet.Memo),
-			sdk.NewAttribute(types.AttributeKeyCexId, exchangeData.CexId.String()),
-			sdk.NewAttribute(types.AttributeKeyRate, exchangeData.Rate.String()),
-			sdk.NewAttribute(types.AttributeKeySlippage, exchangeData.Slippage.String()),
-		}
+	eventAttributes := []sdk.Attribute{
+		sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
+		sdk.NewAttribute(types.AttributeKeyRefundReceiver, data.Sender),
+		sdk.NewAttribute(types.AttributeKeyRefundDenom, data.Denom),
+		sdk.NewAttribute(types.AttributeKeyRefundAmount, data.Amount),
+		sdk.NewAttribute(types.AttributeKeyMemo, data.Memo),
+	}
+
+	if data.Type == types.PacketTypeExchange {
+		eventAttributes = append(eventAttributes, []sdk.Attribute{
+			sdk.NewAttribute(types.AttributeKeyCexId, data.CexId),
+			sdk.NewAttribute(types.AttributeKeyRate, data.Rate),
+			sdk.NewAttribute(types.AttributeKeySlippage, data.Slippage),
+		}...)
 	}
 
 	ctx.EventManager().EmitEvent(
@@ -415,4 +350,5 @@ func (im IBCModule) OnTimeoutPacket(
 	)
 
 	return nil
+
 }

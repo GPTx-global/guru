@@ -11,35 +11,22 @@ option go_package = "github.com/GPTx-global/guru/x/transwap/types";
 // See FungibleTokenPacketData spec:
 // https://github.com/cosmos/ibc/tree/master/spec/app/ics-020-fungible-token-transfer#data-structures
 message FungibleTokenPacketData {
+  // exchange/transfer packet
+  string type  = 1;
   // the token denomination to be transferred
-  string denom = 1;
+  string denom = 2;
   // the token amount to be transferred
-  string amount = 2 [
-    (cosmos_proto.scalar) = "cosmos.Int", 
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int", 
-    (gogoproto.nullable) = false
-  ];
+  string amount = 3;
   // the sender address
-  string sender = 3;
+  string sender = 4;
   // the recipient address on the destination chain
-  string receiver = 4;
+  string receiver = 5;
   // optional memo
-  string memo = 5;
-}
-
-message ExchangeTokenPacketData {
-  FungibleTokenPacketData packet = 1 [(gogoproto.nullable) = false];
-  string cex_id = 2 [
-    (cosmos_proto.scalar) = "cosmos.Int", 
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int", 
-    (gogoproto.nullable) = false
-  ];
-  string rate = 3 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec", 
-    (gogoproto.nullable) = true
-  ];
-  string slippage = 4 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec", 
-    (gogoproto.nullable) = true
-  ];
+  string memo = 6;
+  // station cex id
+  string cex_id = 7;
+  // expected rate
+  string rate = 8;
+  // allowed slippage
+  string slippage = 9;
 }

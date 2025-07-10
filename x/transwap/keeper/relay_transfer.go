@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"cosmossdk.io/math"
 	metrics "github.com/armon/go-metrics"
 	"github.com/cosmos/cosmos-sdk/telemetry"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -55,7 +56,7 @@ func (k Keeper) sendTransfer(
 	token sdk.Coin,
 	sender sdk.AccAddress,
 	receiver string,
-	timeoutHeight uint64,
+	timeoutHeight clienttypes.Height,
 	timeoutTimestamp uint64,
 	memo string,
 ) (uint64, error) {
@@ -130,10 +131,18 @@ func (k Keeper) sendTransfer(
 	}
 
 	packetData := types.NewFungibleTokenPacketData(
-		fullDenomPath, token.Amount, sender.String(), receiver, memo,
+		types.PacketTypeTransfer,
+		fullDenomPath,
+		token.Amount.String(),
+		sender.String(),
+		receiver,
+		memo,
+		"",
+		"",
+		"",
 	)
 
-	sequence, err := k.ics4Wrapper.SendPacket(ctx, channelCap, sourcePort, sourceChannel, clienttypes.NewHeight(0, timeoutHeight), timeoutTimestamp, packetData.GetBytes())
+	sequence, err := k.ics4Wrapper.SendPacket(ctx, channelCap, sourcePort, sourceChannel, timeoutHeight, timeoutTimestamp, packetData.GetBytes())
 	if err != nil {
 		return 0, err
 	}
@@ -179,7 +188,10 @@ func (k Keeper) onRecvPacket(ctx sdk.Context, packet channeltypes.Packet, data t
 	}
 
 	// parse the transfer amount
-	transferAmount := data.Amount
+	transferAmount, ok := math.NewIntFromString(data.Amount)
+	if !ok {
+		return fmt.Errorf("invalid transfer amount: %s", data.Amount)
+	}
 
 	labels := []metrics.Label{
 		telemetry.NewLabel(coretypes.LabelSourcePort, packet.GetSourcePort()),
@@ -350,7 +362,10 @@ func (k Keeper) refundPacketToken(ctx sdk.Context, packet channeltypes.Packet, d
 	trace := types.ParseDenomTrace(data.Denom)
 
 	// parse the transfer amount
-	transferAmount := data.Amount
+	transferAmount, ok := math.NewIntFromString(data.Amount)
+	if !ok {
+		return fmt.Errorf("invalid transfer amount: %s", data.Amount)
+	}
 	token := sdk.NewCoin(trace.IBCDenom(), transferAmount)
 
 	// decode the sender address

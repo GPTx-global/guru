@@ -20,18 +20,19 @@ const (
 func NewMsgTransfer(
 	sourcePort, sourceChannel string,
 	token sdk.Coin, sender, receiver string,
-	timeoutHeight uint64, timeoutTimestamp uint64,
+	timeoutRevisionNumber uint64, timeoutRevisionHeight uint64, timeoutTimestamp uint64,
 	memo string,
 ) *MsgTransfer {
 	return &MsgTransfer{
-		SourcePort:       sourcePort,
-		SourceChannel:    sourceChannel,
-		Token:            token,
-		Sender:           sender,
-		Receiver:         receiver,
-		TimeoutHeight:    timeoutHeight,
-		TimeoutTimestamp: timeoutTimestamp,
-		Memo:             memo,
+		SourcePort:            sourcePort,
+		SourceChannel:         sourceChannel,
+		Token:                 token,
+		Sender:                sender,
+		Receiver:              receiver,
+		TimeoutRevisionNumber: timeoutRevisionNumber,
+		TimeoutRevisionHeight: timeoutRevisionHeight,
+		TimeoutTimestamp:      timeoutTimestamp,
+		Memo:                  memo,
 	}
 }
 

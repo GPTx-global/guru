@@ -3,10 +3,10 @@ package keeper
 import (
 	"context"
 
+	"github.com/GPTx-global/guru/x/transwap/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-
-	"github.com/GPTx-global/guru/x/transwap/types"
+	clienttypes "github.com/cosmos/ibc-go/v6/modules/core/02-client/types"
 )
 
 var _ types.MsgServer = Keeper{}
@@ -33,8 +33,7 @@ func (k Keeper) Transfer(goCtx context.Context, msg *types.MsgTransfer) (*types.
 	}
 
 	sequence, err := k.sendTransfer(
-		ctx, msg.SourcePort, msg.SourceChannel, msg.Token, sender, msg.Receiver, msg.TimeoutHeight, msg.TimeoutTimestamp,
-		msg.Memo)
+		ctx, msg.SourcePort, msg.SourceChannel, msg.Token, sender, msg.Receiver, clienttypes.NewHeight(msg.TimeoutRevisionNumber, msg.TimeoutRevisionHeight), msg.TimeoutTimestamp, msg.Memo)
 	if err != nil {
 		return nil, err
 	}
