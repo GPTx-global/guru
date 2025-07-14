@@ -580,11 +580,6 @@ func NewEvmos(
 	// we prefer to be more strict in what arguments the modules expect.
 	skipGenesisInvariants := cast.ToBool(appOpts.Get(crisis.FlagSkipGenesisInvariants))
 
-	app.OracleKeeper = *oraclekeeper.NewKeeper(
-		appCodec,
-		keys[oracletypes.StoreKey],
-	)
-
 	oracleKeeper := oraclekeeper.NewKeeper(appCodec, keys[oracletypes.StoreKey])
 	app.OracleKeeper = *oracleKeeper.SetHooks(
 		oraclekeeper.NewMultiOracleHooks(
