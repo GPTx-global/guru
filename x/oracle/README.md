@@ -10,7 +10,6 @@ The oracle module is responsible for managing oracle data in the blockchain. It 
   - Register new oracle request documents
   - Update existing oracle request documents
   - Query oracle request documents
-  - Delete oracle request documents
 
 - Oracle Data Management
   - Submit oracle data
