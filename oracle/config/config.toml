@@ -1,0 +1,12 @@
+[chain]
+id = 'guru_3110-1'
+endpoint = 'http://localhost:26657'
+
+[key]
+name = 'node1'
+keyring_dir = '/Users/pamla/.oracled'
+keyring_backend = 'test'
+
+[gas]
+limit = 30000
+prices = '630000000000aguru'

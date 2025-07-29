@@ -26,7 +26,6 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/math"
-	"github.com/ethereum/go-ethereum/crypto"
 )
 
 // DefaultPriorityReduction is the default amount of price values required for 1 unit of priority.
@@ -34,7 +33,7 @@ import (
 // The default value is the same as the `sdk.DefaultPowerReduction`.
 var DefaultPriorityReduction = sdk.DefaultPowerReduction
 
-var EmptyCodeHash = crypto.Keccak256(nil)
+// var EmptyCodeHash = crypto.Keccak256(nil)
 
 // DecodeTxResponse decodes an protobuf-encoded byte slice into TxResponse
 func DecodeTxResponse(in []byte) (*MsgEthereumTxResponse, error) {

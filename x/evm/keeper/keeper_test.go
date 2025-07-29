@@ -8,8 +8,7 @@ import (
 
 	evmostypes "github.com/GPTx-global/guru/types"
 	"github.com/GPTx-global/guru/x/evm/keeper"
-	"github.com/GPTx-global/guru/x/evm/statedb"
-	evmtypes "github.com/GPTx-global/guru/x/evm/types"
+	"github.com/GPTx-global/guru/x/evm/types"
 
 	"github.com/ethereum/go-ethereum/common"
 
@@ -142,9 +141,10 @@ func (suite *KeeperTestSuite) TestGetAccountStorage() {
 }
 
 func (suite *KeeperTestSuite) TestGetAccountOrEmpty() {
-	empty := statedb.Account{
+	empty := types.StateAccount{
 		Balance:  new(big.Int),
-		CodeHash: evmtypes.EmptyCodeHash,
+		Root:     types.EmptyRootHash,
+		CodeHash: types.EmptyCodeHash.Bytes(),
 	}
 
 	supply := big.NewInt(100)

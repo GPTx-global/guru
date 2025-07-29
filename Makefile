@@ -123,6 +123,15 @@ build: BUILD_ARGS=-o $(BUILDDIR)/
 build-linux:
 	GOOS=linux GOARCH=amd64 LEDGER_ENABLED=false $(MAKE) build
 
+# Build Oracle Daemon
+build-oracled:
+	@echo "Building Oracle Daemon..."
+	cd oracled && go build $(BUILD_FLAGS) -o $(BUILDDIR)/oracled ./cmd
+
+install-oracled:
+	@echo "Installing Oracle Daemon..."
+	cd oracled && go install $(BUILD_FLAGS) ./cmd
+
 $(BUILD_TARGETS): go.sum $(BUILDDIR)/
 	go $@ $(BUILD_FLAGS) $(BUILD_ARGS) ./...
 

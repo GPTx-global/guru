@@ -29,4 +29,7 @@ message Params {
   // to senders based on gas limit
   string min_gas_multiplier = 8
       [(gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec", (gogoproto.nullable) = false];
+  // min_gas_price_rate defines the minimum gas price rate for fixed price determination based on the dollar ratio
+  string min_gas_price_rate = 9
+      [(gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec", (gogoproto.nullable) = false];
 }

@@ -29,6 +29,7 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
+	"github.com/ethereum/go-ethereum/core"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 
@@ -209,7 +210,7 @@ func (k Keeper) CallEVMWithData(
 		gasCap = gasRes.Gas
 	}
 
-	msg := ethtypes.NewMessage(
+	msg := core.NewMessage(
 		from,
 		contract,
 		nonce,

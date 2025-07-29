@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"github.com/GPTx-global/guru/x/erc20/types"
-	"github.com/GPTx-global/guru/x/evm/statedb"
 	evm "github.com/GPTx-global/guru/x/evm/types"
+	evmtypes "github.com/GPTx-global/guru/x/evm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/ethereum/go-ethereum/common"
@@ -25,12 +25,12 @@ func (m *MockEVMKeeper) GetParams(_ sdk.Context) evm.Params {
 	return args.Get(0).(evm.Params)
 }
 
-func (m *MockEVMKeeper) GetAccountWithoutBalance(_ sdk.Context, _ common.Address) *statedb.Account {
+func (m *MockEVMKeeper) GetAccountWithoutBalance(_ sdk.Context, _ common.Address) *evmtypes.StateAccount {
 	args := m.Called(mock.Anything, mock.Anything)
 	if args.Get(0) == nil {
 		return nil
 	}
-	return args.Get(0).(*statedb.Account)
+	return args.Get(0).(*evmtypes.StateAccount)
 }
 
 func (m *MockEVMKeeper) EstimateGas(_ context.Context, _ *evm.EthCallRequest) (*evm.EstimateGasResponse, error) {

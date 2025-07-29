@@ -14,7 +14,6 @@ import (
 
 	"github.com/GPTx-global/guru/x/erc20/keeper"
 	"github.com/GPTx-global/guru/x/erc20/types"
-	"github.com/GPTx-global/guru/x/evm/statedb"
 	evmtypes "github.com/GPTx-global/guru/x/evm/types"
 )
 
@@ -98,7 +97,7 @@ func (suite *KeeperTestSuite) TestConvertCoinNativeCoin() {
 					authtypes.NewModuleAddress(govtypes.ModuleName), suite.app.AccountKeeper,
 					suite.app.BankKeeper, mockEVMKeeper, suite.app.StakingKeeper)
 
-				existingAcc := &statedb.Account{Nonce: uint64(1), Balance: common.Big1}
+				existingAcc := &evmtypes.StateAccount{Nonce: uint64(1), Balance: common.Big1}
 				balance := make([]uint8, 32)
 				mockEVMKeeper.On("EstimateGas", mock.Anything, mock.Anything).Return(&evmtypes.EstimateGasResponse{Gas: uint64(200)}, nil)
 				mockEVMKeeper.On("ApplyMessage", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(&evmtypes.MsgEthereumTxResponse{Ret: balance}, nil).Once()
@@ -115,7 +114,7 @@ func (suite *KeeperTestSuite) TestConvertCoinNativeCoin() {
 					authtypes.NewModuleAddress(govtypes.ModuleName), suite.app.AccountKeeper,
 					suite.app.BankKeeper, mockEVMKeeper, suite.app.StakingKeeper)
 
-				existingAcc := &statedb.Account{Nonce: uint64(1), Balance: common.Big1}
+				existingAcc := &evmtypes.StateAccount{Nonce: uint64(1), Balance: common.Big1}
 				balance := make([]uint8, 32)
 				mockEVMKeeper.On("EstimateGas", mock.Anything, mock.Anything).Return(&evmtypes.EstimateGasResponse{Gas: uint64(200)}, nil)
 				// first balance of
@@ -138,7 +137,7 @@ func (suite *KeeperTestSuite) TestConvertCoinNativeCoin() {
 					authtypes.NewModuleAddress(govtypes.ModuleName), suite.app.AccountKeeper,
 					suite.app.BankKeeper, mockEVMKeeper, suite.app.StakingKeeper)
 
-				existingAcc := &statedb.Account{Nonce: uint64(1), Balance: common.Big1}
+				existingAcc := &evmtypes.StateAccount{Nonce: uint64(1), Balance: common.Big1}
 				balance := make([]uint8, 32)
 				mockEVMKeeper.On("EstimateGas", mock.Anything, mock.Anything).Return(&evmtypes.EstimateGasResponse{Gas: uint64(200)}, nil)
 				mockEVMKeeper.On("ApplyMessage", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(&evmtypes.MsgEthereumTxResponse{Ret: balance}, nil).Times(4)
@@ -234,7 +233,7 @@ func (suite *KeeperTestSuite) TestConvertERC20NativeCoin() {
 					authtypes.NewModuleAddress(govtypes.ModuleName), suite.app.AccountKeeper,
 					suite.app.BankKeeper, mockEVMKeeper, suite.app.StakingKeeper)
 
-				existingAcc := &statedb.Account{Nonce: uint64(1), Balance: common.Big1}
+				existingAcc := &evmtypes.StateAccount{Nonce: uint64(1), Balance: common.Big1}
 				balance := make([]uint8, 32)
 				mockEVMKeeper.On("EstimateGas", mock.Anything, mock.Anything).Return(&evmtypes.EstimateGasResponse{Gas: uint64(200)}, nil)
 				mockEVMKeeper.On("ApplyMessage", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(&evmtypes.MsgEthereumTxResponse{Ret: balance}, nil).Once()
@@ -252,7 +251,7 @@ func (suite *KeeperTestSuite) TestConvertERC20NativeCoin() {
 					authtypes.NewModuleAddress(govtypes.ModuleName), suite.app.AccountKeeper,
 					suite.app.BankKeeper, mockEVMKeeper, suite.app.StakingKeeper)
 
-				existingAcc := &statedb.Account{Nonce: uint64(1), Balance: common.Big1}
+				existingAcc := &evmtypes.StateAccount{Nonce: uint64(1), Balance: common.Big1}
 				balance := make([]uint8, 32)
 				mockEVMKeeper.On("EstimateGas", mock.Anything, mock.Anything).Return(&evmtypes.EstimateGasResponse{Gas: uint64(200)}, nil)
 				// first balance of
@@ -276,7 +275,7 @@ func (suite *KeeperTestSuite) TestConvertERC20NativeCoin() {
 					authtypes.NewModuleAddress(govtypes.ModuleName), suite.app.AccountKeeper,
 					suite.app.BankKeeper, mockEVMKeeper, suite.app.StakingKeeper)
 
-				existingAcc := &statedb.Account{Nonce: uint64(1), Balance: common.Big1}
+				existingAcc := &evmtypes.StateAccount{Nonce: uint64(1), Balance: common.Big1}
 				balance := make([]uint8, 32)
 				mockEVMKeeper.On("EstimateGas", mock.Anything, mock.Anything).Return(&evmtypes.EstimateGasResponse{Gas: uint64(200)}, nil)
 				// first balance of
@@ -521,7 +520,7 @@ func (suite *KeeperTestSuite) TestConvertERC20NativeERC20() {
 					authtypes.NewModuleAddress(govtypes.ModuleName), suite.app.AccountKeeper,
 					suite.app.BankKeeper, mockEVMKeeper, suite.app.StakingKeeper)
 
-				existingAcc := &statedb.Account{Nonce: uint64(1), Balance: common.Big1}
+				existingAcc := &evmtypes.StateAccount{Nonce: uint64(1), Balance: common.Big1}
 				balance := make([]uint8, 32)
 				mockEVMKeeper.On("EstimateGas", mock.Anything, mock.Anything).Return(&evmtypes.EstimateGasResponse{Gas: uint64(200)}, nil)
 				mockEVMKeeper.On("ApplyMessage", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(&evmtypes.MsgEthereumTxResponse{Ret: balance}, nil).Once()
@@ -544,7 +543,7 @@ func (suite *KeeperTestSuite) TestConvertERC20NativeERC20() {
 					authtypes.NewModuleAddress(govtypes.ModuleName), suite.app.AccountKeeper,
 					suite.app.BankKeeper, mockEVMKeeper, suite.app.StakingKeeper)
 
-				existingAcc := &statedb.Account{Nonce: uint64(1), Balance: common.Big1}
+				existingAcc := &evmtypes.StateAccount{Nonce: uint64(1), Balance: common.Big1}
 				balance := make([]uint8, 32)
 				balance[31] = uint8(1)
 				mockEVMKeeper.On("EstimateGas", mock.Anything, mock.Anything).Return(&evmtypes.EstimateGasResponse{Gas: uint64(200)}, nil)
@@ -568,7 +567,7 @@ func (suite *KeeperTestSuite) TestConvertERC20NativeERC20() {
 					authtypes.NewModuleAddress(govtypes.ModuleName), suite.app.AccountKeeper,
 					suite.app.BankKeeper, mockEVMKeeper, suite.app.StakingKeeper)
 
-				existingAcc := &statedb.Account{Nonce: uint64(1), Balance: common.Big1}
+				existingAcc := &evmtypes.StateAccount{Nonce: uint64(1), Balance: common.Big1}
 				balance := make([]uint8, 32)
 				mockEVMKeeper.On("EstimateGas", mock.Anything, mock.Anything).Return(&evmtypes.EstimateGasResponse{Gas: uint64(200)}, nil)
 				mockEVMKeeper.On("ApplyMessage", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(&evmtypes.MsgEthereumTxResponse{Ret: balance}, nil).Once()
@@ -592,7 +591,7 @@ func (suite *KeeperTestSuite) TestConvertERC20NativeERC20() {
 					authtypes.NewModuleAddress(govtypes.ModuleName), suite.app.AccountKeeper,
 					suite.app.BankKeeper, mockEVMKeeper, suite.app.StakingKeeper)
 
-				existingAcc := &statedb.Account{Nonce: uint64(1), Balance: common.Big1}
+				existingAcc := &evmtypes.StateAccount{Nonce: uint64(1), Balance: common.Big1}
 				balance := make([]uint8, 32)
 				mockEVMKeeper.On("EstimateGas", mock.Anything, mock.Anything).Return(&evmtypes.EstimateGasResponse{Gas: uint64(200)}, nil)
 				mockEVMKeeper.On("ApplyMessage", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(&evmtypes.MsgEthereumTxResponse{Ret: balance}, nil).Once()
@@ -808,7 +807,7 @@ func (suite *KeeperTestSuite) TestConvertCoinNativeERC20() {
 					authtypes.NewModuleAddress(govtypes.ModuleName), suite.app.AccountKeeper,
 					suite.app.BankKeeper, mockEVMKeeper, suite.app.StakingKeeper)
 
-				existingAcc := &statedb.Account{Nonce: uint64(1), Balance: common.Big1}
+				existingAcc := &evmtypes.StateAccount{Nonce: uint64(1), Balance: common.Big1}
 				balance := make([]uint8, 32)
 				mockEVMKeeper.On("EstimateGas", mock.Anything, mock.Anything).Return(&evmtypes.EstimateGasResponse{Gas: uint64(200)}, nil)
 				mockEVMKeeper.On("ApplyMessage", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(&evmtypes.MsgEthereumTxResponse{Ret: balance}, nil).Once()
@@ -830,7 +829,7 @@ func (suite *KeeperTestSuite) TestConvertCoinNativeERC20() {
 					authtypes.NewModuleAddress(govtypes.ModuleName), suite.app.AccountKeeper,
 					suite.app.BankKeeper, mockEVMKeeper, suite.app.StakingKeeper)
 
-				existingAcc := &statedb.Account{Nonce: uint64(1), Balance: common.Big1}
+				existingAcc := &evmtypes.StateAccount{Nonce: uint64(1), Balance: common.Big1}
 				balance := make([]uint8, 32)
 				mockEVMKeeper.On("EstimateGas", mock.Anything, mock.Anything).Return(&evmtypes.EstimateGasResponse{Gas: uint64(200)}, nil)
 				mockEVMKeeper.On("ApplyMessage", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(&evmtypes.MsgEthereumTxResponse{Ret: balance}, nil).Once()
@@ -852,7 +851,7 @@ func (suite *KeeperTestSuite) TestConvertCoinNativeERC20() {
 					authtypes.NewModuleAddress(govtypes.ModuleName), suite.app.AccountKeeper,
 					suite.app.BankKeeper, mockEVMKeeper, suite.app.StakingKeeper)
 
-				existingAcc := &statedb.Account{Nonce: uint64(1), Balance: common.Big1}
+				existingAcc := &evmtypes.StateAccount{Nonce: uint64(1), Balance: common.Big1}
 				balance := make([]uint8, 32)
 				balance[31] = uint8(1)
 				mockEVMKeeper.On("EstimateGas", mock.Anything, mock.Anything).Return(&evmtypes.EstimateGasResponse{Gas: uint64(200)}, nil)
@@ -875,7 +874,7 @@ func (suite *KeeperTestSuite) TestConvertCoinNativeERC20() {
 					authtypes.NewModuleAddress(govtypes.ModuleName), suite.app.AccountKeeper,
 					suite.app.BankKeeper, mockEVMKeeper, suite.app.StakingKeeper)
 
-				existingAcc := &statedb.Account{Nonce: uint64(1), Balance: common.Big1}
+				existingAcc := &evmtypes.StateAccount{Nonce: uint64(1), Balance: common.Big1}
 				balance := make([]uint8, 32)
 				mockEVMKeeper.On("EstimateGas", mock.Anything, mock.Anything).Return(&evmtypes.EstimateGasResponse{Gas: uint64(200)}, nil)
 				mockEVMKeeper.On("ApplyMessage", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(&evmtypes.MsgEthereumTxResponse{Ret: balance}, nil)
@@ -1078,7 +1077,7 @@ func (suite *KeeperTestSuite) TestConvertCoinNativeIBCVoucher() {
 					authtypes.NewModuleAddress(govtypes.ModuleName), suite.app.AccountKeeper,
 					suite.app.BankKeeper, mockEVMKeeper, suite.app.StakingKeeper)
 
-				existingAcc := &statedb.Account{Nonce: uint64(1), Balance: common.Big1}
+				existingAcc := &evmtypes.StateAccount{Nonce: uint64(1), Balance: common.Big1}
 				balance := make([]uint8, 32)
 				mockEVMKeeper.On("EstimateGas", mock.Anything, mock.Anything).Return(&evmtypes.EstimateGasResponse{Gas: uint64(200)}, nil)
 				mockEVMKeeper.On("ApplyMessage", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(&evmtypes.MsgEthereumTxResponse{Ret: balance}, nil).Once()
@@ -1095,7 +1094,7 @@ func (suite *KeeperTestSuite) TestConvertCoinNativeIBCVoucher() {
 					authtypes.NewModuleAddress(govtypes.ModuleName), suite.app.AccountKeeper,
 					suite.app.BankKeeper, mockEVMKeeper, suite.app.StakingKeeper)
 
-				existingAcc := &statedb.Account{Nonce: uint64(1), Balance: common.Big1}
+				existingAcc := &evmtypes.StateAccount{Nonce: uint64(1), Balance: common.Big1}
 				balance := make([]uint8, 32)
 				mockEVMKeeper.On("EstimateGas", mock.Anything, mock.Anything).Return(&evmtypes.EstimateGasResponse{Gas: uint64(200)}, nil)
 				// first balance of
@@ -1118,7 +1117,7 @@ func (suite *KeeperTestSuite) TestConvertCoinNativeIBCVoucher() {
 					authtypes.NewModuleAddress(govtypes.ModuleName), suite.app.AccountKeeper,
 					suite.app.BankKeeper, mockEVMKeeper, suite.app.StakingKeeper)
 
-				existingAcc := &statedb.Account{Nonce: uint64(1), Balance: common.Big1}
+				existingAcc := &evmtypes.StateAccount{Nonce: uint64(1), Balance: common.Big1}
 				balance := make([]uint8, 32)
 				mockEVMKeeper.On("EstimateGas", mock.Anything, mock.Anything).Return(&evmtypes.EstimateGasResponse{Gas: uint64(200)}, nil)
 				mockEVMKeeper.On("ApplyMessage", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(&evmtypes.MsgEthereumTxResponse{Ret: balance}, nil).Times(4)
@@ -1212,7 +1211,7 @@ func (suite *KeeperTestSuite) TestConvertERC20NativeIBCVoucher() {
 					authtypes.NewModuleAddress(govtypes.ModuleName), suite.app.AccountKeeper,
 					suite.app.BankKeeper, mockEVMKeeper, suite.app.StakingKeeper)
 
-				existingAcc := &statedb.Account{Nonce: uint64(1), Balance: common.Big1}
+				existingAcc := &evmtypes.StateAccount{Nonce: uint64(1), Balance: common.Big1}
 				balance := make([]uint8, 32)
 				mockEVMKeeper.On("EstimateGas", mock.Anything, mock.Anything).Return(&evmtypes.EstimateGasResponse{Gas: uint64(200)}, nil)
 				mockEVMKeeper.On("ApplyMessage", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(&evmtypes.MsgEthereumTxResponse{Ret: balance}, nil).Once()
@@ -1230,7 +1229,7 @@ func (suite *KeeperTestSuite) TestConvertERC20NativeIBCVoucher() {
 					authtypes.NewModuleAddress(govtypes.ModuleName), suite.app.AccountKeeper,
 					suite.app.BankKeeper, mockEVMKeeper, suite.app.StakingKeeper)
 
-				existingAcc := &statedb.Account{Nonce: uint64(1), Balance: common.Big1}
+				existingAcc := &evmtypes.StateAccount{Nonce: uint64(1), Balance: common.Big1}
 				balance := make([]uint8, 32)
 				mockEVMKeeper.On("EstimateGas", mock.Anything, mock.Anything).Return(&evmtypes.EstimateGasResponse{Gas: uint64(200)}, nil)
 				// first balance of
@@ -1254,7 +1253,7 @@ func (suite *KeeperTestSuite) TestConvertERC20NativeIBCVoucher() {
 					authtypes.NewModuleAddress(govtypes.ModuleName), suite.app.AccountKeeper,
 					suite.app.BankKeeper, mockEVMKeeper, suite.app.StakingKeeper)
 
-				existingAcc := &statedb.Account{Nonce: uint64(1), Balance: common.Big1}
+				existingAcc := &evmtypes.StateAccount{Nonce: uint64(1), Balance: common.Big1}
 				balance := make([]uint8, 32)
 				mockEVMKeeper.On("EstimateGas", mock.Anything, mock.Anything).Return(&evmtypes.EstimateGasResponse{Gas: uint64(200)}, nil)
 				// first balance of

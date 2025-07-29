@@ -64,6 +64,7 @@ vagrant
 .idea/
 *.iml
 *.code-workspace
+.cursor
 
 # Graphviz
 dependency-graph.png
@@ -83,3 +84,7 @@ dependency-graph.png
 
 # OpenZeppelin contracts
 contracts/@openzeppelin/*
+
+# Cursor
+.cursor/
+*.mdc

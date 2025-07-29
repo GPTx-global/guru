@@ -22,7 +22,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/spf13/cobra"
 
 	"github.com/cosmos/cosmos-sdk/client"
@@ -220,7 +219,7 @@ contain valid denominations. Accounts may optionally be supplied with vesting pa
 			default:
 				genAccount = &types.EthAccount{
 					BaseAccount: baseAccount,
-					CodeHash:    common.BytesToHash(evmtypes.EmptyCodeHash).Hex(),
+					CodeHash:    evmtypes.EmptyCodeHash.Hex(),
 				}
 			}
 
