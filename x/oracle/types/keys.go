@@ -27,7 +27,6 @@ const (
 	prefixOracleRequestDocCount
 	prefixOracleData
 	prefixOracleDataSet
-	prefixPredefinedOracle
 )
 
 // KV Store key prefixes
@@ -38,13 +37,7 @@ var (
 	KeyOracleRequestDocCount = []byte{prefixOracleRequestDocCount}
 	KeyOracleData            = []byte{prefixOracleData}
 	KeyOracleDataSet         = []byte{prefixOracleDataSet}
-	KeyPredefinedOracle      = []byte{prefixPredefinedOracle}
 )
-
-// GetPredefinedOracleKey returns the key for storing PredefinedOracle
-func GetPredefinedOracleKey(predefinedOracleId uint32) []byte {
-	return append(KeyPredefinedOracle, IDToBytes32(predefinedOracleId)...)
-}
 
 // GetOracleRequestDocKey returns the key for storing OracleRequsetDoc
 func GetOracleRequestDocKey(id uint64) []byte {
